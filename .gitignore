@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Secrets & Environment
+.env
+firebase-key.json
+firebase-admin-key.json
+firebase-web-config.json
+admin-config.json
+ton-api-key.txt
+coinpayments-keys.json
+*.pem
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
