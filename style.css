@@ -1991,5 +1991,471 @@ body.rtl .notification-item.unread {
 }
 
 /* ============================================================================
+   إضافات وتحسينات CSS النهائية - AdNova Network
+   تشمل: TON Connect, نوافذ منبثقة, تحسين RTL, توافق الجوال
+   ============================================================================ */
+
+/* ====== TON CONNECT داخل بطاقة الرصيد ====== */
+.ton-connect-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.ton-connect-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ton-connect-left i {
+    color: #d4af37;
+    font-size: 12px;
+}
+
+.ton-connect-left span {
+    font-size: 10px;
+    color: rgba(212, 175, 55, 0.7);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+#connectTONBtn {
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 30px;
+    padding: 5px 14px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #d4af37;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#connectTONBtn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    border-color: #d4af37;
+    transform: scale(1.02);
+}
+
+#connectTONBtn:active {
+    transform: scale(0.98);
+}
+
+#tonWalletStatus {
+    font-size: 9px;
+    font-family: monospace;
+    color: #10b981;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ====== تحسين النوافذ المنبثقة ====== */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.show {
+    display: flex;
+    animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content {
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.2);
+    max-width: 360px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-icon {
+    font-size: 48px;
+    text-align: center;
+    margin: 20px 0 8px;
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary, #fff);
+    margin-bottom: 8px;
+}
+
+.modal-content p {
+    font-size: 14px;
+    text-align: center;
+    color: var(--text-secondary, #b0b0c0);
+    margin-bottom: 20px;
+    padding: 0 16px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px 20px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary, #b0b0c0);
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-confirm {
+    background: linear-gradient(135deg, #d4af37, #b8920e);
+    border: none;
+    color: #1a1a2e;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.btn-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+/* ====== تحسين أزرار لوحة المشرف ====== */
+.admin-card-actions .btn-add,
+.admin-card-actions .btn-remove,
+.admin-card-actions .btn-block,
+.admin-card-actions .btn-unblock {
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* ====== تحسين النافذة المنبثقة للغة ====== */
+.lang-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.lang-modal-overlay.open {
+    display: flex;
+    animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.lang-modal {
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 28px 28px 0 0;
+    padding: 20px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.lang-modal-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 99px;
+    margin: 0 auto 18px;
+}
+
+.lang-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary, #fff);
+    margin-bottom: 16px;
+}
+
+.lang-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.lang-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.lang-option.active {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.lang-option-flag {
+    font-size: 22px;
+}
+
+.lang-option-body {
+    flex: 1;
+}
+
+.lang-option-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.lang-option-native {
+    font-size: 11px;
+    color: var(--text-secondary, #b0b0c0);
+}
+
+.lang-option-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(212, 175, 55, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lang-option-radio-inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #d4af37;
+    opacity: 0;
+}
+
+.lang-option.active .lang-option-radio-inner {
+    opacity: 1;
+}
+
+/* ====== تحسين RTL للغة العربية ====== */
+body.rtl .lang-option {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+body.rtl .lang-option-body {
+    text-align: right;
+}
+
+body.rtl .modal-actions {
+    flex-direction: row-reverse;
+}
+
+body.rtl .close-btn {
+    right: auto;
+    left: 12px;
+}
+
+/* ====== تحسين التوافق مع الجوال ====== */
+@media (max-width: 428px) {
+    .lang-options-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        max-width: 320px;
+    }
+    
+    .modal-actions {
+        padding: 0 16px 16px;
+    }
+    
+    .modal-actions button {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .ton-connect-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    #tonWalletStatus {
+        max-width: 120px;
+        font-size: 8px;
+    }
+    
+    .admin-card-actions {
+        flex-wrap: wrap;
+    }
+    
+    .admin-card-actions button {
+        flex: 1 1 auto;
+        min-width: 80px;
+    }
+}
+
+/* ====== تحسين وسائل الدفع ====== */
+.method-option {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.method-option.selected {
+    border-color: #d4af37;
+    background: linear-gradient(145deg, #fffbec 0%, #fff3c4 65%, #faeea0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.method-option.selected i {
+    color: #b8860b;
+}
+
+.method-option.selected span {
+    color: #5a3e0b;
+}
+
+/* ====== تحسين رسائل الحالة ====== */
+.status-msg {
+    transition: all 0.2s ease;
+}
+
+.status-msg.info {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.status-msg.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.status-msg.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.status-msg.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #f87171;
+}
+
+/* ====== تحسين زر مشاهدة الإعلان ====== */
+.watch-ad-btn:active {
+    transform: scale(0.98);
+}
+
+.watch-ad-progress-fill {
+    transition: width 0.3s ease;
+}
+
+/* ====== تحسين القائمة السفلية ====== */
+.bottom-nav {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(18, 18, 26, 0.95);
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.nav-item.active .nav-icon-wrap {
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.nav-item.active {
+    color: #d4af37;
+}
+
+/* ====== تحسين بطاقة الرصيد ====== */
+.balance-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.balance-card:active {
+    transform: scale(0.99);
+}
+
+/* ====== تحسين إشعارات التوست ====== */
+.toast {
+    z-index: 10002;
+}
+
+.toast-inner {
+    background: linear-gradient(135deg, #2d2d3a, #1a1a2e);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ====== تحسين شاشة التحميل ====== */
+.splash-screen {
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ====== إصلاح العرض في الوضع الليلي ====== */
+@media (prefers-color-scheme: dark) {
+    .balance-card {
+        background: linear-gradient(135deg, #2a2418, #1c1810);
+    }
+}
+/* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
