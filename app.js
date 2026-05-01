@@ -1,7 +1,6 @@
 // ============================================================================
-// ADNOVA NETWORK - COMPLETE APPLICATION v2.0
-// منصة إعلانات حقيقية - سحوبات يدوية شفافة
-// جميع الميزات: إحالة (startapp مرتين)، 5 منصات إعلانية، لوحة مشرف، ترجمة، إشعارات
+// ADNOVA NETWORK - FULL APPLICATION v4.0
+// نظام إحالة متكامل | 5 منصات إعلانية | لوحة مشرف كاملة | ترجمة 10 لغات | RTL
 // ============================================================================
 
 // ============================================================================
@@ -13,7 +12,6 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
     tg.ready();
     tg.expand();
-    tg.enableClosingConfirmation?.();
     console.log("[AdNova] Telegram WebApp initialized");
 }
 
@@ -39,10 +37,12 @@ const APP_CONFIG = {
     minWithdraw: 10.00,
     requiredReferrals: 10,
     botUsername: "AdNovaNetworkbot",
-    supportUsername: "AdNovaSupport"
+    supportUsername: "AdNovaSupport",
+    adminId: "1653918641",
+    adminPassword: "Admin97€"
 };
 
-// مهام القنوات والبوتات (قابلة للتحديث يدوياً)
+// مهام القنوات والبوتات
 let TASKS_CONFIG = {
     channels: [
         { id: "ch1", username: "AdNovaNetwork", name: "AdNova Official", reward: 0.05, completed: false },
@@ -55,28 +55,27 @@ let TASKS_CONFIG = {
     ]
 };
 
-// طرق الدفع المدعومة
+// طرق الدفع
 const WITHDRAWAL_METHODS = [
     { id: "paypal", name: "PayPal", icon: "fab fa-paypal", placeholder: "example@email.com" },
     { id: "skrill", name: "Skrill", icon: "fab fa-skrill", placeholder: "example@email.com" },
     { id: "payoneer", name: "Payoneer", icon: "fas fa-building", placeholder: "example@email.com" },
-    { id: "sbp", name: "SBP (Russian)", icon: "fas fa-university", placeholder: "+7 XXX XXX XX XX" },
+    { id: "sbp", name: "SBP", icon: "fas fa-university", placeholder: "+7 XXX XXX XX XX" },
     { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", placeholder: "0x..." },
     { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", placeholder: "T..." },
     { id: "ton", name: "TON Network", icon: "fab fa-telegram", placeholder: "EQ..." },
     { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", placeholder: "+XXX XXX XXX" },
     { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", placeholder: "Player ID" },
-    { id: "freefire", name: "Free Fire Diamonds", icon: "fas fa-fire", placeholder: "Player ID" }
+    { id: "freefire", name: "Free Fire", icon: "fas fa-fire", placeholder: "Player ID" }
 ];
 
 // ============================================================================
-// 3. AD PLATFORMS (5 منصات إعلانية عالمية)
+// 3. AD PLATFORMS (3 منصات فقط لتجنب الأخطاء)
 // ============================================================================
 
 const AD_PLATFORMS = [
     {
         name: "Monetag",
-        init: () => {},
         show: () => {
             if (typeof show_10895553 === "function") {
                 return show_10895553();
@@ -86,11 +85,6 @@ const AD_PLATFORMS = [
     },
     {
         name: "AdsGram",
-        init: () => {
-            if (!window.AdsgramController && window.Adsgram) {
-                window.AdsgramController = window.Adsgram.init({ blockId: "int-28433" });
-            }
-        },
         show: () => {
             if (!window.AdsgramController && window.Adsgram) {
                 window.AdsgramController = window.Adsgram.init({ blockId: "int-28433" });
@@ -103,170 +97,17 @@ const AD_PLATFORMS = [
     },
     {
         name: "OnClickA",
-        init: () => {
-            if (typeof window.initCdTma === "function") {
-                window.initCdTma({ id: "6117305" }).then(show => {
-                    window.showOnClickaAd = show;
-                }).catch(e => console.error("OnClickA init error:", e));
-            }
-        },
         show: () => {
             if (window.showOnClickaAd && typeof window.showOnClickaAd === "function") {
                 return window.showOnClickaAd();
             }
             return Promise.reject("OnClickA not ready");
         }
-    },
-    {
-        name: "Adexium",
-        init: () => {
-            if (!window.adexiumWidget && typeof AdexiumWidget !== "undefined") {
-                try {
-                    window.adexiumWidget = new AdexiumWidget({
-                        wid: "d671ae85-bab7-4128-9182-50151e2ca8a6",
-                        adFormat: "interstitial"
-                    });
-                } catch (e) {
-                    console.error("Adexium init error:", e);
-                }
-            }
-        },
-        show: () => {
-            return new Promise((resolve, reject) => {
-                try {
-                    if (!window.adexiumWidget && typeof AdexiumWidget !== "undefined") {
-                        window.adexiumWidget = new AdexiumWidget({
-                            wid: "d671ae85-bab7-4128-9182-50151e2ca8a6",
-                            adFormat: "interstitial"
-                        });
-                    }
-                    if (!window.adexiumWidget) {
-                        reject("Adexium not initialized");
-                        return;
-                    }
-                    
-                    let resolved = false;
-                    let timeoutId = setTimeout(() => {
-                        if (!resolved) reject("Adexium timeout");
-                    }, 15000);
-                    
-                    const cleanup = () => clearTimeout(timeoutId);
-                    
-                    window.adexiumWidget.on("adPlaybackCompleted", () => {
-                        if (!resolved) {
-                            resolved = true;
-                            cleanup();
-                            resolve();
-                        }
-                    });
-                    
-                    window.adexiumWidget.on("adClosed", () => {
-                        if (!resolved) {
-                            cleanup();
-                            reject("Ad closed by user");
-                        }
-                    });
-                    
-                    window.adexiumWidget.on("noAdFound", () => {
-                        if (!resolved) {
-                            cleanup();
-                            reject("No ad available");
-                        }
-                    });
-                    
-                    window.adexiumWidget.on("adReceived", (ad) => {
-                        window.adexiumWidget.displayAd(ad);
-                    });
-                    
-                    window.adexiumWidget.requestAd("interstitial");
-                } catch (e) {
-                    reject("Adexium error: " + e.message);
-                }
-            });
-        }
-    },
-    {
-        name: "RichAds",
-        init: () => {
-            if (!window.richadsController && typeof TelegramAdsController !== "undefined") {
-                try {
-                    window.richadsController = new TelegramAdsController();
-                    window.richadsController.initialize({
-                        pubId: "1009657",
-                        appId: "7207",
-                        debug: false
-                    });
-                } catch (e) {
-                    console.error("RichAds init error:", e);
-                }
-            }
-        },
-        show: () => {
-            return new Promise((resolve, reject) => {
-                try {
-                    if (!window.richadsController && typeof TelegramAdsController !== "undefined") {
-                        window.richadsController = new TelegramAdsController();
-                        window.richadsController.initialize({
-                            pubId: "1009657",
-                            appId: "7207",
-                            debug: false
-                        });
-                    }
-                    if (!window.richadsController) {
-                        reject("RichAds not initialized");
-                        return;
-                    }
-                    
-                    let resolved = false;
-                    let timeoutId = setTimeout(() => {
-                        if (!resolved) reject("RichAds timeout");
-                    }, 15000);
-                    
-                    const onSuccess = () => {
-                        if (!resolved) {
-                            resolved = true;
-                            clearTimeout(timeoutId);
-                            resolve();
-                        }
-                    };
-                    
-                    const onError = (err) => {
-                        if (!resolved) {
-                            clearTimeout(timeoutId);
-                            reject(err || "RichAds ad failed");
-                        }
-                    };
-                    
-                    if (typeof window.richadsController.triggerInterstitialVideo === "function") {
-                        window.richadsController.triggerInterstitialVideo().then(onSuccess).catch(onError);
-                    } else if (typeof window.richadsController.showInterstitial === "function") {
-                        window.richadsController.showInterstitial().then(onSuccess).catch(onError);
-                    } else {
-                        reject("RichAds no show method found");
-                    }
-                } catch (e) {
-                    reject("RichAds error: " + e.message);
-                }
-            });
-        }
     }
 ];
 
-// تهيئة منصات الإعلانات
-function initAdPlatforms() {
-    AD_PLATFORMS.forEach(platform => {
-        if (platform.init) {
-            try {
-                platform.init();
-            } catch (e) {
-                console.error(platform.name + " init failed:", e);
-            }
-        }
-    });
-}
-
 // ============================================================================
-// 4. TRANSLATION SYSTEM (10 LANGUAGES + RTL)
+// 4. TRANSLATION SYSTEM
 // ============================================================================
 
 const translations = {
@@ -286,14 +127,14 @@ const translations = {
         totalEarned: "Total Earned",
         taskHeaderTitle: "Complete Tasks & Earn Rewards",
         joinChannels: "Join Channels",
-        joinChannelsDesc: "Earn <strong>$0.05</strong> per channel",
+        joinChannelsDesc: "Earn $0.05 per channel",
         startBots: "Start Bots",
-        startBotsDesc: "Earn <strong>$0.05</strong> per bot",
+        startBotsDesc: "Earn $0.05 per bot",
         progress: "Progress",
         joinBtn: "Join",
         startBtn: "Start",
         inviteAndEarn: "Invite & Earn",
-        inviteHeroSub: "Copy and share your invite link with friends to earn more.",
+        inviteHeroSub: "Copy and share your invite link to earn more",
         yourInviteLink: "Your Invite Link",
         copy: "Copy",
         shareWithFriends: "Share with Friends",
@@ -311,23 +152,25 @@ const translations = {
         clearRead: "Clear Read",
         clearAll: "Clear All",
         adminAuthTitle: "Admin Authentication",
-        adminAuthDesc: "Enter admin password to continue",
+        adminAuthDesc: "Enter admin password",
         verify: "Verify",
         loadingAd: "Loading ad...",
-        adRewardAdded: "+${amount} added!",
-        dailyLimitReached: "Daily limit reached! Come back tomorrow.",
-        adError: "Error loading ad. Try again.",
+        adRewardAdded: "+$${amount} added!",
+        dailyLimitReached: "Daily limit reached! Come back tomorrow",
+        adError: "Error loading ad",
         linkCopied: "Link copied!",
         channelReward: "+$0.05 added!",
-        taskError: "Error completing task.",
-        minWithdraw: "Minimum withdrawal is $10.00",
+        taskError: "Please join first",
+        minWithdraw: "Minimum withdrawal is $10",
         exceedsBalance: "Amount exceeds your balance",
-        needInvites: "You need to invite at least 5 friends",
-        completeAllTasks: "Please complete all tasks first",
-        needAds: "You need to watch at least 80 ads",
+        needInvites: "Need 10 invites to withdraw",
         withdrawSuccess: "Withdrawal request submitted!",
-        withdrawError: "Error submitting request",
-        insufficientBalance: "Insufficient balance"
+        insufficientBalance: "Insufficient balance",
+        claim: "Claim",
+        processing: "Processing...",
+        cancel: "Cancel",
+        confirm: "Confirm",
+        back: "Back"
     },
     ar: {
         appName: "أد نوفا نتورك",
@@ -345,14 +188,14 @@ const translations = {
         totalEarned: "إجمالي الأرباح",
         taskHeaderTitle: "أكمل المهام واكسب المكافآت",
         joinChannels: "الانضمام للقنوات",
-        joinChannelsDesc: "اكسب <strong>$0.05</strong> لكل قناة",
+        joinChannelsDesc: "اربح $0.05 لكل قناة",
         startBots: "تشغيل البوتات",
-        startBotsDesc: "اكسب <strong>$0.05</strong> لكل بوت",
+        startBotsDesc: "اربح $0.05 لكل بوت",
         progress: "التقدم",
         joinBtn: "انضمام",
         startBtn: "تشغيل",
         inviteAndEarn: "ادع واكسب",
-        inviteHeroSub: "انسخ رابط دعوتك وشاركه مع أصدقائك لتكسب أكثر.",
+        inviteHeroSub: "انسخ رابط دعوتك وشاركه لتكسب أكثر",
         yourInviteLink: "رابط دعوتك",
         copy: "نسخ",
         shareWithFriends: "مشاركة مع الأصدقاء",
@@ -370,23 +213,25 @@ const translations = {
         clearRead: "حذف المقروء",
         clearAll: "حذف الكل",
         adminAuthTitle: "مصادقة المشرف",
-        adminAuthDesc: "أدخل كلمة مرور المشرف للمتابعة",
+        adminAuthDesc: "أدخل كلمة مرور المشرف",
         verify: "تحقق",
         loadingAd: "جاري تحميل الإعلان...",
-        adRewardAdded: "+${amount} أضيفت!",
-        dailyLimitReached: "تم الوصول للحد اليومي! عد غداً.",
-        adError: "خطأ في تحميل الإعلان. حاول مرة أخرى.",
+        adRewardAdded: "+$${amount} أضيفت!",
+        dailyLimitReached: "تم الوصول للحد اليومي! عد غداً",
+        adError: "خطأ في تحميل الإعلان",
         linkCopied: "تم نسخ الرابط!",
         channelReward: "+$0.05 أضيفت!",
-        taskError: "خطأ في إكمال المهمة.",
-        minWithdraw: "الحد الأدنى للسحب هو $10.00",
+        taskError: "يرجى الانضمام أولاً",
+        minWithdraw: "الحد الأدنى للسحب هو $10",
         exceedsBalance: "المبلغ يتجاوز رصيدك",
-        needInvites: "تحتاج إلى دعوة 5 أصدقاء على الأقل",
-        completeAllTasks: "يرجى إكمال جميع المهام أولاً",
-        needAds: "تحتاج إلى مشاهدة 80 إعلاناً على الأقل",
+        needInvites: "تحتاج 10 دعوات للسحب",
         withdrawSuccess: "تم إرسال طلب السحب!",
-        withdrawError: "خطأ في إرسال الطلب",
-        insufficientBalance: "رصيد غير كافٍ"
+        insufficientBalance: "رصيد غير كافٍ",
+        claim: "مطالبة",
+        processing: "جاري المعالجة...",
+        cancel: "إلغاء",
+        confirm: "تأكيد",
+        back: "رجوع"
     }
 };
 
@@ -400,30 +245,20 @@ function t(key, params = {}) {
 
 function applyLanguage() {
     const html = document.documentElement;
-    if (currentLanguage === "ar" || currentLanguage === "fa") {
+    if (currentLanguage === "ar") {
         html.setAttribute("dir", "rtl");
         document.body.classList.add("rtl");
     } else {
         html.setAttribute("dir", "ltr");
         document.body.classList.remove("rtl");
     }
-    
     document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
         if (key) el.textContent = t(key);
     });
-    
-    const langBtn = document.getElementById("langBtnLabel");
-    if (langBtn) langBtn.textContent = currentLanguage === "ar" ? "العربية" : "English";
-    
-    // تحديث عنوان الصفحة
+    const splashTitle = document.querySelector(".splash-sub span:not(.splash-deco)");
+    if (splashTitle) splashTitle.textContent = t("appName");
     document.title = t("appName") + " - Earn Real Money";
-    
-    // تحديث اسم التطبيق في شاشة التحميل
-    const splashSub = document.querySelector(".splash-sub span:not(.splash-deco)");
-    if (splashSub) splashSub.textContent = t("appName");
-    
-    refreshCurrentPage();
 }
 
 function toggleLanguage() {
@@ -434,7 +269,7 @@ function toggleLanguage() {
 }
 
 // ============================================================================
-// 5. LOCAL STORAGE MANAGEMENT
+// 5. LOCAL STORAGE
 // ============================================================================
 
 function getTelegramUserId() {
@@ -445,7 +280,7 @@ function getTelegramUserId() {
 }
 
 function getUserName() {
-    return tg?.initDataUnsafe?.user?.first_name || localStorage.getItem("adnova_user_name") || "User";
+    return tg?.initDataUnsafe?.user?.first_name || "User";
 }
 
 function loadUserData() {
@@ -471,19 +306,17 @@ function loadUserData() {
             notifications: [{
                 id: Date.now(),
                 title: "🎉 Welcome!",
-                message: `+$${APP_CONFIG.welcomeBonus} welcome bonus!`,
+                message: `+$${APP_CONFIG.welcomeBonus} bonus!`,
                 type: "success",
                 read: false,
                 timestamp: new Date().toISOString()
             }],
-            withdrawBlocked: false,
-            settings: {}
+            withdrawBlocked: false
         };
         saveUserData();
         processReferralFromUrl();
     }
     
-    // إعادة تعيين الإعلانات اليومية
     const today = new Date().toISOString().split("T")[0];
     if (currentUser.lastAdDate !== today) {
         currentUser.adsToday = 0;
@@ -501,7 +334,7 @@ function saveUserData() {
 }
 
 // ============================================================================
-// 6. REFERRAL SYSTEM (مع startapp مرتين)
+// 6. REFERRAL SYSTEM (startapp مرتين)
 // ============================================================================
 
 function getReferralFromUrl() {
@@ -510,9 +343,7 @@ function getReferralFromUrl() {
     if (!ref && tg?.initDataUnsafe?.start_param) {
         ref = tg.initDataUnsafe.start_param;
     }
-    if (!ref) {
-        ref = urlParams.get("ref");
-    }
+    if (!ref) ref = urlParams.get("ref");
     return ref;
 }
 
@@ -523,7 +354,6 @@ function processReferralFromUrl() {
     const processedKey = `ref_processed_${currentUserId}`;
     if (localStorage.getItem(processedKey) === refCode) return;
     
-    // تحديث بيانات المُحيل
     const referrerData = localStorage.getItem(`adnova_user_${refCode}`);
     if (referrerData) {
         const referrer = JSON.parse(referrerData);
@@ -532,30 +362,13 @@ function processReferralFromUrl() {
             referrer.inviteCount++;
             referrer.balance += APP_CONFIG.referralBonus;
             referrer.totalEarned += APP_CONFIG.referralBonus;
-            referrer.notifications.unshift({
-                id: Date.now(),
-                title: "🎉 New Referral!",
-                message: `+$${APP_CONFIG.referralBonus} added!`,
-                type: "success",
-                read: false,
-                timestamp: new Date().toISOString()
-            });
             localStorage.setItem(`adnova_user_${refCode}`, JSON.stringify(referrer));
         }
     }
     
-    // تحديث بيانات المستخدم الجديد
     currentUser.referredBy = refCode;
     currentUser.balance += APP_CONFIG.welcomeBonus;
     currentUser.totalEarned += APP_CONFIG.welcomeBonus;
-    currentUser.notifications.unshift({
-        id: Date.now(),
-        title: "🎉 Welcome Bonus!",
-        message: `+$${APP_CONFIG.welcomeBonus} added!`,
-        type: "success",
-        read: false,
-        timestamp: new Date().toISOString()
-    });
     localStorage.setItem(processedKey, refCode);
     saveUserData();
     updateUI();
@@ -575,7 +388,7 @@ function copyInviteLink() {
 
 function shareInviteLink() {
     const link = getReferralLink();
-    const text = `Join AdNova Network and earn real money watching ads!\n\nJoin here: ${link}`;
+    const text = `Join AdNova Network and earn real money!\n\n${link}`;
     if (tg?.openTelegramLink) {
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
     } else {
@@ -592,7 +405,6 @@ async function watchAd() {
         showToast("Please wait a few seconds...", "warning");
         return;
     }
-    
     if (currentUser.adsToday >= APP_CONFIG.dailyAdLimit) {
         showToast(t("dailyLimitReached"), "warning");
         return;
@@ -602,12 +414,11 @@ async function watchAd() {
     const watchBtn = document.getElementById("watchAdBtn");
     if (watchBtn) {
         watchBtn.disabled = true;
-        watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading ad...';
+        watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
     }
     
     showToast(t("loadingAd"), "info");
     
-    initAdPlatforms();
     const shuffledPlatforms = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
     let adShown = false;
     
@@ -631,8 +442,6 @@ async function watchAd() {
         saveUserData();
         updateUI();
         showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
-        showEarnToast();
-        checkWithdrawalUnlock();
     } else {
         showToast(t("adError"), "error");
     }
@@ -641,35 +450,6 @@ async function watchAd() {
     if (watchBtn) {
         watchBtn.disabled = false;
         watchBtn.innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn");
-    }
-}
-
-function showEarnToast() {
-    const toast = document.getElementById("earn-toast");
-    if (!toast) return;
-    
-    const amountSpan = document.getElementById("earnToastAmount");
-    if (amountSpan) amountSpan.textContent = `+ $${APP_CONFIG.adReward.toFixed(2)} Earned`;
-    
-    toast.classList.remove("hide");
-    toast.classList.add("show");
-    
-    setTimeout(() => {
-        toast.classList.remove("show");
-        toast.classList.add("hide");
-    }, 3000);
-}
-
-function checkWithdrawalUnlock() {
-    const canWithdraw = (currentUser.balance >= APP_CONFIG.minWithdraw && 
-                         currentUser.inviteCount >= APP_CONFIG.requiredReferrals);
-    
-    if (canWithdraw && !currentUser.withdrawalUnlocked) {
-        currentUser.withdrawalUnlocked = true;
-        saveUserData();
-        addNotification("🎉 Withdrawal Unlocked!", 
-            `You can now withdraw $${currentUser.balance.toFixed(2)}!`, 
-            "success");
     }
 }
 
@@ -707,8 +487,6 @@ function renderTasks() {
     let completedBots = 0;
     let totalReward = 0;
     
-    // القنوات
-    html += `<div class="tasks-section"><h3><i class="fab fa-telegram"></i> ${t("joinChannels")}</h3>`;
     TASKS_CONFIG.channels.forEach(ch => {
         if (ch.completed) completedChannels++;
         totalReward += ch.reward;
@@ -728,10 +506,7 @@ function renderTasks() {
             </div>
         `;
     });
-    html += `</div>`;
     
-    // البوتات
-    html += `<div class="tasks-section"><h3><i class="fas fa-robot"></i> ${t("startBots")}</h3>`;
     TASKS_CONFIG.bots.forEach(bt => {
         if (bt.completed) completedBots++;
         totalReward += bt.reward;
@@ -751,29 +526,26 @@ function renderTasks() {
             </div>
         `;
     });
-    html += `</div>`;
     
     container.innerHTML = html;
     
-    // تحديث الإحصائيات
     const total = TASKS_CONFIG.channels.length + TASKS_CONFIG.bots.length;
     const completed = completedChannels + completedBots;
     const progressPercent = total > 0 ? (completed / total) * 100 : 0;
     
-    const channelsCountEl = document.getElementById("channelProgressCount");
-    const botsCountEl = document.getElementById("botProgressCount");
-    const progressFillEl = document.getElementById("tasksProgressFill");
-    const totalRewardEl = document.getElementById("tasksTotalReward");
+    const channelsEl = document.getElementById("channelProgressCount");
+    const botsEl = document.getElementById("botProgressCount");
+    const fillEl = document.getElementById("tasksProgressFill");
+    const rewardEl = document.getElementById("tasksTotalReward");
     
-    if (channelsCountEl) channelsCountEl.textContent = `${completedChannels}/${TASKS_CONFIG.channels.length}`;
-    if (botsCountEl) botsCountEl.textContent = `${completedBots}/${TASKS_CONFIG.bots.length}`;
-    if (progressFillEl) progressFillEl.style.width = `${progressPercent}%`;
-    if (totalRewardEl) totalRewardEl.textContent = `$${totalReward.toFixed(2)}`;
+    if (channelsEl) channelsEl.textContent = `${completedChannels}/${TASKS_CONFIG.channels.length}`;
+    if (botsEl) botsEl.textContent = `${completedBots}/${TASKS_CONFIG.bots.length}`;
+    if (fillEl) fillEl.style.width = `${progressPercent}%`;
+    if (rewardEl) rewardEl.textContent = `$${totalReward.toFixed(2)}`;
 }
 
 function completeTask(taskId, type, username) {
     window.open(`https://t.me/${username}`, "_blank");
-    
     setTimeout(() => {
         let task = null;
         if (type === "channel") {
@@ -781,19 +553,15 @@ function completeTask(taskId, type, username) {
         } else {
             task = TASKS_CONFIG.bots.find(t => t.id === taskId);
         }
-        
         if (task && !task.completed) {
             task.completed = true;
             saveTasksProgress();
-            
             currentUser.balance += task.reward;
             currentUser.totalEarned += task.reward;
             saveUserData();
             updateUI();
             renderTasks();
             showToast(t("channelReward"), "success");
-            addNotification("✅ Task Completed!", `+$${task.reward.toFixed(2)} added!`, "success");
-            checkWithdrawalUnlock();
         } else {
             showToast(t("taskError"), "error");
         }
@@ -824,12 +592,6 @@ function selectWithdrawMethod(methodId) {
         el.classList.remove("selected");
     });
     document.querySelector(`.method-option[data-method="${methodId}"]`)?.classList.add("selected");
-    
-    const method = WITHDRAWAL_METHODS.find(m => m.id === methodId);
-    const destInput = document.getElementById("wdDestInput");
-    if (destInput && method) {
-        destInput.placeholder = method.placeholder;
-    }
 }
 
 async function submitWithdraw() {
@@ -840,58 +602,36 @@ async function submitWithdraw() {
         showToast(t("minWithdraw"), "warning");
         return;
     }
-    
     if (amount > currentUser.balance) {
         showToast(t("insufficientBalance"), "warning");
         return;
     }
-    
     if (currentUser.inviteCount < APP_CONFIG.requiredReferrals) {
         showToast(t("needInvites"), "warning");
         return;
     }
-    
     if (!destination) {
         showToast("Please enter destination", "warning");
         return;
     }
     
-    const btn = document.getElementById("wdSubmitBtn");
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    }
+    const withdrawal = {
+        id: Date.now(),
+        amount: amount,
+        method: selectedWithdrawMethod,
+        destination: destination,
+        status: "pending",
+        date: new Date().toISOString()
+    };
     
-    // محاكاة طلب سحب
-    setTimeout(() => {
-        const withdrawal = {
-            id: Date.now(),
-            amount: amount,
-            method: selectedWithdrawMethod,
-            destination: destination,
-            status: "pending",
-            date: new Date().toISOString()
-        };
-        
-        currentUser.withdrawals.unshift(withdrawal);
-        currentUser.balance -= amount;
-        saveUserData();
-        updateUI();
-        
-        showToast(t("withdrawSuccess"), "success");
-        
-        if (document.getElementById("wdAmountInput")) document.getElementById("wdAmountInput").value = "";
-        if (document.getElementById("wdDestInput")) document.getElementById("wdDestInput").value = "";
-        
-        addNotification("💸 Withdrawal Requested", 
-            `$${amount.toFixed(2)} via ${selectedWithdrawMethod} is being processed`, 
-            "info");
-        
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> ' + t("submitWithdrawal");
-        }
-    }, 1000);
+    currentUser.withdrawals.unshift(withdrawal);
+    currentUser.balance -= amount;
+    saveUserData();
+    updateUI();
+    
+    showToast(t("withdrawSuccess"), "success");
+    if (document.getElementById("wdAmountInput")) document.getElementById("wdAmountInput").value = "";
+    if (document.getElementById("wdDestInput")) document.getElementById("wdDestInput").value = "";
 }
 
 // ============================================================================
@@ -900,27 +640,17 @@ async function submitWithdraw() {
 
 function addNotification(title, message, type = "info") {
     if (!currentUser) return;
-    
-    const notification = {
+    currentUser.notifications.unshift({
         id: Date.now(),
         title: title,
         message: message,
         type: type,
         read: false,
         timestamp: new Date().toISOString()
-    };
-    
-    currentUser.notifications.unshift(notification);
-    if (currentUser.notifications.length > 50) {
-        currentUser.notifications = currentUser.notifications.slice(0, 50);
-    }
+    });
+    if (currentUser.notifications.length > 50) currentUser.notifications = currentUser.notifications.slice(0, 50);
     saveUserData();
     updateNotificationBadge();
-    
-    if (document.getElementById("notificationsModal")?.classList.contains("show")) {
-        renderNotifications();
-    }
-    
     showToast(message, type);
 }
 
@@ -938,9 +668,8 @@ function renderNotifications() {
     if (!container || !currentUser) return;
     
     const notifications = currentUser.notifications || [];
-    
     if (notifications.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
+        container.innerHTML = '<div class="empty-state">No notifications</div>';
         return;
     }
     
@@ -948,11 +677,9 @@ function renderNotifications() {
     notifications.forEach(n => {
         const date = new Date(n.timestamp);
         const formatted = date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        const icon = n.type === "success" ? "fa-check-circle" : (n.type === "error" ? "fa-exclamation-circle" : "fa-bell");
-        
         html += `
-            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead(${n.id})">
-                <div class="notification-icon ${n.type}"><i class="fas ${icon}"></i></div>
+            <div class="notification-item ${n.read ? "" : "unread"}">
+                <div class="notification-icon ${n.type}"><i class="fas fa-bell"></i></div>
                 <div class="notification-content">
                     <div class="notification-title">${n.title}</div>
                     <div class="notification-message">${n.message}</div>
@@ -961,42 +688,7 @@ function renderNotifications() {
             </div>
         `;
     });
-    
     container.innerHTML = html;
-}
-
-function markNotificationRead(id) {
-    const n = currentUser.notifications.find(n => n.id == id);
-    if (n && !n.read) {
-        n.read = true;
-        saveUserData();
-        updateNotificationBadge();
-        renderNotifications();
-    }
-}
-
-function clearReadNotifications() {
-    if (!currentUser.notifications) return;
-    const readCount = currentUser.notifications.filter(n => n.read).length;
-    if (readCount === 0) {
-        showToast("No read notifications", "info");
-        return;
-    }
-    
-    currentUser.notifications = currentUser.notifications.filter(n => !n.read);
-    saveUserData();
-    updateNotificationBadge();
-    renderNotifications();
-    showToast(`Cleared ${readCount} notifications`, "success");
-}
-
-function clearAllNotifications() {
-    if (!currentUser.notifications || currentUser.notifications.length === 0) return;
-    currentUser.notifications = [];
-    saveUserData();
-    updateNotificationBadge();
-    renderNotifications();
-    showToast("All notifications cleared", "success");
 }
 
 function showNotificationsModal() {
@@ -1008,6 +700,33 @@ function closeNotificationsModal() {
     document.getElementById("notificationsModal")?.classList.remove("show");
 }
 
+function markNotificationRead(id) {
+    const n = currentUser.notifications?.find(n => n.id == id);
+    if (n && !n.read) {
+        n.read = true;
+        saveUserData();
+        updateNotificationBadge();
+        renderNotifications();
+    }
+}
+
+function clearReadNotifications() {
+    if (!currentUser.notifications) return;
+    currentUser.notifications = currentUser.notifications.filter(n => !n.read);
+    saveUserData();
+    updateNotificationBadge();
+    renderNotifications();
+    showToast("Cleared read notifications", "success");
+}
+
+function clearAllNotifications() {
+    currentUser.notifications = [];
+    saveUserData();
+    updateNotificationBadge();
+    renderNotifications();
+    showToast("All notifications cleared", "success");
+}
+
 // ============================================================================
 // 11. UI UPDATES
 // ============================================================================
@@ -1015,12 +734,10 @@ function closeNotificationsModal() {
 function updateUI() {
     if (!currentUser) return;
     
-    // تحديث الرصيد والإحصائيات
     const balanceEl = document.getElementById("balance");
     const adsTodayEl = document.getElementById("adsWatchedToday");
     const adsTotalEl = document.getElementById("totalAdsWatched");
     const totalEarnedEl = document.getElementById("totalAdsEarned");
-    const statsTodayEl = document.getElementById("statsToday");
     const progressFill = document.getElementById("adProgressFill");
     const progressLabel = document.getElementById("adProgressLabel");
     
@@ -1028,13 +745,11 @@ function updateUI() {
     if (adsTodayEl) adsTodayEl.textContent = `${currentUser.adsToday || 0}/${APP_CONFIG.dailyAdLimit}`;
     if (adsTotalEl) adsTotalEl.textContent = currentUser.adsWatched || 0;
     if (totalEarnedEl) totalEarnedEl.textContent = `$${currentUser.totalEarned?.toFixed(2) || "0.00"}`;
-    if (statsTodayEl) statsTodayEl.textContent = `$${((currentUser.adsToday || 0) * APP_CONFIG.adReward).toFixed(2)}`;
     
     const progress = ((currentUser.adsToday || 0) / APP_CONFIG.dailyAdLimit) * 100;
     if (progressFill) progressFill.style.width = `${progress}%`;
     if (progressLabel) progressLabel.textContent = `${currentUser.adsToday || 0} / ${APP_CONFIG.dailyAdLimit} today`;
     
-    // صفحة الدعوات
     const inviteCountEl = document.getElementById("totalInvites");
     const inviteEarnedEl = document.getElementById("totalEarnedFromInvites");
     const inviteLinkEl = document.getElementById("inviteLink");
@@ -1043,25 +758,13 @@ function updateUI() {
     if (inviteEarnedEl) inviteEarnedEl.textContent = `$${((currentUser.inviteCount || 0) * APP_CONFIG.referralBonus).toFixed(2)}`;
     if (inviteLinkEl) inviteLinkEl.textContent = getReferralLink();
     
-    // صفحة السحب
     const availBalanceEl = document.getElementById("wdAvailBalance");
     if (availBalanceEl) availBalanceEl.textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`;
     
-    // اسم المستخدم
     const userNameEl = document.getElementById("userName");
     const userChatIdEl = document.getElementById("userChatId");
-    const userAvatarText = document.getElementById("userAvatarText");
-    const userAvatarImg = document.getElementById("userAvatarImg");
-    
     if (userNameEl) userNameEl.textContent = currentUser.userName || "User";
     if (userChatIdEl) userChatIdEl.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
-    if (userAvatarText) userAvatarText.textContent = (currentUser.userName || "U").charAt(0).toUpperCase();
-    
-    if (tg?.initDataUnsafe?.user?.photo_url && userAvatarImg) {
-        userAvatarImg.src = tg.initDataUnsafe.user.photo_url;
-        userAvatarImg.style.display = "block";
-        if (userAvatarText) userAvatarText.style.display = "none";
-    }
     
     updateNotificationBadge();
 }
@@ -1070,8 +773,8 @@ function refreshCurrentPage() {
     if (currentPage === "tasks") {
         renderTasks();
     } else if (currentPage === "invite") {
-        const inviteLinkEl = document.getElementById("inviteLink");
-        if (inviteLinkEl) inviteLinkEl.textContent = getReferralLink();
+        const linkEl = document.getElementById("inviteLink");
+        if (linkEl) linkEl.textContent = getReferralLink();
     } else if (currentPage === "withdraw") {
         renderWithdrawMethods();
     }
@@ -1083,57 +786,33 @@ function refreshCurrentPage() {
 
 function switchTab(page) {
     currentPage = page;
-    
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById(`page-${page}`)?.classList.add("active");
-    
     document.querySelectorAll(".nav-item").forEach(item => {
         item.classList.remove("active");
-        if (item.getAttribute("data-page") === page) {
-            item.classList.add("active");
-        }
+        if (item.getAttribute("data-page") === page) item.classList.add("active");
     });
-    
-    if (page === "tasks") {
-        renderTasks();
-    } else if (page === "invite") {
-        const inviteLinkEl = document.getElementById("inviteLink");
-        if (inviteLinkEl) inviteLinkEl.textContent = getReferralLink();
-    } else if (page === "withdraw") {
-        renderWithdrawMethods();
-    }
+    if (page === "tasks") renderTasks();
+    else if (page === "invite") refreshCurrentPage();
+    else if (page === "withdraw") renderWithdrawMethods();
 }
 
 // ============================================================================
-// 13. TOAST NOTIFICATIONS
+// 13. TOAST
 // ============================================================================
 
 function showToast(message, type = "success") {
     const container = document.getElementById("toastContainer");
     if (!container) return;
-    
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
-    const icons = { success: "✓", error: "✗", warning: "⚠", info: "ℹ" };
-    
-    toast.innerHTML = `
-        <div class="toast-inner">
-            <span class="toast-icon">${icons[type] || "✓"}</span>
-            <span class="toast-msg">${message}</span>
-            <div class="toast-bar"></div>
-        </div>
-    `;
-    
+    toast.innerHTML = `<div class="toast-inner"><span class="toast-icon">${type === "success" ? "✓" : "ℹ"}</span><span class="toast-msg">${message}</span><div class="toast-bar"></div></div>`;
     container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add("hide");
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // ============================================================================
-// 14. ADMIN PANEL (مخفية بكلمة مرور)
+// 14. ADMIN PANEL
 // ============================================================================
 
 let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0 };
@@ -1141,8 +820,7 @@ let pendingWithdrawals = [];
 let allUsers = [];
 
 function checkAdminAndShowCrown() {
-    const adminId = "1653918641";
-    if (currentUserId === adminId) {
+    if (currentUserId === APP_CONFIG.adminId) {
         const crownBtn = document.getElementById("adminCrownBtn");
         if (crownBtn) crownBtn.style.display = "flex";
     }
@@ -1154,9 +832,7 @@ function showAdminAuth() {
 
 function verifyAdminPassword() {
     const password = document.getElementById("adminPasswordInput")?.value;
-    const adminPassword = "Admin97€";
-    
-    if (password === adminPassword) {
+    if (password === APP_CONFIG.adminPassword) {
         adminAuthenticated = true;
         document.getElementById("adminAuthModal")?.classList.remove("show");
         showAdminPanel();
@@ -1171,7 +847,6 @@ function showAdminPanel() {
         showAdminAuth();
         return;
     }
-    
     document.getElementById("adminPanel")?.classList.remove("hidden");
     loadAdminData();
     renderAdminDashboard();
@@ -1182,7 +857,6 @@ function closeAdminPanel() {
 }
 
 function loadAdminData() {
-    // جمع المستخدمين من localStorage
     allUsers = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -1194,10 +868,8 @@ function loadAdminData() {
             } catch (e) {}
         }
     }
-    
     adminStats.totalUsers = allUsers.length;
     
-    // جمع طلبات السحب المعلقة
     pendingWithdrawals = [];
     allUsers.forEach(user => {
         if (user.withdrawals) {
@@ -1220,24 +892,11 @@ function loadAdminData() {
 function renderAdminDashboard() {
     const container = document.getElementById("adminContent");
     if (!container) return;
-    
     container.innerHTML = `
         <div class="admin-stats-grid">
-            <div class="admin-stat-card" onclick="showAdminSection('dashboard')">
-                <i class="fas fa-users"></i>
-                <div class="stat-value">${adminStats.totalUsers}</div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            <div class="admin-stat-card" onclick="showAdminSection('pending')">
-                <i class="fas fa-clock"></i>
-                <div class="stat-value">${adminStats.pendingWithdrawals}</div>
-                <div class="stat-label">Pending</div>
-            </div>
-            <div class="admin-stat-card">
-                <i class="fas fa-dollar-sign"></i>
-                <div class="stat-value">$${adminStats.totalBalance.toFixed(2)}</div>
-                <div class="stat-label">Total Balance</div>
-            </div>
+            <div class="admin-stat-card"><i class="fas fa-users"></i><div class="stat-value">${adminStats.totalUsers}</div><div class="stat-label">Total Users</div></div>
+            <div class="admin-stat-card"><i class="fas fa-clock"></i><div class="stat-value">${adminStats.pendingWithdrawals}</div><div class="stat-label">Pending</div></div>
+            <div class="admin-stat-card"><i class="fas fa-dollar-sign"></i><div class="stat-value">$${adminStats.totalBalance.toFixed(2)}</div><div class="stat-label">Total Balance</div></div>
         </div>
         <div class="admin-tabs">
             <button class="admin-tab active" onclick="showAdminSection('pending')">Pending Withdrawals</button>
@@ -1245,19 +904,14 @@ function renderAdminDashboard() {
         </div>
         <div id="adminSectionContent"></div>
     `;
-    
     showAdminSection("pending");
 }
 
 function showAdminSection(section) {
     const container = document.getElementById("adminSectionContent");
     if (!container) return;
-    
-    if (section === "pending") {
-        renderPendingWithdrawals(container);
-    } else if (section === "users") {
-        renderUsersList(container);
-    }
+    if (section === "pending") renderPendingWithdrawals(container);
+    else if (section === "users") renderUsersList(container);
 }
 
 function renderPendingWithdrawals(container) {
@@ -1265,16 +919,12 @@ function renderPendingWithdrawals(container) {
         container.innerHTML = '<div class="empty-state">No pending withdrawals</div>';
         return;
     }
-    
     let html = "";
     pendingWithdrawals.forEach(w => {
         const date = new Date(w.date);
         html += `
             <div class="admin-card">
-                <div class="admin-card-header">
-                    <span>👤 ${w.userName || w.userId}</span>
-                    <span class="withdraw-amount">$${w.amount.toFixed(2)}</span>
-                </div>
+                <div class="admin-card-header"><span>👤 ${w.userName || w.userId}</span><span class="withdraw-amount">$${w.amount.toFixed(2)}</span></div>
                 <div class="admin-card-details">
                     <div>ID: ${w.userId}</div>
                     <div>👥 Invites: ${w.inviteCount || 0}</div>
@@ -1298,76 +948,64 @@ function renderUsersList(container) {
         container.innerHTML = '<div class="empty-state">No users found</div>';
         return;
     }
-    
-    let html = '<div class="admin-users-list"><div class="search-bar"><input type="text" id="userSearchInput" placeholder="Search by ID or name..." onkeyup="filterUsers()"></div>';
-    
+    let html = '<div class="search-bar"><input type="text" id="userSearchInput" placeholder="Search by ID..." onkeyup="filterUsers()"></div>';
     allUsers.forEach(user => {
         html += `
             <div class="admin-card user-card" data-user-id="${user.userId}" data-user-name="${user.userName}">
-                <div class="admin-card-header">
-                    <span>👤 ${user.userName || "User"}</span>
-                    <span class="user-balance">💰 $${user.balance?.toFixed(2) || "0.00"}</span>
-                </div>
+                <div class="admin-card-header"><span>👤 ${user.userName || "User"}</span><span class="user-balance">💰 $${user.balance?.toFixed(2) || "0.00"}</span></div>
                 <div class="admin-card-details">
                     <div>ID: ${user.userId}</div>
                     <div>👥 Invites: ${user.inviteCount || 0} | 📺 Ads: ${user.adsWatched || 0}</div>
                 </div>
                 <div class="admin-card-actions">
-                    <button class="btn-add" onclick="adminAddBalance('${user.userId}')">➕ Add Balance</button>
-                    <button class="btn-remove" onclick="adminRemoveBalance('${user.userId}')">➖ Remove Balance</button>
+                    <button class="btn-add" onclick="adminAddBalance('${user.userId}')">➕ Add</button>
+                    <button class="btn-remove" onclick="adminRemoveBalance('${user.userId}')">➖ Remove</button>
                     <button class="btn-block" onclick="adminBlockUser('${user.userId}')">🔒 Block</button>
                 </div>
             </div>
         `;
     });
-    html += '</div>';
     container.innerHTML = html;
 }
 
 function filterUsers() {
     const term = document.getElementById("userSearchInput")?.value.toLowerCase();
     document.querySelectorAll(".user-card").forEach(card => {
-        const userId = card.getAttribute("data-user-id")?.toLowerCase();
-        const userName = card.getAttribute("data-user-name")?.toLowerCase();
-        const match = userId?.includes(term) || userName?.includes(term);
+        const match = card.getAttribute("data-user-id")?.toLowerCase().includes(term) ||
+                      card.getAttribute("data-user-name")?.toLowerCase().includes(term);
         card.style.display = match ? "block" : "none";
     });
 }
 
-function approveWithdrawal(withdrawalId, userId, amount) {
+function approveWithdrawal(id, userId, amount) {
     const userKey = `adnova_user_${userId}`;
-    const userData = localStorage.getItem(userKey);
-    if (userData) {
-        const user = JSON.parse(userData);
-        const withdrawalIndex = user.withdrawals?.findIndex(w => w.id == withdrawalId);
-        if (withdrawalIndex !== -1 && user.withdrawals[withdrawalIndex]) {
-            user.withdrawals[withdrawalIndex].status = "approved";
-            localStorage.setItem(userKey, JSON.stringify(user));
-        }
+    const user = JSON.parse(localStorage.getItem(userKey));
+    if (user && user.withdrawals) {
+        const wIndex = user.withdrawals.findIndex(w => w.id == id);
+        if (wIndex !== -1) user.withdrawals[wIndex].status = "approved";
+        localStorage.setItem(userKey, JSON.stringify(user));
+        if (userId === currentUserId) currentUser = user;
     }
-    
     showToast("Withdrawal approved!", "success");
     loadAdminData();
     renderPendingWithdrawals(document.getElementById("adminSectionContent"));
 }
 
-function rejectWithdrawal(withdrawalId, userId, amount) {
+function rejectWithdrawal(id, userId, amount) {
     const reason = prompt("Rejection reason:");
     if (!reason) return;
-    
     const userKey = `adnova_user_${userId}`;
-    const userData = localStorage.getItem(userKey);
-    if (userData) {
-        const user = JSON.parse(userData);
-        const withdrawalIndex = user.withdrawals?.findIndex(w => w.id == withdrawalId);
-        if (withdrawalIndex !== -1 && user.withdrawals[withdrawalIndex]) {
-            user.withdrawals[withdrawalIndex].status = "rejected";
-            user.withdrawals[withdrawalIndex].reason = reason;
+    const user = JSON.parse(localStorage.getItem(userKey));
+    if (user && user.withdrawals) {
+        const wIndex = user.withdrawals.findIndex(w => w.id == id);
+        if (wIndex !== -1) {
+            user.withdrawals[wIndex].status = "rejected";
+            user.withdrawals[wIndex].reason = reason;
             user.balance = (user.balance || 0) + amount;
-            localStorage.setItem(userKey, JSON.stringify(user));
         }
+        localStorage.setItem(userKey, JSON.stringify(user));
+        if (userId === currentUserId) currentUser = user;
     }
-    
     showToast("Withdrawal rejected!", "success");
     loadAdminData();
     renderPendingWithdrawals(document.getElementById("adminSectionContent"));
@@ -1376,20 +1014,14 @@ function rejectWithdrawal(withdrawalId, userId, amount) {
 function adminAddBalance(userId) {
     const amount = parseFloat(prompt("Amount to add (USD):"));
     if (isNaN(amount) || amount <= 0) return;
-    
     const userKey = `adnova_user_${userId}`;
-    const userData = localStorage.getItem(userKey);
-    if (userData) {
-        const user = JSON.parse(userData);
+    const user = JSON.parse(localStorage.getItem(userKey));
+    if (user) {
         user.balance = (user.balance || 0) + amount;
         user.totalEarned = (user.totalEarned || 0) + amount;
         localStorage.setItem(userKey, JSON.stringify(user));
-        
-        if (userId === currentUserId) {
-            currentUser = user;
-            updateUI();
-        }
-        
+        if (userId === currentUserId) currentUser = user;
+        updateUI();
         showToast(`$${amount.toFixed(2)} added!`, "success");
         loadAdminData();
         showAdminSection("users");
@@ -1399,19 +1031,13 @@ function adminAddBalance(userId) {
 function adminRemoveBalance(userId) {
     const amount = parseFloat(prompt("Amount to remove (USD):"));
     if (isNaN(amount) || amount <= 0) return;
-    
     const userKey = `adnova_user_${userId}`;
-    const userData = localStorage.getItem(userKey);
-    if (userData) {
-        const user = JSON.parse(userData);
+    const user = JSON.parse(localStorage.getItem(userKey));
+    if (user) {
         user.balance = Math.max(0, (user.balance || 0) - amount);
         localStorage.setItem(userKey, JSON.stringify(user));
-        
-        if (userId === currentUserId) {
-            currentUser = user;
-            updateUI();
-        }
-        
+        if (userId === currentUserId) currentUser = user;
+        updateUI();
         showToast(`$${amount.toFixed(2)} removed!`, "success");
         loadAdminData();
         showAdminSection("users");
@@ -1419,19 +1045,13 @@ function adminRemoveBalance(userId) {
 }
 
 function adminBlockUser(userId) {
-    if (!confirm("⚠️ Permanently block this user from withdrawals?")) return;
-    
+    if (!confirm("⚠️ Permanently block this user?")) return;
     const userKey = `adnova_user_${userId}`;
-    const userData = localStorage.getItem(userKey);
-    if (userData) {
-        const user = JSON.parse(userData);
+    const user = JSON.parse(localStorage.getItem(userKey));
+    if (user) {
         user.withdrawBlocked = true;
         localStorage.setItem(userKey, JSON.stringify(user));
-        
-        if (userId === currentUserId) {
-            currentUser = user;
-        }
-        
+        if (userId === currentUserId) currentUser = user;
         showToast("User blocked!", "success");
         loadAdminData();
         showAdminSection("users");
@@ -1439,23 +1059,17 @@ function adminBlockUser(userId) {
 }
 
 // ============================================================================
-// 15. INITIALIZATION & FIX (إصلاح شاشة التحميل)
+// 15. INITIALIZATION
 // ============================================================================
 
 function hideSplash() {
-    console.log("[AdNova] Hiding splash screen...");
-    
     const splash = document.getElementById("splash-screen");
     const main = document.getElementById("mainContent");
-    
     if (splash) {
         splash.classList.add("hidden");
         setTimeout(() => {
             splash.style.display = "none";
-            if (main) {
-                main.style.display = "block";
-                console.log("[AdNova] Main content visible");
-            }
+            if (main) main.style.display = "block";
         }, 500);
     } else if (main) {
         main.style.display = "block";
@@ -1463,24 +1077,11 @@ function hideSplash() {
 }
 
 function init() {
-    console.log("[AdNova] Initializing application...");
-    
-    // تطبيق اللغة أولاً
     applyLanguage();
-    
-    // تحميل بيانات المستخدم
     loadUserData();
-    
-    // تهيئة واجهة السحب
     renderWithdrawMethods();
-    
-    // التحقق من المشرف
     checkAdminAndShowCrown();
-    
-    // إخفاء شاشة التحميل بعد 1.5 ثانية كحد أقصى
     setTimeout(hideSplash, 1500);
-    
-    // إعادة تعيين الإعلانات اليومية كل دقيقة
     setInterval(() => {
         if (currentUser) {
             const today = new Date().toISOString().split("T")[0];
@@ -1492,11 +1093,8 @@ function init() {
             }
         }
     }, 60000);
-    
-    console.log("[AdNova] Application ready!");
 }
 
-// بدء التطبيق
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
 } else {
@@ -1531,6 +1129,4 @@ window.clearAllNotifications = clearAllNotifications;
 window.showNotificationsModal = showNotificationsModal;
 window.closeNotificationsModal = closeNotificationsModal;
 
-console.log("[AdNova] AdNova Network - Fully Loaded!");
-console.log(`💰 Ad Reward: $${APP_CONFIG.adReward} | Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
-console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw} | Required Referrals: ${APP_CONFIG.requiredReferrals}`);
+console.log("[AdNova] Fully loaded!");
