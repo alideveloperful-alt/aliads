@@ -13,11 +13,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Ad Networks SDK -->
-    <script src='//libtl.com/sdk.js' data-zone='10895553' data-sdk='show_10895553'></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='10950362' data-sdk='show_10950362'></script>
     <script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
-    <script src="https://adexium.pro/widget.js"></script>
-    <script src="https://cdn.richads.com/sdk/telegram/v1/richads.min.js"></script>
+    <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
+    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
@@ -28,15 +27,31 @@
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-logo-wrap">
-                <svg class="splash-logo-img" viewBox="0 0 100 100" fill="none">
-                    <circle cx="50" cy="50" r="48" fill="url(#goldGrad)" stroke="#d4af37" stroke-width="2"/>
-                    <path d="M30 50 L45 35 L55 45 L70 30 L65 65 L50 55 L35 70 Z" fill="#d4af37" opacity="0.8"/>
-                    <text x="50" y="68" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">A</text>
+                <svg class="splash-logo-img" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="95" fill="url(#splashBgGrad)" stroke="url(#splashBorderGrad)" stroke-width="3"/>
+                    <path d="M100 40 L115 75 L155 80 L125 105 L135 145 L100 125 L65 145 L75 105 L45 80 L85 75 L100 40Z" fill="url(#splashIconGrad)" stroke="#fff" stroke-width="2"/>
+                    <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(212,175,55,0.3)" stroke-width="1" stroke-dasharray="4 8">
+                        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="8s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(212,175,55,0.2)" stroke-width="1" stroke-dasharray="3 10">
+                        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="6s" repeatCount="indefinite"/>
+                    </circle>
                     <defs>
-                        <radialGradient id="goldGrad" cx="50%" cy="40%" r="60%">
-                            <stop offset="0%" stop-color="#f5d97e"/>
+                        <linearGradient id="splashBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#2d2d3d"/>
+                            <stop offset="50%" stop-color="#1a1a2e"/>
+                            <stop offset="100%" stop-color="#0d0d1a"/>
+                        </linearGradient>
+                        <linearGradient id="splashBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#d4af37"/>
+                            <stop offset="50%" stop-color="#f5d97e"/>
                             <stop offset="100%" stop-color="#c8a830"/>
-                        </radialGradient>
+                        </linearGradient>
+                        <linearGradient id="splashIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f5d97e"/>
+                            <stop offset="50%" stop-color="#d4af37"/>
+                            <stop offset="100%" stop-color="#c8a830"/>
+                        </linearGradient>
                     </defs>
                 </svg>
             </div>
@@ -48,6 +63,7 @@
             <div class="splash-loader">
                 <div class="splash-loader-bar"></div>
             </div>
+            <div class="splash-version">v2.0</div>
         </div>
     </div>
 
@@ -61,22 +77,24 @@
                     <circle cx="50" cy="50" r="48" fill="url(#goldGrad)" stroke="#d4af37" stroke-width="2"/>
                     <path d="M30 50 L45 35 L55 45 L70 30 L65 65 L50 55 L35 70 Z" fill="#d4af37" opacity="0.8"/>
                     <text x="50" y="68" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">A</text>
+                    <defs>
+                        <radialGradient id="goldGrad" cx="50%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#f5d97e"/>
+                            <stop offset="100%" stop-color="#c8a830"/>
+                        </radialGradient>
+                    </defs>
                 </svg>
             </div>
             <div class="header-right">
-                <a class="support-btn" href="https://t.me/AdNovaSupport" target="_blank">
-                    <i class="fas fa-headset"></i>
-                    <span class="support-btn-label">Support</span>
-                </a>
-                <button class="lang-btn" id="langBtn">
+                <button class="lang-btn" id="langBtn" onclick="openLanguageModal()">
                     <i class="fas fa-globe"></i>
                     <span class="lang-btn-label" id="langBtnLabel">English</span>
                 </button>
-                <button class="icon-btn" id="notificationBtn">
+                <button class="icon-btn" id="notificationBtn" onclick="showNotificationsModal()">
                     <i class="fas fa-bell"></i>
                     <span class="badge" id="notificationBadge" style="display: none;">0</span>
                 </button>
-                <button class="icon-btn" id="adminCrownBtn" style="display: none;">
+                <button class="icon-btn" id="adminCrownBtn" onclick="showAdminPanel()" style="display: none;">
                     <i class="fas fa-crown" style="color: gold;"></i>
                 </button>
             </div>
@@ -121,7 +139,7 @@
             </div>
         </div>
 
-        <!-- ====== PAGE: ADS (الصفحة الرئيسية) ====== -->
+        <!-- ====== PAGE: ADS ====== -->
         <div id="page-ads" class="page active">
             <div class="card">
                 <div class="card-header">
@@ -197,41 +215,7 @@
                     <span data-i18n="taskHeaderTitle">Complete Tasks &amp; Earn Rewards</span>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <div class="task-card-icon"><i class="fab fa-telegram"></i></div>
-                        <div style="flex:1;">
-                            <div class="card-title" data-i18n="joinChannels">Join Channels</div>
-                            <div class="card-desc" data-i18n="joinChannelsDesc">Earn <strong>$0.05</strong> per channel</div>
-                        </div>
-                        <button class="btn-task-gold" id="joinChannelBtn" data-i18n="joinBtn">Join</button>
-                    </div>
-                    <div class="progress-row">
-                        <span class="progress-label" data-i18n="progress">Progress</span>
-                        <span class="progress-count" id="channelProgressCount">0 / 3</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="channelProgressBar" style="width:0%"></div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <div class="task-card-icon"><i class="fas fa-robot"></i></div>
-                        <div style="flex:1;">
-                            <div class="card-title" data-i18n="startBots">Start Bots</div>
-                            <div class="card-desc" data-i18n="startBotsDesc">Earn <strong>$0.05</strong> per bot</div>
-                        </div>
-                        <button class="btn-task-gold" id="startBotBtn" data-i18n="startBtn">Start</button>
-                    </div>
-                    <div class="progress-row">
-                        <span class="progress-label" data-i18n="progress">Progress</span>
-                        <span class="progress-count" id="botProgressCount">0 / 2</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="botProgressBar" style="width:0%"></div>
-                    </div>
-                </div>
+                <div id="tasksContainer"></div>
             </div>
         </div>
 
@@ -244,7 +228,7 @@
                         <div class="invite-hero-text">
                             <div class="invite-hero-title" data-i18n="inviteAndEarn">Invite &amp; Earn</div>
                             <div class="invite-hero-earn">Earn <strong>$0.50</strong> for each invite</div>
-                            <div class="invite-hero-subtitle" data-i18n="inviteHeroSub">Copy and share your invite link with friends to earn more.</div>
+                            <div class="invite-hero-subtitle" data-i18n="inviteHeroSub">Copy and share your invite link to earn more</div>
                         </div>
                     </div>
                     <div class="invite-hero-divider"></div>
@@ -255,7 +239,7 @@
                             <div class="invite-link-text" id="inviteLink">Loading...</div>
                             <button class="btn-dark" id="copyInviteBtn"><i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span></button>
                         </div>
-                        <button class="btn-ghost" id="shareInviteBtn"><i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share with Friends</span></button>
+                        <button class="btn-ghost" id="shareInviteBtn"><i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share</span></button>
                     </div>
                 </div>
 
@@ -327,9 +311,16 @@
         </nav>
     </div>
 
-    <!-- ====== MODALS ====== -->
-    
-    <!-- Notifications Modal -->
+    <!-- ====== LANGUAGE MODAL ====== -->
+    <div id="langModal" class="lang-modal-overlay" onclick="closeLanguageModal(event)">
+        <div class="lang-modal">
+            <div class="lang-modal-handle"></div>
+            <div class="lang-modal-title" data-i18n="chooseLanguage">Choose your language</div>
+            <div class="lang-options-grid" id="langOptionsGrid"></div>
+        </div>
+    </div>
+
+    <!-- ====== NOTIFICATIONS MODAL ====== -->
     <div id="notificationsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -346,7 +337,7 @@
         </div>
     </div>
 
-    <!-- Admin Auth Modal -->
+    <!-- ====== ADMIN AUTH MODAL ====== -->
     <div id="adminAuthModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -362,7 +353,7 @@
         </div>
     </div>
 
-    <!-- Admin Panel -->
+    <!-- ====== ADMIN PANEL ====== -->
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-panel-header">
             <h2><i class="fas fa-crown"></i> Admin Panel</h2>
@@ -371,17 +362,8 @@
         <div id="adminContent"></div>
     </div>
 
-    <!-- Toast Container -->
+    <!-- ====== TOAST CONTAINER ====== -->
     <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Language Modal -->
-    <div id="langModal" class="lang-modal-overlay">
-        <div class="lang-modal">
-            <div class="lang-modal-handle"></div>
-            <div class="lang-modal-title">Choose your language</div>
-            <div class="lang-options-grid" id="langOptionsGrid"></div>
-        </div>
-    </div>
 
     <!-- Main Script -->
     <script src="app.js"></script>
