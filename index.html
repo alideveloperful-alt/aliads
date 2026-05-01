@@ -32,7 +32,10 @@
 </head>
 <body>
     
-    <!-- ====== SPLASH SCREEN ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 1. 🚀 SPLASH SCREEN - شاشة البداية الأسطورية -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-logo-wrap">
@@ -72,14 +75,20 @@
             <div class="splash-loader">
                 <div class="splash-loader-bar"></div>
             </div>
-            <div class="splash-version">v3.0</div>
+            <div class="splash-version">v4.0</div>
         </div>
     </div>
 
-    <!-- ====== MAIN APP CONTENT ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 2. 📱 MAIN APP CONTENT - المحتوى الرئيسي -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="mainContent" style="display: none;">
         
-        <!-- ====== HEADER ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 3. 🎨 HEADER - رأس الصفحة مع الإشعارات واللغة -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <header>
             <div class="app-title">
                 <svg class="app-logo-img" viewBox="0 0 100 100" fill="none">
@@ -109,7 +118,10 @@
             </div>
         </header>
 
-        <!-- ====== BALANCE CARD ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 4. 💰 BALANCE CARD - بطاقة الرصيد الرئيسية -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <div class="balance-card">
             <div class="balance-card-shine"></div>
             <div class="balance-card-top">
@@ -133,20 +145,20 @@
             <div class="balance-earn-row">
                 <span class="balance-earn-item">
                     <i class="fas fa-play-circle"></i>
-                    <span id="earnItemAds" data-i18n="watchAds">Watch Ads</span>
+                    <span data-i18n="watchAds">Watch Ads</span>
                 </span>
                 <span class="balance-earn-dot">·</span>
                 <span class="balance-earn-item">
                     <i class="fas fa-check-circle"></i>
-                    <span id="earnItemTasks" data-i18n="completeTasks">Complete Tasks</span>
+                    <span data-i18n="completeTasks">Complete Tasks</span>
                 </span>
                 <span class="balance-earn-dot">·</span>
                 <span class="balance-earn-item">
                     <i class="fas fa-user-plus"></i>
-                    <span id="earnItemInvite" data-i18n="inviteFriends">Invite Friends</span>
+                    <span data-i18n="inviteFriends">Invite Friends</span>
                 </span>
             </div>
-            <div class="ton-connect-row" style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(212,175,55,0.2);">
+            <div class="ton-connect-row">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <i class="fab fa-telegram" style="color: #d4af37; font-size: 12px;"></i>
                     <span style="font-size: 10px; color: rgba(212,175,55,0.7);">TON Wallet</span>
@@ -159,7 +171,10 @@
             <div id="tonConnectButton" style="display: none;"></div>
         </div>
 
-        <!-- ====== PAGE: ADS ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 5. 📺 PAGE: ADS - صفحة مشاهدة الإعلانات -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <div id="page-ads" class="page active">
             <div class="card">
                 <div class="card-header">
@@ -184,7 +199,7 @@
                         </div>
                     </div>
                     
-                    <button id="watchAdBtn" class="watch-ad-btn">
+                    <button id="watchAdBtn" class="watch-ad-btn" onclick="watchAd()">
                         <div class="watch-ad-inner">
                             <div class="watch-ad-play-wrap">
                                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -224,7 +239,10 @@
             </div>
         </div>
 
-        <!-- ====== PAGE: TASKS ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 6. 📋 PAGE: TASKS - صفحة المهام المتجددة -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <div id="page-tasks" class="page">
             <div class="task-wrapper-card">
                 <div class="task-wrapper-title">
@@ -234,12 +252,14 @@
                     </svg>
                     <span data-i18n="taskHeaderTitle">Complete Tasks &amp; Earn Rewards</span>
                 </div>
-
                 <div id="tasksContainer"></div>
             </div>
         </div>
 
-        <!-- ====== PAGE: INVITE ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 7. 👥 PAGE: INVITE - صفحة الإحالات -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <div id="page-invite" class="page">
             <div class="invite-wrapper-card">
                 <div class="invite-hero">
@@ -257,12 +277,11 @@
                         <div class="invite-link-wrap">
                             <div class="invite-link-icon"><i class="fas fa-link"></i></div>
                             <div class="invite-link-text" id="inviteLink">Loading...</div>
-                            <button class="btn-dark" id="copyInviteBtn"><i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span></button>
+                            <button class="btn-dark" id="copyInviteBtn" onclick="copyInviteLink()"><i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span></button>
                         </div>
-                        <button class="btn-ghost" id="shareInviteBtn"><i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share</span></button>
+                        <button class="btn-ghost" id="shareInviteBtn" onclick="shareInviteLink()"><i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share</span></button>
                     </div>
                 </div>
-
                 <div class="invite-stats-row">
                     <div class="invite-stat-box">
                         <div class="invite-stat-label" data-i18n="friendsInvited">Friends Invited</div>
@@ -276,7 +295,10 @@
             </div>
         </div>
 
-        <!-- ====== PAGE: WITHDRAW ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 8. 💸 PAGE: WITHDRAW - صفحة السحب (مع SBP) -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <div id="page-withdraw" class="page">
             <div class="wd-outer-card">
                 <div class="wd-wrapper-card">
@@ -286,23 +308,18 @@
                         </svg>
                         <span data-i18n="paymentMethod">Payment Method</span>
                     </div>
-                    
                     <div class="method-grid" id="withdrawMethodsContainer"></div>
-                    
                     <div class="wd-divider"></div>
-                    
                     <div>
                         <div class="wd-field-label" id="wdDestLabel">Destination</div>
                         <input class="wd-input" id="wdDestInput" type="text" placeholder="Enter your wallet address / email / phone number">
                     </div>
-                    
                     <div>
                         <div class="wd-field-label" data-i18n="amount">Amount (USD)</div>
                         <input class="wd-input" id="wdAmountInput" type="number" min="10" step="0.01" placeholder="Enter amount (min $10)">
                         <div class="wd-field-hint"><span data-i18n="availableBalance">Available balance:</span> <strong id="wdAvailBalance">$0.00</strong></div>
                     </div>
-                    
-                    <button class="btn-wd-submit" id="submitWithdrawBtn">
+                    <button class="btn-wd-submit" id="submitWithdrawBtn" onclick="submitWithdraw()">
                         <i class="fas fa-paper-plane"></i>
                         <span data-i18n="submitWithdrawal">Submit Withdrawal</span>
                     </button>
@@ -310,7 +327,10 @@
             </div>
         </div>
 
-        <!-- ====== BOTTOM NAVIGATION ====== -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 9. 🧭 BOTTOM NAVIGATION - القائمة السفلية -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
         <nav class="bottom-nav">
             <button class="nav-item active" data-page="ads" onclick="switchTab('ads')">
                 <div class="nav-icon-wrap"><i class="fas fa-ad"></i></div>
@@ -331,7 +351,10 @@
         </nav>
     </div>
 
-    <!-- ====== LANGUAGE MODAL ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 10. 🌍 LANGUAGE MODAL - نافذة اختيار اللغة -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="langModal" class="lang-modal-overlay" onclick="closeLanguageModal(event)">
         <div class="lang-modal">
             <div class="lang-modal-handle"></div>
@@ -340,7 +363,10 @@
         </div>
     </div>
 
-    <!-- ====== NOTIFICATIONS MODAL ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 11. 🔔 NOTIFICATIONS MODAL - نافذة الإشعارات -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="notificationsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -357,7 +383,10 @@
         </div>
     </div>
 
-    <!-- ====== CONFIRM MODAL (نافذة تأكيد احترافية) ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 12. ✅ CONFIRM MODAL - نافذة التأكيد -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="confirmModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <div class="modal-icon" id="confirmModalIcon">❓</div>
@@ -371,7 +400,10 @@
         </div>
     </div>
 
-    <!-- ====== ADMIN AUTH MODAL ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 13. 👑 ADMIN AUTH MODAL - نافذة دخول المشرف -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="adminAuthModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -387,7 +419,10 @@
         </div>
     </div>
 
-    <!-- ====== ADMIN PANEL ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 14. 🎛️ ADMIN PANEL - لوحة المشرف المتطورة -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-panel-header">
             <h2><i class="fas fa-crown"></i> Admin Panel</h2>
@@ -396,7 +431,10 @@
         <div id="adminContent"></div>
     </div>
 
-    <!-- ====== TOAST CONTAINER ====== -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 15. 🍞 TOAST CONTAINER - حاوية الإشعارات المنبثقة -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Main Script -->
