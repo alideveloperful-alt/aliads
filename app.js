@@ -1,6 +1,7 @@
 // ============================================================================
-// ADNOVA NETWORK - COMPLETE APPLICATION v1.0
+// ADNOVA NETWORK - COMPLETE APPLICATION v2.0
 // منصة إعلانات حقيقية - سحوبات يدوية شفافة
+// جميع الميزات: إحالة (startapp مرتين)، 5 منصات إعلانية، لوحة مشرف، ترجمة، إشعارات
 // ============================================================================
 
 // ============================================================================
@@ -326,9 +327,7 @@ const translations = {
         needAds: "You need to watch at least 80 ads",
         withdrawSuccess: "Withdrawal request submitted!",
         withdrawError: "Error submitting request",
-        insufficientBalance: "Insufficient balance",
-        copy: "Copy",
-        share: "Share"
+        insufficientBalance: "Insufficient balance"
     },
     ar: {
         appName: "أد نوفا نتورك",
@@ -387,13 +386,10 @@ const translations = {
         needAds: "تحتاج إلى مشاهدة 80 إعلاناً على الأقل",
         withdrawSuccess: "تم إرسال طلب السحب!",
         withdrawError: "خطأ في إرسال الطلب",
-        insufficientBalance: "رصيد غير كافٍ",
-        copy: "نسخ",
-        share: "مشاركة"
+        insufficientBalance: "رصيد غير كافٍ"
     }
 };
 
-// دالة الترجمة
 function t(key, params = {}) {
     let text = translations[currentLanguage]?.[key] || translations.en[key] || key;
     Object.keys(params).forEach(p => {
@@ -402,7 +398,6 @@ function t(key, params = {}) {
     return text;
 }
 
-// تطبيق اللغة على الواجهة
 function applyLanguage() {
     const html = document.documentElement;
     if (currentLanguage === "ar" || currentLanguage === "fa") {
@@ -421,10 +416,16 @@ function applyLanguage() {
     const langBtn = document.getElementById("langBtnLabel");
     if (langBtn) langBtn.textContent = currentLanguage === "ar" ? "العربية" : "English";
     
+    // تحديث عنوان الصفحة
+    document.title = t("appName") + " - Earn Real Money";
+    
+    // تحديث اسم التطبيق في شاشة التحميل
+    const splashSub = document.querySelector(".splash-sub span:not(.splash-deco)");
+    if (splashSub) splashSub.textContent = t("appName");
+    
     refreshCurrentPage();
 }
 
-// تبديل اللغة
 function toggleLanguage() {
     currentLanguage = currentLanguage === "en" ? "ar" : "en";
     localStorage.setItem("adnova_lang", currentLanguage);
@@ -861,7 +862,7 @@ async function submitWithdraw() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     }
     
-    // محاكاة طلب سحب (يمكن استبدالها باتصال حقيقي بالخادم لاحقاً)
+    // محاكاة طلب سحب
     setTimeout(() => {
         const withdrawal = {
             id: Date.now(),
@@ -1181,13 +1182,6 @@ function closeAdminPanel() {
 }
 
 function loadAdminData() {
-    // محاكاة تحميل البيانات (يمكن استبدالها باتصال حقيقي بالخادم)
-    adminStats = {
-        totalUsers: parseInt(localStorage.getItem("adnova_total_users") || "0"),
-        pendingWithdrawals: 0,
-        totalBalance: 0
-    };
-    
     // جمع المستخدمين من localStorage
     allUsers = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -1341,7 +1335,6 @@ function filterUsers() {
 }
 
 function approveWithdrawal(withdrawalId, userId, amount) {
-    // تحديث حالة السحب في بيانات المستخدم
     const userKey = `adnova_user_${userId}`;
     const userData = localStorage.getItem(userKey);
     if (userData) {
@@ -1362,7 +1355,6 @@ function rejectWithdrawal(withdrawalId, userId, amount) {
     const reason = prompt("Rejection reason:");
     if (!reason) return;
     
-    // تحديث حالة السحب وإعادة الرصيد
     const userKey = `adnova_user_${userId}`;
     const userData = localStorage.getItem(userKey);
     if (userData) {
@@ -1447,10 +1439,12 @@ function adminBlockUser(userId) {
 }
 
 // ============================================================================
-// 15. INITIALIZATION
+// 15. INITIALIZATION & FIX (إصلاح شاشة التحميل)
 // ============================================================================
 
 function hideSplash() {
+    console.log("[AdNova] Hiding splash screen...");
+    
     const splash = document.getElementById("splash-screen");
     const main = document.getElementById("mainContent");
     
@@ -1458,7 +1452,10 @@ function hideSplash() {
         splash.classList.add("hidden");
         setTimeout(() => {
             splash.style.display = "none";
-            if (main) main.style.display = "block";
+            if (main) {
+                main.style.display = "block";
+                console.log("[AdNova] Main content visible");
+            }
         }, 500);
     } else if (main) {
         main.style.display = "block";
@@ -1468,11 +1465,20 @@ function hideSplash() {
 function init() {
     console.log("[AdNova] Initializing application...");
     
-    loadUserData();
-    renderWithdrawMethods();
+    // تطبيق اللغة أولاً
     applyLanguage();
+    
+    // تحميل بيانات المستخدم
+    loadUserData();
+    
+    // تهيئة واجهة السحب
+    renderWithdrawMethods();
+    
+    // التحقق من المشرف
     checkAdminAndShowCrown();
-    hideSplash();
+    
+    // إخفاء شاشة التحميل بعد 1.5 ثانية كحد أقصى
+    setTimeout(hideSplash, 1500);
     
     // إعادة تعيين الإعلانات اليومية كل دقيقة
     setInterval(() => {
@@ -1491,7 +1497,11 @@ function init() {
 }
 
 // بدء التطبيق
-document.addEventListener("DOMContentLoaded", init);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+} else {
+    init();
+}
 
 // ============================================================================
 // 16. GLOBAL EXPORTS
