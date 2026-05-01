@@ -1,6 +1,6 @@
 // ============================================================================
-// ADNOVA NETWORK - FULL APPLICATION v4.0
-// نظام إحالة متكامل | 5 منصات إعلانية | لوحة مشرف كاملة | ترجمة 10 لغات | RTL
+// ADNOVA NETWORK - COMPLETE FRONTEND v7.0
+// جميع الميزات - بدون مفاتيح حساسة (تُجلب من الخادم)
 // ============================================================================
 
 // ============================================================================
@@ -24,90 +24,41 @@ let currentUserId = null;
 let currentPage = "ads";
 let adminAuthenticated = false;
 let unreadNotifications = 0;
-let adCooldown = false;
+let adPlaying = false;
 let currentLanguage = localStorage.getItem("adnova_lang") || "en";
 let selectedWithdrawMethod = "paypal";
+let adPlatformsInitialized = false;
 
-// إعدادات التطبيق
-const APP_CONFIG = {
+// إعدادات التطبيق (ستُجلب من الخادم)
+let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
     adReward: 0.01,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
     requiredReferrals: 10,
-    botUsername: "AdNovaNetworkbot",
-    supportUsername: "AdNovaSupport",
-    adminId: "1653918641",
-    adminPassword: "Admin97€"
+    botUsername: "AdNovaNetworkbot"
 };
 
-// مهام القنوات والبوتات
-let TASKS_CONFIG = {
-    channels: [
-        { id: "ch1", username: "AdNovaNetwork", name: "AdNova Official", reward: 0.05, completed: false },
-        { id: "ch2", username: "AdNovaNews", name: "AdNova News", reward: 0.05, completed: false },
-        { id: "ch3", username: "AdNovaSupport", name: "AdNova Support", reward: 0.05, completed: false }
-    ],
-    bots: [
-        { id: "bt1", username: "AdNovaBot", name: "AdNova Assistant", reward: 0.05, completed: false },
-        { id: "bt2", username: "AdNovaRewardsBot", name: "AdNova Rewards", reward: 0.05, completed: false }
-    ]
-};
+// ============================================================================
+// 3. LANGUAGES LIST (لنافذة اختيار اللغة)
+// ============================================================================
 
-// طرق الدفع
-const WITHDRAWAL_METHODS = [
-    { id: "paypal", name: "PayPal", icon: "fab fa-paypal", placeholder: "example@email.com" },
-    { id: "skrill", name: "Skrill", icon: "fab fa-skrill", placeholder: "example@email.com" },
-    { id: "payoneer", name: "Payoneer", icon: "fas fa-building", placeholder: "example@email.com" },
-    { id: "sbp", name: "SBP", icon: "fas fa-university", placeholder: "+7 XXX XXX XX XX" },
-    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", placeholder: "0x..." },
-    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", placeholder: "T..." },
-    { id: "ton", name: "TON Network", icon: "fab fa-telegram", placeholder: "EQ..." },
-    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", placeholder: "+XXX XXX XXX" },
-    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", placeholder: "Player ID" },
-    { id: "freefire", name: "Free Fire", icon: "fas fa-fire", placeholder: "Player ID" }
+const LANGUAGES = [
+    { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", dir: "ltr" },
+    { code: "ar", name: "Arabic", nativeName: "العربية", flag: "🇸🇦", dir: "rtl" },
+    { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", dir: "ltr" },
+    { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", dir: "ltr" },
+    { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺", dir: "ltr" },
+    { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷", dir: "ltr" },
+    { code: "hi", name: "Hindi", nativeName: "हिन्दी", flag: "🇮🇳", dir: "ltr" },
+    { code: "id", name: "Indonesian", nativeName: "Bahasa Indonesia", flag: "🇮🇩", dir: "ltr" },
+    { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", dir: "ltr" },
+    { code: "fa", name: "Persian", nativeName: "فارسی", flag: "🇮🇷", dir: "rtl" }
 ];
 
 // ============================================================================
-// 3. AD PLATFORMS (3 منصات فقط لتجنب الأخطاء)
-// ============================================================================
-
-const AD_PLATFORMS = [
-    {
-        name: "Monetag",
-        show: () => {
-            if (typeof show_10895553 === "function") {
-                return show_10895553();
-            }
-            return Promise.reject("Monetag not ready");
-        }
-    },
-    {
-        name: "AdsGram",
-        show: () => {
-            if (!window.AdsgramController && window.Adsgram) {
-                window.AdsgramController = window.Adsgram.init({ blockId: "int-28433" });
-            }
-            if (window.AdsgramController && typeof window.AdsgramController.show === "function") {
-                return window.AdsgramController.show();
-            }
-            return Promise.reject("AdsGram not ready");
-        }
-    },
-    {
-        name: "OnClickA",
-        show: () => {
-            if (window.showOnClickaAd && typeof window.showOnClickaAd === "function") {
-                return window.showOnClickaAd();
-            }
-            return Promise.reject("OnClickA not ready");
-        }
-    }
-];
-
-// ============================================================================
-// 4. TRANSLATION SYSTEM
+// 4. TRANSLATIONS (10 لغات كاملة)
 // ============================================================================
 
 const translations = {
@@ -166,11 +117,15 @@ const translations = {
         needInvites: "Need 10 invites to withdraw",
         withdrawSuccess: "Withdrawal request submitted!",
         insufficientBalance: "Insufficient balance",
-        claim: "Claim",
-        processing: "Processing...",
-        cancel: "Cancel",
+        chooseLanguage: "Choose your language",
+        welcome: "Welcome",
+        close: "Close",
         confirm: "Confirm",
-        back: "Back"
+        cancel: "Cancel",
+        processing: "Processing...",
+        success: "Success!",
+        error: "Error!",
+        warning: "Warning!"
     },
     ar: {
         appName: "أد نوفا نتورك",
@@ -227,14 +182,539 @@ const translations = {
         needInvites: "تحتاج 10 دعوات للسحب",
         withdrawSuccess: "تم إرسال طلب السحب!",
         insufficientBalance: "رصيد غير كافٍ",
-        claim: "مطالبة",
-        processing: "جاري المعالجة...",
-        cancel: "إلغاء",
+        chooseLanguage: "اختر لغتك المفضلة",
+        welcome: "مرحباً",
+        close: "إغلاق",
         confirm: "تأكيد",
-        back: "رجوع"
+        cancel: "إلغاء",
+        processing: "جاري المعالجة...",
+        success: "تم بنجاح!",
+        error: "خطأ!",
+        warning: "تحذير!"
+    },
+    es: {
+        appName: "AdNova Network",
+        totalBalance: "Saldo Total",
+        availableToWithdraw: "Disponible para retirar",
+        watchAds: "Ver Anuncios",
+        completeTasks: "Completar Tareas",
+        inviteFriends: "Invitar Amigos",
+        watchAndEarn: "Mira Anuncios y Gana",
+        watchAdBtn: "Ver Anuncio",
+        watchAdBtnSub: "Completa el video para ganar al instante",
+        readyToEarn: "Listo para ganar",
+        totalWatched: "Total Visto",
+        adsUnit: "anuncios",
+        totalEarned: "Total Ganado",
+        taskHeaderTitle: "Completa tareas y gana recompensas",
+        joinChannels: "Unirse a Canales",
+        joinChannelsDesc: "Gana $0.05 por canal",
+        startBots: "Iniciar Bots",
+        startBotsDesc: "Gana $0.05 por bot",
+        progress: "Progreso",
+        joinBtn: "Unirse",
+        startBtn: "Iniciar",
+        inviteAndEarn: "Invita y Gana",
+        inviteHeroSub: "Copia y comparte tu enlace de invitación",
+        yourInviteLink: "Tu Enlace de Invitación",
+        copy: "Copiar",
+        shareWithFriends: "Compartir con Amigos",
+        friendsInvited: "Amigos Invitados",
+        earnedFromInvites: "Ganado por Invitaciones",
+        paymentMethod: "Método de Pago",
+        amount: "Cantidad",
+        availableBalance: "Saldo disponible:",
+        submitWithdrawal: "Enviar Solicitud",
+        navAds: "Anuncios",
+        navTasks: "Tareas",
+        navInvite: "Invitar",
+        navWithdraw: "Retirar",
+        notificationsTitle: "Notificaciones",
+        clearRead: "Borrar Leídas",
+        clearAll: "Borrar Todo",
+        adminAuthTitle: "Autenticación Admin",
+        adminAuthDesc: "Ingresa la contraseña de admin",
+        verify: "Verificar",
+        loadingAd: "Cargando anuncio...",
+        adRewardAdded: "+$${amount} añadido!",
+        dailyLimitReached: "Límite diario alcanzado",
+        adError: "Error al cargar anuncio",
+        linkCopied: "¡Enlace copiado!",
+        channelReward: "+$0.05 añadido!",
+        taskError: "Por favor únete primero",
+        minWithdraw: "El retiro mínimo es $10",
+        exceedsBalance: "El monto excede tu saldo",
+        needInvites: "Necesitas 10 invitaciones",
+        withdrawSuccess: "¡Solicitud enviada!",
+        insufficientBalance: "Saldo insuficiente",
+        chooseLanguage: "Elige tu idioma",
+        welcome: "Bienvenido",
+        close: "Cerrar",
+        confirm: "Confirmar",
+        cancel: "Cancelar",
+        processing: "Procesando...",
+        success: "¡Éxito!",
+        error: "¡Error!",
+        warning: "¡Advertencia!"
+    },
+    fr: {
+        appName: "AdNova Network",
+        totalBalance: "Solde Total",
+        availableToWithdraw: "Disponible au retrait",
+        watchAds: "Voir les Annonces",
+        completeTasks: "Compléter les Tâches",
+        inviteFriends: "Inviter des Amis",
+        watchAndEarn: "Regardez et Gagnez",
+        watchAdBtn: "Voir l'Annonce",
+        watchAdBtnSub: "Regardez la vidéo jusqu'au bout",
+        readyToEarn: "Prêt à gagner",
+        totalWatched: "Total Vu",
+        adsUnit: "annonces",
+        totalEarned: "Total Gagné",
+        taskHeaderTitle: "Complétez des tâches et gagnez",
+        joinChannels: "Rejoindre les Chaînes",
+        joinChannelsDesc: "Gagnez $0.05 par chaîne",
+        startBots: "Démarrer les Bots",
+        startBotsDesc: "Gagnez $0.05 par bot",
+        progress: "Progrès",
+        joinBtn: "Rejoindre",
+        startBtn: "Démarrer",
+        inviteAndEarn: "Invitez et Gagnez",
+        inviteHeroSub: "Copiez et partagez votre lien",
+        yourInviteLink: "Votre Lien d'Invitation",
+        copy: "Copier",
+        shareWithFriends: "Partager avec des Amis",
+        friendsInvited: "Amis Invités",
+        earnedFromInvites: "Gagné par Invitations",
+        paymentMethod: "Mode de Paiement",
+        amount: "Montant",
+        availableBalance: "Solde disponible:",
+        submitWithdrawal: "Soumettre la Demande",
+        navAds: "Annonces",
+        navTasks: "Tâches",
+        navInvite: "Inviter",
+        navWithdraw: "Retirer",
+        notificationsTitle: "Notifications",
+        clearRead: "Effacer Lus",
+        clearAll: "Tout Effacer",
+        adminAuthTitle: "Authentification Admin",
+        adminAuthDesc: "Entrez le mot de passe admin",
+        verify: "Vérifier",
+        loadingAd: "Chargement de l'annonce...",
+        adRewardAdded: "+$${amount} ajouté!",
+        dailyLimitReached: "Limite quotidienne atteinte",
+        adError: "Erreur de chargement",
+        linkCopied: "Lien copié!",
+        channelReward: "+$0.05 ajouté!",
+        taskError: "Veuillez d'abord rejoindre",
+        minWithdraw: "Le retrait minimum est $10",
+        exceedsBalance: "Montant dépasse votre solde",
+        needInvites: "Besoin de 10 invitations",
+        withdrawSuccess: "Demande soumise!",
+        insufficientBalance: "Solde insuffisant",
+        chooseLanguage: "Choisissez votre langue",
+        welcome: "Bienvenue",
+        close: "Fermer",
+        confirm: "Confirmer",
+        cancel: "Annuler",
+        processing: "Traitement...",
+        success: "Succès!",
+        error: "Erreur!",
+        warning: "Attention!"
+    },
+    ru: {
+        appName: "AdNova Network",
+        totalBalance: "Общий Баланс",
+        availableToWithdraw: "Доступно для вывода",
+        watchAds: "Смотреть Рекламу",
+        completeTasks: "Выполнить Задания",
+        inviteFriends: "Пригласить Друзей",
+        watchAndEarn: "Смотри и Зарабатывай",
+        watchAdBtn: "Смотреть Рекламу",
+        watchAdBtnSub: "Досмотрите видео до конца",
+        readyToEarn: "Готов к заработку",
+        totalWatched: "Всего Просмотрено",
+        adsUnit: "реклам",
+        totalEarned: "Всего Заработано",
+        taskHeaderTitle: "Выполняйте задания и получайте награды",
+        joinChannels: "Вступить в Каналы",
+        joinChannelsDesc: "Заработайте $0.05 за канал",
+        startBots: "Запустить Ботов",
+        startBotsDesc: "Заработайте $0.05 за бота",
+        progress: "Прогресс",
+        joinBtn: "Вступить",
+        startBtn: "Запустить",
+        inviteAndEarn: "Приглашай и Зарабатывай",
+        inviteHeroSub: "Скопируйте и поделитесь ссылкой",
+        yourInviteLink: "Ваша Реферальная Ссылка",
+        copy: "Копировать",
+        shareWithFriends: "Поделиться с Друзьями",
+        friendsInvited: "Приглашено Друзей",
+        earnedFromInvites: "Заработано с Приглашений",
+        paymentMethod: "Способ Оплаты",
+        amount: "Сумма",
+        availableBalance: "Доступный баланс:",
+        submitWithdrawal: "Отправить Заявку",
+        navAds: "Реклама",
+        navTasks: "Задания",
+        navInvite: "Пригласить",
+        navWithdraw: "Вывод",
+        notificationsTitle: "Уведомления",
+        clearRead: "Очистить Прочитанные",
+        clearAll: "Очистить Все",
+        adminAuthTitle: "Авторизация Админа",
+        adminAuthDesc: "Введите пароль администратора",
+        verify: "Подтвердить",
+        loadingAd: "Загрузка рекламы...",
+        adRewardAdded: "+$${amount} добавлено!",
+        dailyLimitReached: "Дневной лимит достигнут",
+        adError: "Ошибка загрузки рекламы",
+        linkCopied: "Ссылка скопирована!",
+        channelReward: "+$0.05 добавлено!",
+        taskError: "Пожалуйста, вступите сначала",
+        minWithdraw: "Минимальный вывод $10",
+        exceedsBalance: "Сумма превышает баланс",
+        needInvites: "Нужно 10 приглашений",
+        withdrawSuccess: "Заявка отправлена!",
+        insufficientBalance: "Недостаточно средств",
+        chooseLanguage: "Выберите язык",
+        welcome: "Добро пожаловать",
+        close: "Закрыть",
+        confirm: "Подтвердить",
+        cancel: "Отмена",
+        processing: "Обработка...",
+        success: "Успех!",
+        error: "Ошибка!",
+        warning: "Внимание!"
+    },
+    pt: {
+        appName: "AdNova Network",
+        totalBalance: "Saldo Total",
+        availableToWithdraw: "Disponível para saque",
+        watchAds: "Ver Anúncios",
+        completeTasks: "Completar Tarefas",
+        inviteFriends: "Convidar Amigos",
+        watchAndEarn: "Assista e Ganhe",
+        watchAdBtn: "Ver Anúncio",
+        watchAdBtnSub: "Assista o vídeo completo",
+        readyToEarn: "Pronto para ganhar",
+        totalWatched: "Total Assistido",
+        adsUnit: "anúncios",
+        totalEarned: "Total Ganho",
+        taskHeaderTitle: "Complete tarefas e ganhe recompensas",
+        joinChannels: "Entrar nos Canais",
+        joinChannelsDesc: "Ganhe $0.05 por canal",
+        startBots: "Iniciar Bots",
+        startBotsDesc: "Ganhe $0.05 por bot",
+        progress: "Progresso",
+        joinBtn: "Entrar",
+        startBtn: "Iniciar",
+        inviteAndEarn: "Convide e Ganhe",
+        inviteHeroSub: "Copie e compartilhe seu link",
+        yourInviteLink: "Seu Link de Convite",
+        copy: "Copiar",
+        shareWithFriends: "Compartilhar com Amigos",
+        friendsInvited: "Amigos Convidados",
+        earnedFromInvites: "Ganho de Convites",
+        paymentMethod: "Método de Pagamento",
+        amount: "Valor",
+        availableBalance: "Saldo disponível:",
+        submitWithdrawal: "Enviar Solicitação",
+        navAds: "Anúncios",
+        navTasks: "Tarefas",
+        navInvite: "Convidar",
+        navWithdraw: "Sacar",
+        notificationsTitle: "Notificações",
+        clearRead: "Limpar Lidos",
+        clearAll: "Limpar Tudo",
+        adminAuthTitle: "Autenticação Admin",
+        adminAuthDesc: "Digite a senha de admin",
+        verify: "Verificar",
+        loadingAd: "Carregando anúncio...",
+        adRewardAdded: "+$${amount} adicionado!",
+        dailyLimitReached: "Limite diário atingido",
+        adError: "Erro ao carregar anúncio",
+        linkCopied: "Link copiado!",
+        channelReward: "+$0.05 adicionado!",
+        taskError: "Por favor, entre primeiro",
+        minWithdraw: "O saque mínimo é $10",
+        exceedsBalance: "Valor excede seu saldo",
+        needInvites: "Precisa de 10 convites",
+        withdrawSuccess: "Solicitação enviada!",
+        insufficientBalance: "Saldo insuficiente",
+        chooseLanguage: "Escolha seu idioma",
+        welcome: "Bem-vindo",
+        close: "Fechar",
+        confirm: "Confirmar",
+        cancel: "Cancelar",
+        processing: "Processando...",
+        success: "Sucesso!",
+        error: "Erro!",
+        warning: "Atenção!"
+    },
+    hi: {
+        appName: "एडनोवा नेटवर्क",
+        totalBalance: "कुल शेष राशि",
+        availableToWithdraw: "निकासी के लिए उपलब्ध",
+        watchAds: "विज्ञापन देखें",
+        completeTasks: "कार्य पूरे करें",
+        inviteFriends: "दोस्तों को आमंत्रित करें",
+        watchAndEarn: "देखें और कमाएं",
+        watchAdBtn: "विज्ञापन देखें",
+        watchAdBtnSub: "वीडियो पूरा देखें",
+        readyToEarn: "कमाने के लिए तैयार",
+        totalWatched: "कुल देखे गए",
+        adsUnit: "विज्ञापन",
+        totalEarned: "कुल कमाई",
+        taskHeaderTitle: "कार्य पूरे करें और पुरस्कार पाएं",
+        joinChannels: "चैनल ज्वाइन करें",
+        joinChannelsDesc: "प्रति चैनल $0.05 कमाएं",
+        startBots: "बॉट शुरू करें",
+        startBotsDesc: "प्रति बॉट $0.05 कमाएं",
+        progress: "प्रगति",
+        joinBtn: "ज्वाइन करें",
+        startBtn: "शुरू करें",
+        inviteAndEarn: "आमंत्रित करें और कमाएं",
+        inviteHeroSub: "अपना लिंक कॉपी और शेयर करें",
+        yourInviteLink: "आपका आमंत्रण लिंक",
+        copy: "कॉपी करें",
+        shareWithFriends: "दोस्तों के साथ शेयर करें",
+        friendsInvited: "आमंत्रित मित्र",
+        earnedFromInvites: "आमंत्रण से कमाई",
+        paymentMethod: "भुगतान विधि",
+        amount: "राशि",
+        availableBalance: "उपलब्ध शेष:",
+        submitWithdrawal: "निकासी अनुरोध भेजें",
+        navAds: "विज्ञापन",
+        navTasks: "कार्य",
+        navInvite: "आमंत्रित",
+        navWithdraw: "निकासी",
+        notificationsTitle: "सूचनाएँ",
+        clearRead: "पढ़ी हुई साफ़ करें",
+        clearAll: "सभी साफ़ करें",
+        adminAuthTitle: "व्यवस्थापक प्रमाणीकरण",
+        adminAuthDesc: "व्यवस्थापक पासवर्ड दर्ज करें",
+        verify: "सत्यापित करें",
+        loadingAd: "विज्ञापन लोड हो रहा है...",
+        adRewardAdded: "+$${amount} जोड़ा गया!",
+        dailyLimitReached: "दैनिक सीमा समाप्त",
+        adError: "विज्ञापन लोड करने में त्रुटि",
+        linkCopied: "लिंक कॉपी हो गया!",
+        channelReward: "+$0.05 जोड़ा गया!",
+        taskError: "पहले ज्वाइन करें",
+        minWithdraw: "न्यूनतम निकासी $10 है",
+        exceedsBalance: "राशि आपके शेष से अधिक है",
+        needInvites: "10 आमंत्रण की आवश्यकता",
+        withdrawSuccess: "निकासी अनुरोध भेजा गया!",
+        insufficientBalance: "अपर्याप्त शेष राशि",
+        chooseLanguage: "अपनी भाषा चुनें",
+        welcome: "स्वागत है",
+        close: "बंद करें",
+        confirm: "पुष्टि करें",
+        cancel: "रद्द करें",
+        processing: "प्रोसेसिंग...",
+        success: "सफल!",
+        error: "त्रुटि!",
+        warning: "चेतावनी!"
+    },
+    id: {
+        appName: "AdNova Network",
+        totalBalance: "Total Saldo",
+        availableToWithdraw: "Tersedia untuk ditarik",
+        watchAds: "Tonton Iklan",
+        completeTasks: "Selesaikan Tugas",
+        inviteFriends: "Undang Teman",
+        watchAndEarn: "Tonton & Dapatkan",
+        watchAdBtn: "Tonton Iklan",
+        watchAdBtnSub: "Tonton video sampai selesai",
+        readyToEarn: "Siap menghasilkan",
+        totalWatched: "Total Ditonton",
+        adsUnit: "iklan",
+        totalEarned: "Total Pendapatan",
+        taskHeaderTitle: "Selesaikan tugas & dapatkan hadiah",
+        joinChannels: "Bergabung dengan Saluran",
+        joinChannelsDesc: "Dapatkan $0.05 per saluran",
+        startBots: "Mulai Bot",
+        startBotsDesc: "Dapatkan $0.05 per bot",
+        progress: "Kemajuan",
+        joinBtn: "Bergabung",
+        startBtn: "Mulai",
+        inviteAndEarn: "Undang & Dapatkan",
+        inviteHeroSub: "Salin dan bagikan tautan undangan Anda",
+        yourInviteLink: "Tautan Undangan Anda",
+        copy: "Salin",
+        shareWithFriends: "Bagikan ke Teman",
+        friendsInvited: "Teman Diundang",
+        earnedFromInvites: "Pendapatan dari Undangan",
+        paymentMethod: "Metode Pembayaran",
+        amount: "Jumlah",
+        availableBalance: "Saldo tersedia:",
+        submitWithdrawal: "Kirim Permintaan",
+        navAds: "Iklan",
+        navTasks: "Tugas",
+        navInvite: "Undang",
+        navWithdraw: "Tarik",
+        notificationsTitle: "Notifikasi",
+        clearRead: "Hapus yang Dibaca",
+        clearAll: "Hapus Semua",
+        adminAuthTitle: "Otentikasi Admin",
+        adminAuthDesc: "Masukkan kata sandi admin",
+        verify: "Verifikasi",
+        loadingAd: "Memuat iklan...",
+        adRewardAdded: "+$${amount} ditambahkan!",
+        dailyLimitReached: "Batas harian tercapai",
+        adError: "Gagal memuat iklan",
+        linkCopied: "Tautan disalin!",
+        channelReward: "+$0.05 ditambahkan!",
+        taskError: "Silakan bergabung dulu",
+        minWithdraw: "Penarikan minimum $10",
+        exceedsBalance: "Jumlah melebihi saldo",
+        needInvites: "Butuh 10 undangan",
+        withdrawSuccess: "Permintaan penarikan dikirim!",
+        insufficientBalance: "Saldo tidak mencukupi",
+        chooseLanguage: "Pilih bahasa Anda",
+        welcome: "Selamat datang",
+        close: "Tutup",
+        confirm: "Konfirmasi",
+        cancel: "Batal",
+        processing: "Memproses...",
+        success: "Berhasil!",
+        error: "Kesalahan!",
+        warning: "Peringatan!"
+    },
+    tr: {
+        appName: "AdNova Network",
+        totalBalance: "Toplam Bakiye",
+        availableToWithdraw: "Çekilebilir Bakiye",
+        watchAds: "Reklam İzle",
+        completeTasks: "Görevleri Tamamla",
+        inviteFriends: "Arkadaşları Davet Et",
+        watchAndEarn: "İzle ve Kazan",
+        watchAdBtn: "Reklam İzle",
+        watchAdBtnSub: "Videoyu sonuna kadar izle",
+        readyToEarn: "Kazanmaya hazır",
+        totalWatched: "Toplam İzlenen",
+        adsUnit: "reklam",
+        totalEarned: "Toplam Kazanılan",
+        taskHeaderTitle: "Görevleri tamamla ve ödül kazan",
+        joinChannels: "Kanallara Katıl",
+        joinChannelsDesc: "Kanal başına $0.05 kazan",
+        startBots: "Botları Başlat",
+        startBotsDesc: "Bot başına $0.05 kazan",
+        progress: "İlerleme",
+        joinBtn: "Katıl",
+        startBtn: "Başlat",
+        inviteAndEarn: "Davet Et ve Kazan",
+        inviteHeroSub: "Davet bağlantını kopyala ve paylaş",
+        yourInviteLink: "Davet Bağlantın",
+        copy: "Kopyala",
+        shareWithFriends: "Arkadaşlarla Paylaş",
+        friendsInvited: "Davet Edilen Arkadaşlar",
+        earnedFromInvites: "Davetlerden Kazanılan",
+        paymentMethod: "Ödeme Yöntemi",
+        amount: "Tutar",
+        availableBalance: "Mevcut bakiye:",
+        submitWithdrawal: "Çekim Talebi Gönder",
+        navAds: "Reklamlar",
+        navTasks: "Görevler",
+        navInvite: "Davet",
+        navWithdraw: "Çek",
+        notificationsTitle: "Bildirimler",
+        clearRead: "Okunanları Temizle",
+        clearAll: "Hepsini Temizle",
+        adminAuthTitle: "Admin Yetkilendirmesi",
+        adminAuthDesc: "Admin şifresini girin",
+        verify: "Doğrula",
+        loadingAd: "Reklam yükleniyor...",
+        adRewardAdded: "+$${amount} eklendi!",
+        dailyLimitReached: "Günlük limit aşıldı",
+        adError: "Reklam yüklenirken hata",
+        linkCopied: "Bağlantı kopyalandı!",
+        channelReward: "+$0.05 eklendi!",
+        taskError: "Lütfen önce katılın",
+        minWithdraw: "Minimum çekim $10",
+        exceedsBalance: "Tutar bakiyenizi aşıyor",
+        needInvites: "10 davete ihtiyaç var",
+        withdrawSuccess: "Çekim talebi gönderildi!",
+        insufficientBalance: "Yetersiz bakiye",
+        chooseLanguage: "Dil seçin",
+        welcome: "Hoş geldiniz",
+        close: "Kapat",
+        confirm: "Onayla",
+        cancel: "İptal",
+        processing: "İşleniyor...",
+        success: "Başarılı!",
+        error: "Hata!",
+        warning: "Uyarı!"
+    },
+    fa: {
+        appName: "شبکه ادنوا",
+        totalBalance: "موجودی کل",
+        availableToWithdraw: "قابل برداشت",
+        watchAds: "تماشای تبلیغات",
+        completeTasks: "انجام وظایف",
+        inviteFriends: "دعوت دوستان",
+        watchAndEarn: "تماشا کن و درآمد کسب کن",
+        watchAdBtn: "تماشای تبلیغ",
+        watchAdBtnSub: "ویدیو را کامل ببینید",
+        readyToEarn: "آماده کسب درآمد",
+        totalWatched: "کل تماشا شده",
+        adsUnit: "تبلیغ",
+        totalEarned: "کل درآمد",
+        taskHeaderTitle: "وظایف را کامل کنید و پاداش بگیرید",
+        joinChannels: "عضویت در کانال‌ها",
+        joinChannelsDesc: "به ازای هر کانال $0.05 دریافت کنید",
+        startBots: "شروع ربات‌ها",
+        startBotsDesc: "به ازای هر ربات $0.05 دریافت کنید",
+        progress: "پیشرفت",
+        joinBtn: "عضویت",
+        startBtn: "شروع",
+        inviteAndEarn: "دعوت کن و درآمد کسب کن",
+        inviteHeroSub: "لینک دعوت خود را کپی و به اشتراک بگذارید",
+        yourInviteLink: "لینک دعوت شما",
+        copy: "کپی",
+        shareWithFriends: "اشتراک‌گذاری با دوستان",
+        friendsInvited: "دوستان دعوت شده",
+        earnedFromInvites: "درآمد از دعوت‌ها",
+        paymentMethod: "روش پرداخت",
+        amount: "مبلغ",
+        availableBalance: "موجودی موجود:",
+        submitWithdrawal: "ارسال درخواست برداشت",
+        navAds: "تبلیغات",
+        navTasks: "وظایف",
+        navInvite: "دعوت",
+        navWithdraw: "برداشت",
+        notificationsTitle: "اعلان‌ها",
+        clearRead: "حذف خوانده‌ها",
+        clearAll: "حذف همه",
+        adminAuthTitle: "احراز هویت مدیر",
+        adminAuthDesc: "رمز عبور مدیر را وارد کنید",
+        verify: "تأیید",
+        loadingAd: "در حال بارگذاری تبلیغ...",
+        adRewardAdded: "+$${amount} اضافه شد!",
+        dailyLimitReached: "حد مجاز روزانه تکمیل شد",
+        adError: "خطا در بارگذاری تبلیغ",
+        linkCopied: "لینک کپی شد!",
+        channelReward: "+$0.05 اضافه شد!",
+        taskError: "لطفاً ابتدا عضو شوید",
+        minWithdraw: "حداقل برداشت $10 است",
+        exceedsBalance: "مبلغ از موجودی شما بیشتر است",
+        needInvites: "به 10 دعوت نیاز دارید",
+        withdrawSuccess: "درخواست برداشت ارسال شد!",
+        insufficientBalance: "موجودی ناکافی",
+        chooseLanguage: "زبان خود را انتخاب کنید",
+        welcome: "خوش آمدید",
+        close: "بستن",
+        confirm: "تأیید",
+        cancel: "انصراف",
+        processing: "در حال پردازش...",
+        success: "موفق!",
+        error: "خطا!",
+        warning: "هشدار!"
     }
 };
 
+// دالة الترجمة
 function t(key, params = {}) {
     let text = translations[currentLanguage]?.[key] || translations.en[key] || key;
     Object.keys(params).forEach(p => {
@@ -243,33 +723,189 @@ function t(key, params = {}) {
     return text;
 }
 
-function applyLanguage() {
+// نافذة اختيار اللغة
+let langModalOpen = false;
+
+function openLanguageModal() {
+    const modal = document.getElementById("langModal");
+    if (!modal) return;
+    
+    const grid = document.getElementById("langOptionsGrid");
+    if (!grid) return;
+    
+    grid.innerHTML = LANGUAGES.map(lang => `
+        <div class="lang-option ${currentLanguage === lang.code ? "active" : ""}" 
+             data-lang="${lang.code}"
+             onclick="setLanguage('${lang.code}')">
+            <div class="lang-option-flag">${lang.flag}</div>
+            <div class="lang-option-body">
+                <div class="lang-option-name">${lang.name}</div>
+                <div class="lang-option-native">${lang.nativeName}</div>
+            </div>
+            <div class="lang-option-radio"><div class="lang-option-radio-inner"></div></div>
+        </div>
+    `).join("");
+    
+    modal.classList.add("open");
+    langModalOpen = true;
+}
+
+function closeLanguageModal() {
+    const modal = document.getElementById("langModal");
+    if (modal) {
+        modal.classList.remove("open");
+        langModalOpen = false;
+    }
+}
+
+function setLanguage(langCode) {
+    const lang = LANGUAGES.find(l => l.code === langCode);
+    if (!lang) return;
+    
+    currentLanguage = langCode;
+    localStorage.setItem("adnova_lang", currentLanguage);
+    
+    // تطبيق RTL للعربية والفارسية
     const html = document.documentElement;
-    if (currentLanguage === "ar") {
+    if (lang.dir === "rtl") {
         html.setAttribute("dir", "rtl");
         document.body.classList.add("rtl");
     } else {
         html.setAttribute("dir", "ltr");
         document.body.classList.remove("rtl");
     }
+    
+    // تحديث جميع النصوص
     document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
         if (key) el.textContent = t(key);
     });
+    
+    // تحديث اسم التطبيق
     const splashTitle = document.querySelector(".splash-sub span:not(.splash-deco)");
     if (splashTitle) splashTitle.textContent = t("appName");
     document.title = t("appName") + " - Earn Real Money";
-}
-
-function toggleLanguage() {
-    currentLanguage = currentLanguage === "en" ? "ar" : "en";
-    localStorage.setItem("adnova_lang", currentLanguage);
-    applyLanguage();
-    showToast(t("copy"), "success");
+    
+    // تحديث الزر
+    const langBtn = document.getElementById("langBtnLabel");
+    if (langBtn) langBtn.textContent = lang.name;
+    
+    // تحديث الصفحة الحالية
+    refreshCurrentPage();
+    
+    closeLanguageModal();
+    showToast(t("success"), "success");
 }
 
 // ============================================================================
-// 5. LOCAL STORAGE
+// 5. AD PLATFORMS (4 منصات)
+// ============================================================================
+
+function initAllAdPlatforms() {
+    if (adPlatformsInitialized) return;
+    
+    // Monetag
+    if (typeof show_10950362 !== 'undefined') {
+        console.log("[AdNova] Monetag ready");
+    }
+    
+    // OnClickA
+    if (typeof window.initCdTma === 'function') {
+        window.initCdTma({ id: '6118161' }).then(show => {
+            window.showOnClickaAd = show;
+        }).catch(e => console.error("[AdNova] OnClickA error:", e));
+    }
+    
+    // RichAds
+    if (typeof TelegramAdsController !== 'undefined') {
+        window.richadsController = new TelegramAdsController();
+        window.richadsController.initialize({ pubId: "1009657", appId: "7284", debug: false });
+    }
+    
+    // Adexium
+    if (typeof AdexiumWidget !== 'undefined') {
+        window.adexiumWidget = new AdexiumWidget({
+            wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+            adFormat: 'interstitial'
+        });
+    }
+    
+    adPlatformsInitialized = true;
+    console.log("[AdNova] All ad platforms initialized");
+}
+
+// عرض إعلان
+async function showAdFromAnyPlatform() {
+    const platforms = [
+        { name: "Monetag", show: () => show_10950362?.() },
+        { name: "OnClickA", show: () => window.showOnClickaAd?.() },
+        { name: "RichAds", show: () => showRichAdsAd() },
+        { name: "Adexium", show: () => showAdexiumAd() }
+    ];
+    
+    const shuffled = [...platforms].sort(() => Math.random() - 0.5);
+    
+    for (const platform of shuffled) {
+        try {
+            if (!platform.show) continue;
+            await platform.show();
+            return true;
+        } catch (error) {
+            console.error(`[AdNova] ${platform.name} failed:`, error);
+        }
+    }
+    return false;
+}
+
+function showRichAdsAd() {
+    return new Promise((resolve, reject) => {
+        if (!window.richadsController) {
+            reject("RichAds not ready");
+            return;
+        }
+        let resolved = false;
+        const timeout = setTimeout(() => {
+            if (!resolved) reject("Timeout");
+        }, 15000);
+        const onSuccess = () => {
+            if (!resolved) { resolved = true; clearTimeout(timeout); resolve(); }
+        };
+        const onError = (err) => {
+            if (!resolved) { clearTimeout(timeout); reject(err); }
+        };
+        if (typeof window.richadsController.triggerInterstitialVideo === 'function') {
+            window.richadsController.triggerInterstitialVideo().then(onSuccess).catch(onError);
+        } else {
+            reject("No show method");
+        }
+    });
+}
+
+function showAdexiumAd() {
+    return new Promise((resolve, reject) => {
+        if (!window.adexiumWidget) {
+            reject("Adexium not ready");
+            return;
+        }
+        let resolved = false;
+        const timeout = setTimeout(() => {
+            if (!resolved) reject("Timeout");
+        }, 15000);
+        window.adexiumWidget.on("adPlaybackCompleted", () => {
+            if (!resolved) { resolved = true; clearTimeout(timeout); resolve(); }
+        });
+        window.adexiumWidget.on("adClosed", () => {
+            if (!resolved) { clearTimeout(timeout); reject("Ad closed"); }
+        });
+        window.adexiumWidget.on("noAdFound", () => {
+            if (!resolved) { clearTimeout(timeout); reject("No ad"); }
+        });
+        window.adexiumWidget.requestAd("interstitial");
+    });
+}
+
+// ============================================================================
+// 6. LOCAL STORAGE MANAGEMENT
 // ============================================================================
 
 function getTelegramUserId() {
@@ -280,7 +916,7 @@ function getTelegramUserId() {
 }
 
 function getUserName() {
-    return tg?.initDataUnsafe?.user?.first_name || "User";
+    return tg?.initDataUnsafe?.user?.first_name || localStorage.getItem("adnova_user_name") || "User";
 }
 
 function loadUserData() {
@@ -294,8 +930,8 @@ function loadUserData() {
         currentUser = {
             userId: currentUserId,
             userName: getUserName(),
-            balance: APP_CONFIG.welcomeBonus,
-            totalEarned: APP_CONFIG.welcomeBonus,
+            balance: 0,
+            totalEarned: 0,
             adsWatched: 0,
             adsToday: 0,
             lastAdDate: today,
@@ -303,14 +939,7 @@ function loadUserData() {
             referredBy: null,
             referrals: [],
             withdrawals: [],
-            notifications: [{
-                id: Date.now(),
-                title: "🎉 Welcome!",
-                message: `+$${APP_CONFIG.welcomeBonus} bonus!`,
-                type: "success",
-                read: false,
-                timestamp: new Date().toISOString()
-            }],
+            notifications: [],
             withdrawBlocked: false
         };
         saveUserData();
@@ -326,6 +955,18 @@ function loadUserData() {
     
     updateUI();
     loadTasksProgress();
+    
+    // جلب الإعدادات من الخادم
+    fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+            if (data) {
+                APP_CONFIG = { ...APP_CONFIG, ...data };
+                updateUI();
+            }
+        })
+        .catch(e => console.error("[AdNova] Config error:", e));
+    
     return currentUser;
 }
 
@@ -334,7 +975,7 @@ function saveUserData() {
 }
 
 // ============================================================================
-// 6. REFERRAL SYSTEM (startapp مرتين)
+// 7. REFERRAL SYSTEM (startapp مرتين)
 // ============================================================================
 
 function getReferralFromUrl() {
@@ -354,24 +995,15 @@ function processReferralFromUrl() {
     const processedKey = `ref_processed_${currentUserId}`;
     if (localStorage.getItem(processedKey) === refCode) return;
     
-    const referrerData = localStorage.getItem(`adnova_user_${refCode}`);
-    if (referrerData) {
-        const referrer = JSON.parse(referrerData);
-        if (!referrer.referrals.includes(currentUserId)) {
-            referrer.referrals.push(currentUserId);
-            referrer.inviteCount++;
-            referrer.balance += APP_CONFIG.referralBonus;
-            referrer.totalEarned += APP_CONFIG.referralBonus;
-            localStorage.setItem(`adnova_user_${refCode}`, JSON.stringify(referrer));
-        }
-    }
+    fetch('/api/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referrerId: refCode, newUserId: currentUserId, newUserName: currentUser.userName })
+    }).catch(e => console.error("[AdNova] Referral error:", e));
     
     currentUser.referredBy = refCode;
-    currentUser.balance += APP_CONFIG.welcomeBonus;
-    currentUser.totalEarned += APP_CONFIG.welcomeBonus;
     localStorage.setItem(processedKey, refCode);
     saveUserData();
-    updateUI();
 }
 
 function getReferralLink() {
@@ -397,12 +1029,12 @@ function shareInviteLink() {
 }
 
 // ============================================================================
-// 7. ADS SYSTEM
+// 8. ADS SYSTEM
 // ============================================================================
 
 async function watchAd() {
-    if (adCooldown) {
-        showToast("Please wait a few seconds...", "warning");
+    if (adPlaying) {
+        showToast("Ad is already playing...", "warning");
         return;
     }
     if (currentUser.adsToday >= APP_CONFIG.dailyAdLimit) {
@@ -410,31 +1042,34 @@ async function watchAd() {
         return;
     }
     
-    adCooldown = true;
+    adPlaying = true;
     const watchBtn = document.getElementById("watchAdBtn");
     if (watchBtn) {
         watchBtn.disabled = true;
-        watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading ad...';
     }
     
     showToast(t("loadingAd"), "info");
+    initAllAdPlatforms();
     
-    const shuffledPlatforms = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
-    let adShown = false;
+    let adCompleted = false;
     
-    for (const platform of shuffledPlatforms) {
-        if (!adShown) {
-            try {
-                await platform.show();
-                adShown = true;
-                break;
-            } catch (e) {
-                console.error(platform.name + " failed:", e);
+    // عرض إعلانين متتاليين
+    for (let i = 0; i < 2; i++) {
+        const success = await showAdFromAnyPlatform();
+        if (!success) {
+            showToast(t("adError"), "error");
+            adPlaying = false;
+            if (watchBtn) {
+                watchBtn.disabled = false;
+                watchBtn.innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn");
             }
+            return;
         }
+        adCompleted = true;
     }
     
-    if (adShown) {
+    if (adCompleted) {
         currentUser.balance += APP_CONFIG.adReward;
         currentUser.totalEarned += APP_CONFIG.adReward;
         currentUser.adsWatched++;
@@ -442,19 +1077,31 @@ async function watchAd() {
         saveUserData();
         updateUI();
         showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
-    } else {
-        showToast(t("adError"), "error");
+        showEarnToast();
     }
     
-    adCooldown = false;
+    adPlaying = false;
     if (watchBtn) {
         watchBtn.disabled = false;
         watchBtn.innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn");
     }
 }
 
+function showEarnToast() {
+    const toast = document.getElementById("earn-toast");
+    if (!toast) return;
+    const amountSpan = document.getElementById("earnToastAmount");
+    if (amountSpan) amountSpan.textContent = `+ $${APP_CONFIG.adReward.toFixed(2)} Earned`;
+    toast.classList.remove("hide");
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.add("hide");
+    }, 3000);
+}
+
 // ============================================================================
-// 8. TASKS SYSTEM
+// 9. TASKS SYSTEM
 // ============================================================================
 
 function loadTasksProgress() {
@@ -487,6 +1134,7 @@ function renderTasks() {
     let completedBots = 0;
     let totalReward = 0;
     
+    html += `<div class="tasks-section"><h3><i class="fab fa-telegram"></i> ${t("joinChannels")}</h3>`;
     TASKS_CONFIG.channels.forEach(ch => {
         if (ch.completed) completedChannels++;
         totalReward += ch.reward;
@@ -506,7 +1154,9 @@ function renderTasks() {
             </div>
         `;
     });
+    html += `</div>`;
     
+    html += `<div class="tasks-section"><h3><i class="fas fa-robot"></i> ${t("startBots")}</h3>`;
     TASKS_CONFIG.bots.forEach(bt => {
         if (bt.completed) completedBots++;
         totalReward += bt.reward;
@@ -526,6 +1176,7 @@ function renderTasks() {
             </div>
         `;
     });
+    html += `</div>`;
     
     container.innerHTML = html;
     
@@ -569,7 +1220,7 @@ function completeTask(taskId, type, username) {
 }
 
 // ============================================================================
-// 9. WITHDRAW SYSTEM
+// 10. WITHDRAW SYSTEM
 // ============================================================================
 
 function renderWithdrawMethods() {
@@ -592,6 +1243,9 @@ function selectWithdrawMethod(methodId) {
         el.classList.remove("selected");
     });
     document.querySelector(`.method-option[data-method="${methodId}"]`)?.classList.add("selected");
+    const method = WITHDRAWAL_METHODS.find(m => m.id === methodId);
+    const destInput = document.getElementById("wdDestInput");
+    if (destInput && method) destInput.placeholder = method.placeholder;
 }
 
 async function submitWithdraw() {
@@ -615,27 +1269,43 @@ async function submitWithdraw() {
         return;
     }
     
-    const withdrawal = {
-        id: Date.now(),
-        amount: amount,
-        method: selectedWithdrawMethod,
-        destination: destination,
-        status: "pending",
-        date: new Date().toISOString()
-    };
+    const response = await fetch('/api/withdraw/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            userId: currentUserId,
+            userName: currentUser.userName,
+            amount: amount,
+            method: selectedWithdrawMethod,
+            destination: destination
+        })
+    });
     
-    currentUser.withdrawals.unshift(withdrawal);
-    currentUser.balance -= amount;
-    saveUserData();
-    updateUI();
+    const data = await response.json();
     
-    showToast(t("withdrawSuccess"), "success");
-    if (document.getElementById("wdAmountInput")) document.getElementById("wdAmountInput").value = "";
-    if (document.getElementById("wdDestInput")) document.getElementById("wdDestInput").value = "";
+    if (data.success) {
+        currentUser.balance = data.newBalance;
+        currentUser.withdrawals.unshift({
+            id: Date.now(),
+            amount: amount,
+            method: selectedWithdrawMethod,
+            destination: destination,
+            status: "pending",
+            date: new Date().toISOString()
+        });
+        saveUserData();
+        updateUI();
+        showToast(t("withdrawSuccess"), "success");
+        
+        if (document.getElementById("wdAmountInput")) document.getElementById("wdAmountInput").value = "";
+        if (document.getElementById("wdDestInput")) document.getElementById("wdDestInput").value = "";
+    } else {
+        showToast(data.error || t("error"), "error");
+    }
 }
 
 // ============================================================================
-// 10. NOTIFICATIONS SYSTEM
+// 11. NOTIFICATIONS SYSTEM
 // ============================================================================
 
 function addNotification(title, message, type = "info") {
@@ -669,7 +1339,7 @@ function renderNotifications() {
     
     const notifications = currentUser.notifications || [];
     if (notifications.length === 0) {
-        container.innerHTML = '<div class="empty-state">No notifications</div>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
         return;
     }
     
@@ -728,7 +1398,7 @@ function clearAllNotifications() {
 }
 
 // ============================================================================
-// 11. UI UPDATES
+// 12. UI UPDATES
 // ============================================================================
 
 function updateUI() {
@@ -773,15 +1443,15 @@ function refreshCurrentPage() {
     if (currentPage === "tasks") {
         renderTasks();
     } else if (currentPage === "invite") {
-        const linkEl = document.getElementById("inviteLink");
-        if (linkEl) linkEl.textContent = getReferralLink();
+        const inviteLinkEl = document.getElementById("inviteLink");
+        if (inviteLinkEl) inviteLinkEl.textContent = getReferralLink();
     } else if (currentPage === "withdraw") {
         renderWithdrawMethods();
     }
 }
 
 // ============================================================================
-// 12. NAVIGATION
+// 13. NAVIGATION
 // ============================================================================
 
 function switchTab(page) {
@@ -798,7 +1468,7 @@ function switchTab(page) {
 }
 
 // ============================================================================
-// 13. TOAST
+// 14. TOAST
 // ============================================================================
 
 function showToast(message, type = "success") {
@@ -812,7 +1482,7 @@ function showToast(message, type = "success") {
 }
 
 // ============================================================================
-// 14. ADMIN PANEL
+// 15. ADMIN PANEL (يستخدم الخادم)
 // ============================================================================
 
 let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0 };
@@ -820,19 +1490,30 @@ let pendingWithdrawals = [];
 let allUsers = [];
 
 function checkAdminAndShowCrown() {
-    if (currentUserId === APP_CONFIG.adminId) {
-        const crownBtn = document.getElementById("adminCrownBtn");
-        if (crownBtn) crownBtn.style.display = "flex";
-    }
+    fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+            if (currentUserId === data.adminId) {
+                const crownBtn = document.getElementById("adminCrownBtn");
+                if (crownBtn) crownBtn.style.display = "flex";
+            }
+        })
+        .catch(e => console.error("[AdNova] Config error:", e));
 }
 
 function showAdminAuth() {
     document.getElementById("adminAuthModal")?.classList.add("show");
 }
 
-function verifyAdminPassword() {
+async function verifyAdminPassword() {
     const password = document.getElementById("adminPasswordInput")?.value;
-    if (password === APP_CONFIG.adminPassword) {
+    const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+    });
+    const data = await response.json();
+    if (data.success) {
         adminAuthenticated = true;
         document.getElementById("adminAuthModal")?.classList.remove("show");
         showAdminPanel();
@@ -842,13 +1523,13 @@ function verifyAdminPassword() {
     }
 }
 
-function showAdminPanel() {
+async function showAdminPanel() {
     if (!adminAuthenticated) {
         showAdminAuth();
         return;
     }
     document.getElementById("adminPanel")?.classList.remove("hidden");
-    loadAdminData();
+    await loadAdminData();
     renderAdminDashboard();
 }
 
@@ -856,37 +1537,15 @@ function closeAdminPanel() {
     document.getElementById("adminPanel")?.classList.add("hidden");
 }
 
-function loadAdminData() {
-    allUsers = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("adnova_user_")) {
-            try {
-                const user = JSON.parse(localStorage.getItem(key));
-                allUsers.push(user);
-                adminStats.totalBalance += user.balance || 0;
-            } catch (e) {}
-        }
-    }
-    adminStats.totalUsers = allUsers.length;
+async function loadAdminData() {
+    const stats = await fetch('/api/admin/stats').then(r => r.json()).catch(() => ({}));
+    if (stats.success) adminStats = stats.stats;
     
-    pendingWithdrawals = [];
-    allUsers.forEach(user => {
-        if (user.withdrawals) {
-            user.withdrawals.forEach(w => {
-                if (w.status === "pending") {
-                    pendingWithdrawals.push({
-                        ...w,
-                        userId: user.userId,
-                        userName: user.userName,
-                        inviteCount: user.inviteCount,
-                        adsWatched: user.adsWatched
-                    });
-                }
-            });
-        }
-    });
-    adminStats.pendingWithdrawals = pendingWithdrawals.length;
+    const withdrawals = await fetch('/api/admin/pending-withdrawals').then(r => r.json()).catch(() => ({}));
+    if (withdrawals.success) pendingWithdrawals = withdrawals.withdrawals || [];
+    
+    const users = await fetch('/api/admin/users').then(r => r.json()).catch(() => ({}));
+    if (users.success) allUsers = users.users || [];
 }
 
 function renderAdminDashboard() {
@@ -977,89 +1636,88 @@ function filterUsers() {
     });
 }
 
-function approveWithdrawal(id, userId, amount) {
-    const userKey = `adnova_user_${userId}`;
-    const user = JSON.parse(localStorage.getItem(userKey));
-    if (user && user.withdrawals) {
-        const wIndex = user.withdrawals.findIndex(w => w.id == id);
-        if (wIndex !== -1) user.withdrawals[wIndex].status = "approved";
-        localStorage.setItem(userKey, JSON.stringify(user));
-        if (userId === currentUserId) currentUser = user;
+async function approveWithdrawal(id, userId, amount) {
+    const response = await fetch('/api/admin/approve-withdrawal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ withdrawalId: id })
+    });
+    if (response.ok) {
+        showToast("Withdrawal approved!", "success");
+        await loadAdminData();
+        renderPendingWithdrawals(document.getElementById("adminSectionContent"));
     }
-    showToast("Withdrawal approved!", "success");
-    loadAdminData();
-    renderPendingWithdrawals(document.getElementById("adminSectionContent"));
 }
 
-function rejectWithdrawal(id, userId, amount) {
+async function rejectWithdrawal(id, userId, amount) {
     const reason = prompt("Rejection reason:");
     if (!reason) return;
-    const userKey = `adnova_user_${userId}`;
-    const user = JSON.parse(localStorage.getItem(userKey));
-    if (user && user.withdrawals) {
-        const wIndex = user.withdrawals.findIndex(w => w.id == id);
-        if (wIndex !== -1) {
-            user.withdrawals[wIndex].status = "rejected";
-            user.withdrawals[wIndex].reason = reason;
-            user.balance = (user.balance || 0) + amount;
-        }
-        localStorage.setItem(userKey, JSON.stringify(user));
-        if (userId === currentUserId) currentUser = user;
+    const response = await fetch('/api/admin/reject-withdrawal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ withdrawalId: id, reason })
+    });
+    if (response.ok) {
+        showToast("Withdrawal rejected!", "success");
+        await loadAdminData();
+        renderPendingWithdrawals(document.getElementById("adminSectionContent"));
     }
-    showToast("Withdrawal rejected!", "success");
-    loadAdminData();
-    renderPendingWithdrawals(document.getElementById("adminSectionContent"));
 }
 
-function adminAddBalance(userId) {
+async function adminAddBalance(userId) {
     const amount = parseFloat(prompt("Amount to add (USD):"));
     if (isNaN(amount) || amount <= 0) return;
-    const userKey = `adnova_user_${userId}`;
-    const user = JSON.parse(localStorage.getItem(userKey));
-    if (user) {
-        user.balance = (user.balance || 0) + amount;
-        user.totalEarned = (user.totalEarned || 0) + amount;
-        localStorage.setItem(userKey, JSON.stringify(user));
-        if (userId === currentUserId) currentUser = user;
-        updateUI();
+    const response = await fetch('/api/admin/add-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount })
+    });
+    if (response.ok) {
         showToast(`$${amount.toFixed(2)} added!`, "success");
-        loadAdminData();
-        showAdminSection("users");
+        await loadAdminData();
+        renderUsersList(document.getElementById("adminSectionContent"));
+        if (userId === currentUserId) {
+            currentUser.balance += amount;
+            updateUI();
+        }
     }
 }
 
-function adminRemoveBalance(userId) {
+async function adminRemoveBalance(userId) {
     const amount = parseFloat(prompt("Amount to remove (USD):"));
     if (isNaN(amount) || amount <= 0) return;
-    const userKey = `adnova_user_${userId}`;
-    const user = JSON.parse(localStorage.getItem(userKey));
-    if (user) {
-        user.balance = Math.max(0, (user.balance || 0) - amount);
-        localStorage.setItem(userKey, JSON.stringify(user));
-        if (userId === currentUserId) currentUser = user;
-        updateUI();
+    const response = await fetch('/api/admin/remove-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount })
+    });
+    if (response.ok) {
         showToast(`$${amount.toFixed(2)} removed!`, "success");
-        loadAdminData();
-        showAdminSection("users");
+        await loadAdminData();
+        renderUsersList(document.getElementById("adminSectionContent"));
+        if (userId === currentUserId) {
+            currentUser.balance -= amount;
+            updateUI();
+        }
     }
 }
 
-function adminBlockUser(userId) {
+async function adminBlockUser(userId) {
     if (!confirm("⚠️ Permanently block this user?")) return;
-    const userKey = `adnova_user_${userId}`;
-    const user = JSON.parse(localStorage.getItem(userKey));
-    if (user) {
-        user.withdrawBlocked = true;
-        localStorage.setItem(userKey, JSON.stringify(user));
-        if (userId === currentUserId) currentUser = user;
+    const response = await fetch('/api/admin/block-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+    });
+    if (response.ok) {
         showToast("User blocked!", "success");
-        loadAdminData();
-        showAdminSection("users");
+        await loadAdminData();
+        renderUsersList(document.getElementById("adminSectionContent"));
     }
 }
 
 // ============================================================================
-// 15. INITIALIZATION
+// 16. INITIALIZATION
 // ============================================================================
 
 function hideSplash() {
@@ -1077,11 +1735,39 @@ function hideSplash() {
 }
 
 function init() {
-    applyLanguage();
+    // تطبيق اللغة المحفوظة
+    const savedLang = localStorage.getItem("adnova_lang");
+    if (savedLang) {
+        const lang = LANGUAGES.find(l => l.code === savedLang);
+        if (lang) {
+            currentLanguage = savedLang;
+            if (lang.dir === "rtl") {
+                document.documentElement.setAttribute("dir", "rtl");
+                document.body.classList.add("rtl");
+            }
+        }
+    }
+    
+    // تطبيق الترجمة على العناصر الثابتة
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (key) el.textContent = t(key);
+    });
+    
+    // تحديث اسم التطبيق
+    const splashTitle = document.querySelector(".splash-sub span:not(.splash-deco)");
+    if (splashTitle) splashTitle.textContent = t("appName");
+    document.title = t("appName") + " - Earn Real Money";
+    
+    // تحميل البيانات
     loadUserData();
     renderWithdrawMethods();
     checkAdminAndShowCrown();
+    initAllAdPlatforms();
+    
     setTimeout(hideSplash, 1500);
+    
+    // إعادة تعيين الإعلانات اليومية كل دقيقة
     setInterval(() => {
         if (currentUser) {
             const today = new Date().toISOString().split("T")[0];
@@ -1095,6 +1781,7 @@ function init() {
     }, 60000);
 }
 
+// بدء التطبيق
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
 } else {
@@ -1102,11 +1789,14 @@ if (document.readyState === "loading") {
 }
 
 // ============================================================================
-// 16. GLOBAL EXPORTS
+// 17. GLOBAL EXPORTS
 // ============================================================================
 
 window.switchTab = switchTab;
 window.toggleLanguage = toggleLanguage;
+window.openLanguageModal = openLanguageModal;
+window.closeLanguageModal = closeLanguageModal;
+window.setLanguage = setLanguage;
 window.watchAd = watchAd;
 window.completeTask = completeTask;
 window.copyInviteLink = copyInviteLink;
@@ -1129,4 +1819,6 @@ window.clearAllNotifications = clearAllNotifications;
 window.showNotificationsModal = showNotificationsModal;
 window.closeNotificationsModal = closeNotificationsModal;
 
-console.log("[AdNova] Fully loaded!");
+console.log("[AdNova] Fully loaded with 10 languages!");
+console.log(`💰 Ad Reward: $${APP_CONFIG.adReward} | Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
+console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw} | Required Referrals: ${APP_CONFIG.requiredReferrals}`);
