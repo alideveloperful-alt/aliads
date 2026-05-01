@@ -1717,24 +1717,49 @@ async function adminBlockUser(userId) {
 }
 
 // ============================================================================
-// 16. INITIALIZATION
+// 16. INITIALIZATION & FIX (إصلاح شاشة التحميل)
 // ============================================================================
 
+// دالة إخفاء شاشة التحميل - قوية ومضمونة
 function hideSplash() {
+    console.log("[AdNova] Hiding splash screen...");
+    
     const splash = document.getElementById("splash-screen");
     const main = document.getElementById("mainContent");
+    
     if (splash) {
-        splash.classList.add("hidden");
+        splash.style.transition = "opacity 0.5s ease";
+        splash.style.opacity = "0";
+        
         setTimeout(() => {
             splash.style.display = "none";
-            if (main) main.style.display = "block";
+            if (main) {
+                main.style.display = "block";
+                main.style.animation = "fadeIn 0.5s ease";
+            }
+            console.log("[AdNova] Splash screen hidden, main content visible");
         }, 500);
-    } else if (main) {
-        main.style.display = "block";
+    } else {
+        if (main) main.style.display = "block";
     }
 }
 
+// دالة إجبارية لإخفاء شاشة التحميل بعد 3 ثوان كحد أقصى
+function forceHideSplash() {
+    const splash = document.getElementById("splash-screen");
+    const main = document.getElementById("mainContent");
+    
+    if (splash && splash.style.display !== "none") {
+        console.log("[AdNova] Force hiding splash screen");
+        splash.style.display = "none";
+        if (main) main.style.display = "block";
+    }
+}
+
+// بدء التطبيق مع ضمان إخفاء شاشة التحميل
 function init() {
+    console.log("[AdNova] Initializing application...");
+    
     // تطبيق اللغة المحفوظة
     const savedLang = localStorage.getItem("adnova_lang");
     if (savedLang) {
@@ -1748,16 +1773,11 @@ function init() {
         }
     }
     
-    // تطبيق الترجمة على العناصر الثابتة
+    // تحديث العناصر الثابتة
     document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
         if (key) el.textContent = t(key);
     });
-    
-    // تحديث اسم التطبيق
-    const splashTitle = document.querySelector(".splash-sub span:not(.splash-deco)");
-    if (splashTitle) splashTitle.textContent = t("appName");
-    document.title = t("appName") + " - Earn Real Money";
     
     // تحميل البيانات
     loadUserData();
@@ -1765,7 +1785,11 @@ function init() {
     checkAdminAndShowCrown();
     initAllAdPlatforms();
     
-    setTimeout(hideSplash, 1500);
+    // إخفاء شاشة التحميل فوراً بعد 100ms
+    setTimeout(hideSplash, 100);
+    
+    // إخفاء إجباري بعد 3 ثوان كحد أقصى
+    setTimeout(forceHideSplash, 3000);
     
     // إعادة تعيين الإعلانات اليومية كل دقيقة
     setInterval(() => {
