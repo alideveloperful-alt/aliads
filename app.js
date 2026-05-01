@@ -1,12 +1,13 @@
 // ============================================================================
-// ADNOVA NETWORK - PLATFORM v11.0
-// تطبيق كامل مع Firebase، TON Connect، 10 لغات، لوحة مشرف، جميع الميزات
-// كود نظيف، خال من الأخطاء، بدون مفاتيح حساسة
+// ADNOVA NETWORK - FRONTEND v4.0 (النسخة الأسطورية)
+// ============================================================================
+// منصة احترافية لمشاهدة الإعلانات وكسب المال الحقيقي
+// الميزات: إحالات، مهام متجددة، سحب متعدد، لوحة مشرف متطورة، 10 لغات
 // ============================================================================
 
-// ============================================================================
-// 1. TELEGRAM WEBAPP INITIALIZATION
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. 🚀 تهيئة Telegram WebApp
+// ═══════════════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp;
 
@@ -17,9 +18,9 @@ if (tg) {
     console.log("[AdNova] Telegram WebApp initialized");
 }
 
-// ============================================================================
-// 2. GLOBAL STATE
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. 📦 الحالة العامة للتطبيق (Global State)
+// ═══════════════════════════════════════════════════════════════════════════
 
 let currentUser = null;
 let currentUserId = null;
@@ -32,58 +33,104 @@ let selectedWithdrawMethod = "paypal";
 let adPlatformsInitialized = false;
 let tonConnected = false;
 let tonWalletAddress = null;
+let tasksList = [];           // المهام المتجددة من Firebase
+let userCompletedTasks = [];  // المهام التي أكملها المستخدم
 
-// إعدادات التطبيق (قيم افتراضية - تُجلب من الخادم)
-const APP_CONFIG = {
+// إعدادات التطبيق (سيتم جلبها من الخادم)
+let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
     adReward: 0.01,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
     requiredReferrals: 10,
-    botUsername: "AdNovaNetworkbot"
+    botUsername: "AdNovaNetworkBot",
+    adminId: null
 };
 
-// مهام القنوات والبوتات
-let TASKS_CONFIG = {
-    channels: [
-        { id: "ch1", username: "AdNovaNetwork", name: "AdNova Official", reward: 0.05, completed: false },
-        { id: "ch2", username: "AdNovaNews", name: "AdNova News", reward: 0.05, completed: false },
-        { id: "ch3", username: "AdNovaSupport", name: "AdNova Support", reward: 0.05, completed: false }
-    ],
-    bots: [
-        { id: "bt1", username: "AdNovaBot", name: "AdNova Assistant", reward: 0.05, completed: false },
-        { id: "bt2", username: "AdNovaRewardsBot", name: "AdNova Rewards", reward: 0.05, completed: false }
-    ]
-};
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. 💳 طرق الدفع المدعومة (مع إضافة SBP الروسية)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// طرق الدفع المدعومة
 const WITHDRAWAL_METHODS = [
-    { id: "paypal", name: "PayPal", icon: "fab fa-paypal", placeholder: "example@email.com", label: "Email address" },
-    { id: "skrill", name: "Skrill", icon: "fab fa-skrill", placeholder: "example@email.com", label: "Email address" },
-    { id: "payoneer", name: "Payoneer", icon: "fas fa-building", placeholder: "example@email.com", label: "Email address" },
-    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", placeholder: "0x...", label: "Wallet address (BSC)" },
-    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", placeholder: "T...", label: "Wallet address (TRC20)" },
-    { id: "ton", name: "TON", icon: "fab fa-telegram", placeholder: "EQ...", label: "TON wallet address" },
-    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", placeholder: "+1234567890", label: "Phone number" },
-    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", placeholder: "Player ID", label: "Player ID / User ID" },
-    { id: "freefire", name: "Free Fire", icon: "fas fa-fire", placeholder: "Player ID", label: "Player ID / User ID" }
+    { id: "paypal", name: "PayPal", icon: "fab fa-paypal", placeholder: "example@email.com", label: "Email address", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "skrill", name: "Skrill", icon: "fab fa-skrill", placeholder: "example@email.com", label: "Email address", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "payoneer", name: "Payoneer", icon: "fas fa-building", placeholder: "example@email.com", label: "Email address", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", placeholder: "0x...", label: "Wallet address (BSC)", regex: /^0x[a-fA-F0-9]{40}$/ },
+    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", placeholder: "T...", label: "Wallet address (TRC20)", regex: /^T[a-zA-Z0-9]{33}$/ },
+    { id: "ton", name: "TON", icon: "fab fa-telegram", placeholder: "EQ...", label: "TON wallet address", regex: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/ },
+    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", placeholder: "+1234567890", label: "Phone number", regex: /^\+\d{10,15}$/ },
+    { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone", placeholder: "+71234567890", label: "Phone number (+7)", regex: /^\+7\d{10}$/ },
+    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
+    { id: "freefire", name: "Free Fire", icon: "fas fa-fire", placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
 ];
 
-// مراحل الإحالة
-const REFERRAL_MILESTONES = [
-    { referrals: 5, reward: 5 },
-    { referrals: 10, reward: 10 },
-    { referrals: 25, reward: 25 },
-    { referrals: 50, reward: 50 },
-    { referrals: 100, reward: 100 },
-    { referrals: 250, reward: 250 },
-    { referrals: 500, reward: 500 }
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. 🎬 منصات الإعلانات (5 منصات احترافية)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AD_PLATFORMS = [
+    {
+        name: "Monetag",
+        show: () => typeof show_10950362 === "function" ? show_10950362() : Promise.reject("Monetag not ready")
+    },
+    {
+        name: "OnClickA",
+        init: () => { if (typeof window.initCdTma === "function") { window.initCdTma({ id: '6118161' }).then(s => window.showOnClickaAd = s); } },
+        show: () => window.showOnClickaAd ? window.showOnClickaAd() : Promise.reject("OnClickA not ready")
+    },
+    {
+        name: "RichAds",
+        init: () => { if (typeof TelegramAdsController !== "undefined") { window.richadsController = new TelegramAdsController(); window.richadsController.initialize({ pubId: "1009657", appId: "7284", debug: false }); } },
+        show: () => new Promise((resolve, reject) => {
+            if (!window.richadsController) reject("RichAds not ready");
+            let resolved = false;
+            let tid = setTimeout(() => { if (!resolved) reject("Timeout"); }, 15000);
+            window.richadsController.triggerInterstitialVideo?.().then(() => { resolved = true; clearTimeout(tid); resolve(); }).catch(reject);
+        })
+    },
+    {
+        name: "Adexium",
+        init: () => { if (typeof AdexiumWidget !== "undefined") { window.adexiumWidget = new AdexiumWidget({ wid: '074d0b62-98c8-430a-8ad9-183693879f0d', adFormat: 'interstitial' }); } },
+        show: () => new Promise((resolve, reject) => {
+            if (!window.adexiumWidget) reject("Adexium not ready");
+            let resolved = false;
+            let tid = setTimeout(() => { if (!resolved) reject("Timeout"); }, 15000);
+            window.adexiumWidget.on("adPlaybackCompleted", () => { if (!resolved) { resolved = true; clearTimeout(tid); resolve(); } });
+            window.adexiumWidget.on("adClosed", () => { if (!resolved) reject("Closed"); });
+            window.adexiumWidget.requestAd("interstitial");
+        })
+    },
+    {
+        name: "AdsGram",
+        init: () => { if (typeof AdsgramController === "undefined" && typeof Adsgram !== "undefined") { window.AdsgramController = Adsgram.init({ blockId: "int-28433" }); } },
+        show: () => new Promise((resolve, reject) => {
+            if (!window.AdsgramController) reject("AdsGram not ready");
+            window.AdsgramController.show().then(resolve).catch(reject);
+        })
+    }
 ];
 
-// ============================================================================
-// 3. LANGUAGES
-// ============================================================================
+// تهيئة المنصات الإعلانية
+function initAdPlatforms() {
+    if (adPlatformsInitialized) return;
+    AD_PLATFORMS.forEach(p => { if (p.init) try { p.init(); } catch(e) { console.warn(p.name + " init failed:", e); } });
+    adPlatformsInitialized = true;
+    console.log("[AdNova] Ad platforms initialized");
+}
+
+// عرض إعلان (يحاول عرض إعلانين متتاليين)
+async function showAd() {
+    const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
+    for (const p of shuffled) {
+        try { await p.show(); return true; } catch(e) { console.error(p.name + " failed:", e); }
+    }
+    return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. 🌍 نظام الترجمة (10 لغات)
+// ═══════════════════════════════════════════════════════════════════════════
 
 const LANGUAGES = [
     { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", dir: "ltr" },
@@ -98,18 +145,14 @@ const LANGUAGES = [
     { code: "fa", name: "Persian", nativeName: "فارسی", flag: "🇮🇷", dir: "rtl" }
 ];
 
-// ============================================================================
-// 4. TRANSLATIONS
-// ============================================================================
-
 const translations = {
     en: {
         appName: "AdNova Network", totalBalance: "Total Balance", availableToWithdraw: "Available to withdraw",
         watchAds: "Watch Ads", completeTasks: "Complete Tasks", inviteFriends: "Invite Friends",
         watchAndEarn: "Watch Ads & Earn", watchAdBtn: "Watch Ad", watchAdBtnSub: "Complete video to earn instantly",
         readyToEarn: "Ready to earn", totalWatched: "Total Watched", adsUnit: "ads", totalEarned: "Total Earned",
-        taskHeaderTitle: "Complete Tasks & Earn Rewards", joinChannels: "Join Channels", joinChannelsDesc: "Earn $0.05 per channel",
-        startBots: "Start Bots", startBotsDesc: "Earn $0.05 per bot", progress: "Progress", joinBtn: "Join", startBtn: "Start",
+        taskHeaderTitle: "Complete Tasks & Earn Rewards", joinChannels: "Join Channels", startBots: "Start Bots",
+        progress: "Progress", joinBtn: "Join", startBtn: "Start", subscribeBtn: "Subscribe", followBtn: "Follow",
         inviteAndEarn: "Invite & Earn", inviteHeroSub: "Copy and share your invite link to earn more",
         yourInviteLink: "Your Invite Link", copy: "Copy", shareWithFriends: "Share", friendsInvited: "Friends Invited",
         earnedFromInvites: "Earned from Invites", paymentMethod: "Payment Method", amount: "Amount",
@@ -117,24 +160,19 @@ const translations = {
         navInvite: "Invite", navWithdraw: "Withdraw", notificationsTitle: "Notifications", clearRead: "Clear Read",
         clearAll: "Clear All", loadingAd: "Loading ad...", adRewardAdded: "+$${amount} added!",
         dailyLimitReached: "Daily limit reached! Come back tomorrow", adError: "Error loading ad",
-        linkCopied: "Link copied!", channelReward: "+$0.05 added!", taskError: "Please join first",
-        minWithdraw: "Minimum withdrawal is $10", exceedsBalance: "Amount exceeds your balance",
-        needInvites: "Need 10 invites to withdraw", withdrawSuccess: "Withdrawal request submitted!",
-        insufficientBalance: "Insufficient balance", chooseLanguage: "Choose your language",
-        welcome: "Welcome", close: "Close", confirm: "Confirm", cancel: "Cancel", processing: "Processing...",
-        success: "Success!", error: "Error!", warning: "Warning!", info: "Info", user: "User",
-        deposit: "Deposit", withdraw: "Withdraw", history: "History", swap: "Swap", staking: "Staking",
-        referral: "Referral", settings: "Settings", logout: "Logout", darkMode: "Dark Mode",
-        language: "Language", notifications: "Notifications", security: "Security", help: "Help",
-        about: "About", terms: "Terms", privacy: "Privacy", contact: "Contact", support: "Support"
+        linkCopied: "Link copied!", taskCompleted: "+$${amount} added!", taskError: "Please join first",
+        insufficientBalance: "Insufficient balance", chooseLanguage: "Choose your language", success: "Success!",
+        error: "Error!", warning: "Warning!", info: "Info", adminPanel: "Admin Panel", users: "Users",
+        pendingWithdrawals: "Pending Withdrawals", approve: "Approve", reject: "Reject", addBalance: "Add Balance",
+        removeBalance: "Remove Balance", blockUser: "Block User", broadcast: "Broadcast", manageTasks: "Manage Tasks"
     },
     ar: {
         appName: "أد نوفا نتورك", totalBalance: "الرصيد الإجمالي", availableToWithdraw: "متاح للسحب",
         watchAds: "مشاهدة الإعلانات", completeTasks: "إكمال المهام", inviteFriends: "دعوة الأصدقاء",
         watchAndEarn: "شاهد واكسب", watchAdBtn: "شاهد إعلان", watchAdBtnSub: "أكمل الفيديو لتكسب فوراً",
         readyToEarn: "جاهز للربح", totalWatched: "إجمالي المشاهدات", adsUnit: "إعلانات", totalEarned: "إجمالي الأرباح",
-        taskHeaderTitle: "أكمل المهام واكسب المكافآت", joinChannels: "الانضمام للقنوات", joinChannelsDesc: "اربح $0.05 لكل قناة",
-        startBots: "تشغيل البوتات", startBotsDesc: "اربح $0.05 لكل بوت", progress: "التقدم", joinBtn: "انضمام", startBtn: "تشغيل",
+        taskHeaderTitle: "أكمل المهام واكسب المكافآت", joinChannels: "الانضمام للقنوات", startBots: "تشغيل البوتات",
+        progress: "التقدم", joinBtn: "انضمام", startBtn: "تشغيل", subscribeBtn: "اشتراك", followBtn: "متابعة",
         inviteAndEarn: "ادع واكسب", inviteHeroSub: "انسخ رابط دعوتك وشاركه لتكسب أكثر", yourInviteLink: "رابط دعوتك",
         copy: "نسخ", shareWithFriends: "مشاركة", friendsInvited: "الأصدقاء المدعوون", earnedFromInvites: "الأرباح من الدعوات",
         paymentMethod: "طريقة الدفع", amount: "المبلغ", availableBalance: "الرصيد المتاح:",
@@ -142,16 +180,15 @@ const translations = {
         notificationsTitle: "الإشعارات", clearRead: "حذف المقروء", clearAll: "حذف الكل",
         loadingAd: "جاري تحميل الإعلان...", adRewardAdded: "+$${amount} أضيفت!",
         dailyLimitReached: "تم الوصول للحد اليومي! عد غداً", adError: "خطأ في تحميل الإعلان",
-        linkCopied: "تم نسخ الرابط!", channelReward: "+$0.05 أضيفت!", taskError: "يرجى الانضمام أولاً",
-        minWithdraw: "الحد الأدنى للسحب هو $10", exceedsBalance: "المبلغ يتجاوز رصيدك",
-        needInvites: "تحتاج 10 دعوات للسحب", withdrawSuccess: "تم إرسال طلب السحب!",
-        insufficientBalance: "رصيد غير كافٍ", chooseLanguage: "اختر لغتك", welcome: "مرحباً",
-        close: "إغلاق", confirm: "تأكيد", cancel: "إلغاء", processing: "جاري المعالجة...",
-        success: "تم بنجاح!", error: "خطأ!", warning: "تحذير!", info: "معلومات", user: "مستخدم"
+        linkCopied: "تم نسخ الرابط!", taskCompleted: "+$${amount} أضيفت!", taskError: "يرجى الانضمام أولاً",
+        insufficientBalance: "رصيد غير كافٍ", chooseLanguage: "اختر لغتك", success: "تم بنجاح!",
+        error: "خطأ!", warning: "تحذير!", info: "معلومات", adminPanel: "لوحة المشرف", users: "المستخدمين",
+        pendingWithdrawals: "طلبات السحب", approve: "موافقة", reject: "رفض", addBalance: "إضافة رصيد",
+        removeBalance: "خصم رصيد", blockUser: "حظر المستخدم", broadcast: "بث جماعي", manageTasks: "إدارة المهام"
     }
 };
 
-// تكملة اللغات المتبقية
+// إكمال باقي اللغات
 for (let lang of ["es", "fr", "ru", "pt", "hi", "id", "tr", "fa"]) {
     if (!translations[lang]) translations[lang] = { ...translations.en };
 }
@@ -176,21 +213,10 @@ function applyLanguage() {
         const key = el.getAttribute("data-i18n");
         if (key) el.textContent = t(key);
     });
-    const splashTitle = document.querySelector(".splash-sub span:not(.splash-deco)");
-    if (splashTitle) splashTitle.textContent = t("appName");
     document.title = t("appName") + " - Earn Real Money";
     const langBtn = document.getElementById("langBtnLabel");
     if (langBtn) langBtn.textContent = lang?.name || "English";
     refreshCurrentPage();
-}
-
-function toggleLanguage() {
-    const codes = ["en", "ar", "es", "fr", "ru", "pt", "hi", "id", "tr", "fa"];
-    const idx = (codes.indexOf(currentLanguage) + 1) % codes.length;
-    currentLanguage = codes[idx];
-    localStorage.setItem("adnova_lang", currentLanguage);
-    applyLanguage();
-    showToast(t("success"), "success");
 }
 
 function openLanguageModal() {
@@ -225,60 +251,9 @@ function setLanguage(langCode) {
     showToast(t("success"), "success");
 }
 
-// ============================================================================
-// 5. AD PLATFORMS (منصات إعلانية احترافية)
-// ============================================================================
-
-const AD_PLATFORMS = [
-    {
-        name: "Monetag",
-        show: () => typeof show_10950362 === "function" ? show_10950362() : Promise.reject("Monetag not ready")
-    },
-    {
-        name: "OnClickA",
-        init: () => { if (typeof window.initCdTma === "function") { window.initCdTma({ id: '6118161' }).then(s => window.showOnClickaAd = s); } },
-        show: () => window.showOnClickaAd ? window.showOnClickaAd() : Promise.reject("OnClickA not ready")
-    },
-    {
-        name: "RichAds",
-        init: () => { if (typeof TelegramAdsController !== "undefined") { window.richadsController = new TelegramAdsController(); window.richadsController.initialize({ pubId: "1009657", appId: "7284", debug: false }); } },
-        show: () => new Promise((resolve, reject) => {
-            if (!window.richadsController) reject("RichAds not ready");
-            let resolved = false; let tid = setTimeout(() => { if (!resolved) reject("Timeout"); }, 15000);
-            window.richadsController.triggerInterstitialVideo?.().then(() => { resolved = true; clearTimeout(tid); resolve(); }).catch(reject);
-        })
-    },
-    {
-        name: "Adexium",
-        init: () => { if (typeof AdexiumWidget !== "undefined") { window.adexiumWidget = new AdexiumWidget({ wid: '074d0b62-98c8-430a-8ad9-183693879f0d', adFormat: 'interstitial' }); } },
-        show: () => new Promise((resolve, reject) => {
-            if (!window.adexiumWidget) reject("Adexium not ready");
-            let resolved = false; let tid = setTimeout(() => { if (!resolved) reject("Timeout"); }, 15000);
-            window.adexiumWidget.on("adPlaybackCompleted", () => { if (!resolved) { resolved = true; clearTimeout(tid); resolve(); } });
-            window.adexiumWidget.on("adClosed", () => { if (!resolved) reject("Closed"); });
-            window.adexiumWidget.requestAd("interstitial");
-        })
-    }
-];
-
-function initAdPlatforms() {
-    if (adPlatformsInitialized) return;
-    AD_PLATFORMS.forEach(p => { if (p.init) try { p.init(); } catch(e) {} });
-    adPlatformsInitialized = true;
-    console.log("[AdNova] Ad platforms initialized");
-}
-
-async function showAd() {
-    const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
-    for (const p of shuffled) {
-        try { await p.show(); return true; } catch(e) { console.error(p.name + " failed:", e); }
-    }
-    return false;
-}
-
-// ============================================================================
-// 6. FIREBASE + LOCAL STORAGE
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. 🔥 بيانات المستخدم (Firebase + LocalStorage)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function getTelegramUserId() {
     return tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("adnova_user_id") || "guest_" + Math.random().toString(36).substr(2, 9);
@@ -290,6 +265,17 @@ function getUserName() {
 
 function getUserPhotoUrl() {
     return tg?.initDataUnsafe?.user?.photo_url || null;
+}
+
+async function loadAppConfig() {
+    try {
+        const res = await fetch("/api/config");
+        const data = await res.json();
+        if (data) {
+            APP_CONFIG = { ...APP_CONFIG, ...data };
+            console.log("[AdNova] Config loaded:", APP_CONFIG);
+        }
+    } catch(e) { console.error("Config error:", e); }
 }
 
 async function loadUserData() {
@@ -306,7 +292,7 @@ async function loadUserData() {
             adsWatched: 0, adsToday: 0, lastAdDate: today, inviteCount: 0,
             referredBy: null, referrals: [], withdrawals: [], claimedMilestones: [],
             notifications: [{ id: Date.now(), title: "🎉 Welcome!", message: `+$${APP_CONFIG.welcomeBonus} bonus!`, type: "success", read: false, timestamp: new Date().toISOString() }],
-            tonWallet: null, withdrawBlocked: false
+            tonWallet: null, withdrawBlocked: false, completedTasks: []
         };
         saveUserData();
         await processReferral();
@@ -318,36 +304,34 @@ async function loadUserData() {
         saveUserData();
     }
     
-    await loadUserFromFirebase();
+    userCompletedTasks = currentUser.completedTasks || [];
+    
+    await syncWithFirebase();
     updateUI();
-    loadTasks();
+    await loadTasksFromFirebase();
     return currentUser;
 }
 
 function saveUserData() {
+    currentUser.completedTasks = userCompletedTasks;
     localStorage.setItem(`adnova_user_${currentUserId}`, JSON.stringify(currentUser));
-    saveUserToFirebase();
+    syncToFirebase();
 }
 
-async function loadUserFromFirebase() {
+async function syncWithFirebase() {
     try {
         const res = await fetch(`/api/users/${currentUserId}`);
         const data = await res.json();
         if (data.success && data.data) {
             currentUser = { ...currentUser, ...data.data };
-            if (data.data.balance !== undefined) currentUser.balance = data.data.balance;
-            if (data.data.totalEarned !== undefined) currentUser.totalEarned = data.data.totalEarned;
-            if (data.data.adsWatched !== undefined) currentUser.adsWatched = data.data.adsWatched;
-            if (data.data.inviteCount !== undefined) currentUser.inviteCount = data.data.inviteCount;
-            if (data.data.referrals) currentUser.referrals = data.data.referrals;
-            if (data.data.withdrawals) currentUser.withdrawals = data.data.withdrawals;
+            userCompletedTasks = currentUser.completedTasks || [];
             saveUserData();
             updateUI();
         }
-    } catch(e) { console.error("Firebase load error:", e); }
+    } catch(e) { console.error("Firebase sync error:", e); }
 }
 
-async function saveUserToFirebase() {
+async function syncToFirebase() {
     try {
         await fetch(`/api/users/${currentUserId}`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -356,9 +340,9 @@ async function saveUserToFirebase() {
     } catch(e) { console.error("Firebase save error:", e); }
 }
 
-// ============================================================================
-// 7. REFERRAL SYSTEM
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. 🔗 نظام الإحالة (Referral System)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function getReferralFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -366,6 +350,10 @@ function getReferralFromUrl() {
     if (!ref && tg?.initDataUnsafe?.start_param) ref = tg.initDataUnsafe.start_param;
     if (!ref) ref = urlParams.get("ref");
     return ref;
+}
+
+function getReferralLink() {
+    return `https://t.me/${APP_CONFIG.botUsername}/app?startapp=${currentUserId}`;
 }
 
 async function processReferral() {
@@ -392,13 +380,21 @@ async function processReferral() {
     } catch(e) { console.error("Referral error:", e); }
 }
 
-function getReferralLink() { return `https://t.me/${APP_CONFIG.botUsername}/app?startapp=${currentUserId}`; }
-function copyInviteLink() { const link = document.getElementById("inviteLink")?.textContent; if (link) { navigator.clipboard.writeText(link); showToast(t("linkCopied"), "success"); } }
-function shareInviteLink() { const link = getReferralLink(); const text = `Join AdNova Network!\n\n${link}`; tg?.openTelegramLink ? tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`) : window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, "_blank"); }
+function copyInviteLink() {
+    const link = getReferralLink();
+    navigator.clipboard.writeText(link);
+    showToast(t("linkCopied"), "success");
+}
 
-// ============================================================================
-// 8. ADS SYSTEM
-// ============================================================================
+function shareInviteLink() {
+    const link = getReferralLink();
+    const text = `Join AdNova Network and earn real money!\n\n${link}`;
+    tg?.openTelegramLink ? tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`) : window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, "_blank");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. 🎬 مشاهدة الإعلانات (مع رصيد مباشر)
+// ═══════════════════════════════════════════════════════════════════════════
 
 async function watchAd() {
     if (adPlaying) { showToast("Ad playing...", "warning"); return; }
@@ -411,22 +407,32 @@ async function watchAd() {
     showToast(t("loadingAd"), "info");
     initAdPlatforms();
     
-    let success = false;
+    // عرض إعلانين متتاليين
+    let successCount = 0;
     for (let i = 0; i < 2; i++) {
         const shown = await showAd();
-        if (!shown) { showToast(t("adError"), "error"); adPlaying = false; if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn"); } return; }
-        success = true;
+        if (shown) successCount++;
+        if (!shown) { showToast(t("adError"), "error"); break; }
     }
     
-    if (success) {
+    if (successCount === 2) {
+        // إضافة الرصيد مباشرة
         currentUser.balance += APP_CONFIG.adReward;
         currentUser.totalEarned += APP_CONFIG.adReward;
         currentUser.adsWatched++;
         currentUser.adsToday++;
         saveUserData();
         updateUI();
-        showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
         showEarnToast();
+        showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
+        
+        // مزامنة مع Firebase
+        await fetch("/api/reward", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ initData: tg?.initDataUnsafe || {} })
+        }).catch(e => console.error);
+    } else {
+        showToast("Ad failed, please try again", "error");
     }
     
     adPlaying = false;
@@ -442,104 +448,114 @@ function showEarnToast() {
     setTimeout(() => { toast.classList.remove("show"); toast.classList.add("hide"); }, 3000);
 }
 
-// ============================================================================
-// 9. TASKS SYSTEM (مع عداد 30 ثانية للبوتات)
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 9. 📋 نظام المهام المتجددة (Dynamic Tasks)
+// ═══════════════════════════════════════════════════════════════════════════
 
-function loadTasks() {
-    const saved = localStorage.getItem(`adnova_tasks_${currentUserId}`);
-    if (saved) {
-        const p = JSON.parse(saved);
-        TASKS_CONFIG.channels.forEach(ch => { ch.completed = p.channels?.includes(ch.id) || false; });
-        TASKS_CONFIG.bots.forEach(bt => { bt.completed = p.bots?.includes(bt.id) || false; });
-    }
-}
-
-function saveTasks() {
-    const p = { channels: TASKS_CONFIG.channels.filter(c => c.completed).map(c => c.id), bots: TASKS_CONFIG.bots.filter(b => b.completed).map(b => b.id) };
-    localStorage.setItem(`adnova_tasks_${currentUserId}`, JSON.stringify(p));
+async function loadTasksFromFirebase() {
+    try {
+        const res = await fetch("/api/tasks");
+        const data = await res.json();
+        if (data.success && data.tasks) {
+            tasksList = data.tasks;
+            renderTasks();
+        }
+    } catch(e) { console.error("Load tasks error:", e); }
 }
 
 function renderTasks() {
     const container = document.getElementById("tasksContainer");
     if (!container) return;
-    let html = "", chDone = 0, btDone = 0, total = 0;
-    html += `<div class="tasks-section"><h3><i class="fab fa-telegram"></i> ${t("joinChannels")}</h3>`;
-    TASKS_CONFIG.channels.forEach(ch => { if (ch.completed) chDone++; total += ch.reward;
-        html += `<div class="task-card"><div class="task-icon"><i class="fab fa-telegram"></i></div><div class="task-info"><h4>${ch.name}</h4><p>@${ch.username}</p></div><div class="task-reward">+$${ch.reward}</div><button class="task-btn ${ch.completed ? "completed" : ""}" onclick="verifyChannel('${ch.id}', '${ch.username}')" ${ch.completed ? "disabled" : ""}>${ch.completed ? "✓ " + t("copy") : t("joinBtn")}</button></div>`;
-    });
-    html += `</div><div class="tasks-section"><h3><i class="fas fa-robot"></i> ${t("startBots")}</h3>`;
-    TASKS_CONFIG.bots.forEach(bt => { if (bt.completed) btDone++; total += bt.reward;
-        html += `<div class="task-card"><div class="task-icon"><i class="fas fa-robot"></i></div><div class="task-info"><h4>${bt.name}</h4><p>@${bt.username}</p></div><div class="task-reward">+$${bt.reward}</div><button class="task-btn ${bt.completed ? "completed" : ""}" onclick="startBot('${bt.id}', '${bt.username}')" ${bt.completed ? "disabled" : ""}>${bt.completed ? "✓ " + t("copy") : t("startBtn")}</button></div>`;
-    });
-    html += `</div>`;
+    
+    if (tasksList.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-tasks"></i><p>No tasks available</p></div>';
+        return;
+    }
+    
+    let html = '<div class="tasks-grid">';
+    for (const task of tasksList) {
+        const isCompleted = userCompletedTasks.includes(task.id);
+        let icon = "fab fa-telegram";
+        let actionText = t("joinBtn");
+        let action = `verifyTask('${task.id}', '${task.type}', '${task.username || task.link || ''}', ${task.reward})`;
+        
+        if (task.type === "youtube") {
+            icon = "fab fa-youtube";
+            actionText = t("subscribeBtn");
+        } else if (task.type === "tiktok") {
+            icon = "fab fa-tiktok";
+            actionText = t("followBtn");
+        } else if (task.type === "telegram_bot") {
+            icon = "fab fa-telegram-plane";
+            actionText = t("startBtn");
+        }
+        
+        html += `
+            <div class="task-card ${isCompleted ? 'completed' : ''}">
+                <div class="task-left">
+                    <div class="task-icon"><i class="${icon}"></i></div>
+                    <div class="task-info">
+                        <h4>${task.name}</h4>
+                        <p>${task.username || task.link || ''}</p>
+                    </div>
+                </div>
+                <div class="task-right">
+                    <div class="task-reward">+$${task.reward.toFixed(2)}</div>
+                    ${!isCompleted ? 
+                        `<button class="task-btn" onclick="${action}">${actionText}</button>` :
+                        `<span class="task-completed-badge">✅ Completed</span>`
+                    }
+                </div>
+            </div>
+        `;
+    }
+    html += '</div>';
     container.innerHTML = html;
-    const totalTasks = TASKS_CONFIG.channels.length + TASKS_CONFIG.bots.length;
-    const completed = chDone + btDone;
-    document.getElementById("channelProgressCount") && (document.getElementById("channelProgressCount").textContent = `${chDone}/${TASKS_CONFIG.channels.length}`);
-    document.getElementById("botProgressCount") && (document.getElementById("botProgressCount").textContent = `${btDone}/${TASKS_CONFIG.bots.length}`);
-    const fill = document.getElementById("tasksProgressFill");
-    if (fill) fill.style.width = `${(completed/totalTasks)*100}%`;
-    document.getElementById("tasksTotalReward") && (document.getElementById("tasksTotalReward").textContent = `$${total.toFixed(2)}`);
 }
 
-async function verifyChannel(channelId, username) {
-    window.open(`https://t.me/${username}`, "_blank");
+async function verifyTask(taskId, type, identifier, reward) {
+    // فتح الرابط للمستخدم
+    let url = "";
+    if (type === "telegram_channel") url = `https://t.me/${identifier}`;
+    else if (type === "telegram_bot") url = `https://t.me/${identifier}`;
+    else if (type === "youtube") url = identifier.startsWith("http") ? identifier : `https://youtube.com/@${identifier}`;
+    else if (type === "tiktok") url = identifier.startsWith("http") ? identifier : `https://tiktok.com/@${identifier}`;
+    
+    if (url) window.open(url, "_blank");
+    
     showToast("Verifying membership...", "info");
+    
+    // انتظار 3 ثوانٍ ثم التحقق عبر البوت
     setTimeout(async () => {
         try {
             const res = await fetch("/api/verify-channel", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: currentUserId, channelId, username })
+                body: JSON.stringify({ userId: currentUserId, channelUsername: identifier, taskId, reward })
             });
             const data = await res.json();
+            
             if (data.success) {
-                const ch = TASKS_CONFIG.channels.find(c => c.id === channelId);
-                if (ch && !ch.completed) {
-                    ch.completed = true;
-                    saveTasks();
-                    currentUser.balance += ch.reward;
-                    currentUser.totalEarned += ch.reward;
+                if (!userCompletedTasks.includes(taskId)) {
+                    userCompletedTasks.push(taskId);
+                    currentUser.balance += reward;
+                    currentUser.totalEarned += reward;
                     saveUserData();
                     updateUI();
                     renderTasks();
-                    showToast(t("channelReward"), "success");
+                    showToast(t("taskCompleted", { amount: reward.toFixed(2) }), "success");
                 }
-            } else { showToast("Please join the channel first", "error"); }
-        } catch(e) { showToast("Verification error", "error"); }
+            } else {
+                showToast(t("taskError"), "error");
+            }
+        } catch(e) {
+            showToast("Verification error", "error");
+        }
     }, 3000);
 }
 
-function startBot(botId, username) {
-    window.open(`https://t.me/${username}`, "_blank");
-    showToast("Starting bot... Reward in 30 seconds", "info");
-    let seconds = 30;
-    const btn = event?.target;
-    if (btn) { btn.disabled = true; btn.textContent = `Wait ${seconds}s`; }
-    const interval = setInterval(() => {
-        seconds--;
-        if (btn) btn.textContent = `Wait ${seconds}s`;
-        if (seconds <= 0) {
-            clearInterval(interval);
-            const bot = TASKS_CONFIG.bots.find(b => b.id === botId);
-            if (bot && !bot.completed) {
-                bot.completed = true;
-                saveTasks();
-                currentUser.balance += bot.reward;
-                currentUser.totalEarned += bot.reward;
-                saveUserData();
-                updateUI();
-                renderTasks();
-                showToast(t("channelReward"), "success");
-            }
-            if (btn) { btn.disabled = false; btn.textContent = t("startBtn"); }
-        }
-    }, 1000);
-}
-
-// ============================================================================
-// 10. WITHDRAW SYSTEM
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 10. 💸 نظام السحب (مع SBP)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawMethods() {
     const container = document.getElementById("withdrawMethodsContainer");
@@ -567,16 +583,29 @@ function updateDestinationLabel() {
     if (inputEl && method) inputEl.placeholder = method.placeholder;
 }
 
+function validateDestination() {
+    const method = WITHDRAWAL_METHODS.find(m => m.id === selectedWithdrawMethod);
+    const destination = document.getElementById("wdDestInput")?.value.trim();
+    if (!method || !destination) return false;
+    if (method.regex && !method.regex.test(destination)) {
+        showToast(`Invalid ${method.name} address format`, "warning");
+        return false;
+    }
+    return true;
+}
+
 async function submitWithdraw() {
     const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
     const destination = document.getElementById("wdDestInput")?.value.trim();
     
-    if (!amount || amount < APP_CONFIG.minWithdraw) { showToast(t("minWithdraw"), "warning"); return; }
+    if (!amount || amount < APP_CONFIG.minWithdraw) { showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning"); return; }
     if (amount > currentUser.balance) { showToast(t("insufficientBalance"), "warning"); return; }
-    if (currentUser.inviteCount < APP_CONFIG.requiredReferrals) { showToast(t("needInvites"), "warning"); return; }
+    if (currentUser.inviteCount < APP_CONFIG.requiredReferrals) { showToast(`Need ${APP_CONFIG.requiredReferrals} referrals to withdraw`, "warning"); return; }
     if (!destination) { showToast("Please enter destination", "warning"); return; }
+    if (!validateDestination()) return;
     
-    if (!confirm(`Submit withdrawal of $${amount.toFixed(2)} via ${selectedWithdrawMethod}?`)) return;
+    const confirmMsg = confirm(`Submit withdrawal of $${amount.toFixed(2)} via ${selectedWithdrawMethod.toUpperCase()}?`);
+    if (!confirmMsg) return;
     
     const btn = document.getElementById("submitWithdrawBtn");
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; }
@@ -592,83 +621,298 @@ async function submitWithdraw() {
             currentUser.withdrawals.unshift({ id: Date.now(), amount, method: selectedWithdrawMethod, destination, status: "pending", date: new Date().toISOString() });
             saveUserData();
             updateUI();
-            showToast(t("withdrawSuccess"), "success");
+            showToast("Withdrawal request submitted!", "success");
             document.getElementById("wdAmountInput").value = "";
             document.getElementById("wdDestInput").value = "";
-            showConfirmModal("Withdrawal Request", `Your request for $${amount.toFixed(2)} has been submitted. Our team will process it within 24-48 hours.`, "success");
         } else { showToast(data.error || t("error"), "error"); }
     } catch(e) { showToast(t("error"), "error"); }
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> ' + t("submitWithdrawal"); }
 }
 
-// ============================================================================
-// 11. MODALS (نوافذ منبثقة احترافية)
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. 👑 لوحة المشرف المتطورة (Admin Panel)
+// ═══════════════════════════════════════════════════════════════════════════
 
-function showConfirmModal(title, message, type = "info") {
-    let modal = document.getElementById("confirmModal");
-    if (!modal) {
-        modal = document.createElement("div");
-        modal.id = "confirmModal";
-        modal.className = "modal";
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 320px; text-align: center;">
-                <div class="modal-icon" id="confirmModalIcon">❓</div>
-                <h3 id="confirmModalTitle">Confirm</h3>
-                <p id="confirmModalMessage">Are you sure?</p>
-                <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 20px;">
-                    <button class="btn-cancel" onclick="closeConfirmModal()" style="flex:1; padding: 10px; background: #e2e8f0; border: none; border-radius: 10px; cursor: pointer;">Cancel</button>
-                    <button class="btn-confirm" id="confirmModalBtn" style="flex:1; padding: 10px; background: linear-gradient(135deg, #d4af37, #b8920e); border: none; border-radius: 10px; color: white; cursor: pointer;">Confirm</button>
+let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0, totalEarned: 0 };
+let pendingWithdrawals = [];
+let allUsers = [];
+let adminTasks = [];
+
+function checkAdminAndShowCrown() {
+    if (APP_CONFIG.adminId && currentUserId === APP_CONFIG.adminId.toString()) {
+        const crownBtn = document.getElementById("adminCrownBtn");
+        if (crownBtn) crownBtn.style.display = "flex";
+    }
+}
+
+function showAdminAuth() { document.getElementById("adminAuthModal")?.classList.add("show"); }
+
+async function verifyAdminPassword() {
+    const pwd = document.getElementById("adminPasswordInput")?.value;
+    const res = await fetch("/api/admin/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pwd }) });
+    const data = await res.json();
+    if (data.success) { adminAuthenticated = true; document.getElementById("adminAuthModal")?.classList.remove("show"); showAdminPanel(); }
+    else { document.getElementById("adminAuthError")?.style.setProperty("display", "block"); }
+}
+
+async function showAdminPanel() {
+    if (!adminAuthenticated) { showAdminAuth(); return; }
+    document.getElementById("adminPanel")?.classList.remove("hidden");
+    await loadAdminData();
+    renderAdminDashboard();
+}
+
+function closeAdminPanel() { document.getElementById("adminPanel")?.classList.add("hidden"); }
+
+async function loadAdminData() {
+    try {
+        const statsRes = await fetch("/api/admin/stats", { headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` } });
+        const statsData = await statsRes.json();
+        if (statsData.success) adminStats = statsData.stats;
+        
+        const withdrawalsRes = await fetch("/api/admin/pending-withdrawals", { headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` } });
+        const withdrawalsData = await withdrawalsRes.json();
+        if (withdrawalsData.success) pendingWithdrawals = withdrawalsData.withdrawals || [];
+        
+        const usersRes = await fetch("/api/admin/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` } });
+        const usersData = await usersRes.json();
+        if (usersData.success) allUsers = usersData.users || [];
+        
+        const tasksRes = await fetch("/api/tasks");
+        const tasksData = await tasksRes.json();
+        if (tasksData.success) adminTasks = tasksData.tasks || [];
+    } catch(e) { console.error("Load admin data error:", e); }
+}
+
+function renderAdminDashboard() {
+    const container = document.getElementById("adminContent");
+    if (!container) return;
+    container.innerHTML = `
+        <div class="admin-stats-grid">
+            <div class="admin-stat-card" onclick="showAdminSection('stats')">
+                <i class="fas fa-users"></i>
+                <div class="stat-value">${adminStats.totalUsers || 0}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="admin-stat-card" onclick="showAdminSection('pending')">
+                <i class="fas fa-clock"></i>
+                <div class="stat-value">${adminStats.pendingWithdrawals || 0}</div>
+                <div class="stat-label">Pending Withdrawals</div>
+            </div>
+            <div class="admin-stat-card" onclick="showAdminSection('stats')">
+                <i class="fas fa-dollar-sign"></i>
+                <div class="stat-value">$${(adminStats.totalBalance || 0).toFixed(2)}</div>
+                <div class="stat-label">Total Balance</div>
+            </div>
+        </div>
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showAdminSection('pending')">💸 Pending</button>
+            <button class="admin-tab" onclick="showAdminSection('users')">👥 Users</button>
+            <button class="admin-tab" onclick="showAdminSection('tasks')">📋 Tasks</button>
+            <button class="admin-tab" onclick="showAdminSection('broadcast')">📢 Broadcast</button>
+        </div>
+        <div id="adminSectionContent"></div>
+    `;
+    showAdminSection("pending");
+}
+
+function showAdminSection(section) {
+    const container = document.getElementById("adminSectionContent");
+    if (!container) return;
+    if (section === "pending") renderPendingWithdrawals(container);
+    else if (section === "users") renderUsersList(container);
+    else if (section === "tasks") renderTasksManagement(container);
+    else if (section === "broadcast") renderBroadcastSection(container);
+}
+
+function renderPendingWithdrawals(container) {
+    if (pendingWithdrawals.length === 0) { container.innerHTML = '<div class="empty-state">No pending withdrawals</div>'; return; }
+    let html = "";
+    for (const w of pendingWithdrawals) {
+        const date = new Date(w.createdAt?.toDate?.() || w.createdAt);
+        html += `
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span>👤 ${w.userName || w.userId}</span>
+                    <span class="withdraw-amount">$${w.amount?.toFixed(2)}</span>
                 </div>
-                <button class="close-btn" onclick="closeConfirmModal()" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+                <div class="admin-card-details">
+                    <div>ID: ${w.userId}</div>
+                    <div>👥 Invites: ${w.userInvites || 0}</div>
+                    <div>Method: ${w.method}</div>
+                    <div>Destination: ${w.destination}</div>
+                    <div>Date: ${date.toLocaleString()}</div>
+                </div>
+                <div class="admin-card-actions">
+                    <button class="btn-approve" onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})">✅ Approve</button>
+                    <button class="btn-reject" onclick="rejectWithdrawal('${w.id}', '${w.userId}', ${w.amount})">❌ Reject</button>
+                </div>
             </div>
         `;
-        document.body.appendChild(modal);
     }
-    const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
-    document.getElementById("confirmModalIcon").textContent = icons[type] || "❓";
-    document.getElementById("confirmModalTitle").textContent = title;
-    document.getElementById("confirmModalMessage").innerHTML = message;
-    modal.classList.add("show");
-    return new Promise((resolve) => {
-        const btn = document.getElementById("confirmModalBtn");
-        const oldClick = btn.onclick;
-        btn.onclick = () => { modal.classList.remove("show"); resolve(true); };
-        const closeFn = () => { modal.classList.remove("show"); resolve(false); };
-        document.querySelectorAll("#confirmModal .close-btn, #confirmModal .btn-cancel").forEach(el => el.onclick = closeFn);
+    container.innerHTML = html;
+}
+
+function renderUsersList(container) {
+    if (allUsers.length === 0) { container.innerHTML = '<div class="empty-state">No users found</div>'; return; }
+    let html = '<div class="search-bar"><input type="text" id="userSearchInput" placeholder="Search by ID or name..." onkeyup="filterUsers()"></div>';
+    for (const u of allUsers) {
+        html += `
+            <div class="admin-card user-card" data-user-id="${u.userId}" data-user-name="${u.userName}">
+                <div class="admin-card-header">
+                    <span>👤 ${u.userName || "User"}</span>
+                    <span class="user-balance">💰 $${u.balance?.toFixed(2) || "0.00"}</span>
+                </div>
+                <div class="admin-card-details">
+                    <div>ID: ${u.userId}</div>
+                    <div>👥 Invites: ${u.inviteCount || 0} | 📺 Ads: ${u.adsWatched || 0}</div>
+                </div>
+                <div class="admin-card-actions">
+                    <button class="btn-add" onclick="adminAddBalance('${u.userId}')">➕ Add</button>
+                    <button class="btn-remove" onclick="adminRemoveBalance('${u.userId}')">➖ Remove</button>
+                    <button class="btn-block" onclick="adminBlockUser('${u.userId}')">🔒 Block</button>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+function renderTasksManagement(container) {
+    let html = `
+        <div class="admin-section-header">
+            <h4>Manage Tasks</h4>
+            <button class="btn-add-task" onclick="showAddTaskModal()">➕ Add New Task</button>
+        </div>
+        <div class="tasks-management-list">
+    `;
+    for (const task of adminTasks) {
+        html += `
+            <div class="task-management-card">
+                <div class="task-info">
+                    <span class="task-type">${task.type}</span>
+                    <strong>${task.name}</strong>
+                    <span>${task.username || task.link || ''}</span>
+                    <span class="task-reward-admin">$${task.reward.toFixed(2)}</span>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-edit" onclick="editTask('${task.id}')">✏️ Edit</button>
+                    <button class="btn-delete" onclick="deleteTask('${task.id}')">🗑️ Delete</button>
+                </div>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+function renderBroadcastSection(container) {
+    container.innerHTML = `
+        <div class="broadcast-section">
+            <textarea id="broadcastMessage" placeholder="Enter your message to broadcast to all users..." rows="4"></textarea>
+            <button class="btn-broadcast" onclick="sendBroadcast()">📢 Send Broadcast</button>
+            <p class="broadcast-hint">This will send a notification to all ${adminStats.totalUsers || 0} users</p>
+        </div>
+    `;
+}
+
+async function approveWithdrawal(id, userId, amount) {
+    const token = prompt("Enter admin password to approve:");
+    if (!token) return;
+    const res = await fetch("/api/admin/approve-withdrawal", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ withdrawalId: id })
+    });
+    const data = await res.json();
+    if (data.success) { showToast("Withdrawal approved!", "success"); location.reload(); }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+async function rejectWithdrawal(id, userId, amount) {
+    const reason = prompt("Enter rejection reason:");
+    if (!reason) return;
+    const token = prompt("Enter admin password:");
+    if (!token) return;
+    const res = await fetch("/api/admin/reject-withdrawal", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ withdrawalId: id, reason })
+    });
+    const data = await res.json();
+    if (data.success) { showToast("Withdrawal rejected!", "success"); location.reload(); }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+async function adminAddBalance(userId) {
+    const amount = parseFloat(prompt("Amount to add (USD):"));
+    if (isNaN(amount) || amount <= 0) return;
+    const token = prompt("Enter admin password:");
+    if (!token) return;
+    const res = await fetch("/api/admin/add-balance", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ userId, amount })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`$${amount} added!`, "success"); location.reload(); }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+async function adminRemoveBalance(userId) {
+    const amount = parseFloat(prompt("Amount to remove (USD):"));
+    if (isNaN(amount) || amount <= 0) return;
+    const token = prompt("Enter admin password:");
+    if (!token) return;
+    const res = await fetch("/api/admin/remove-balance", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ userId, amount })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`$${amount} removed!`, "success"); location.reload(); }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+async function adminBlockUser(userId) {
+    if (!confirm("⚠️ PERMANENTLY block this user from withdrawals?")) return;
+    const token = prompt("Enter admin password:");
+    if (!token) return;
+    const res = await fetch("/api/admin/block-user", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ userId })
+    });
+    const data = await res.json();
+    if (data.success) { showToast("User blocked!", "success"); location.reload(); }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+async function sendBroadcast() {
+    const message = document.getElementById("broadcastMessage")?.value;
+    if (!message) { showToast("Enter a message", "warning"); return; }
+    const token = prompt("Enter admin password:");
+    if (!token) return;
+    const res = await fetch("/api/admin/broadcast", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`Broadcast sent to ${data.notifiedCount} users!`, "success"); document.getElementById("broadcastMessage").value = ""; }
+    else { showToast("Failed: " + data.error, "error"); }
+}
+
+function filterUsers() {
+    const term = document.getElementById("userSearchInput")?.value.toLowerCase();
+    document.querySelectorAll(".user-card").forEach(card => {
+        const match = card.getAttribute("data-user-id")?.toLowerCase().includes(term) || card.getAttribute("data-user-name")?.toLowerCase().includes(term);
+        card.style.display = match ? "block" : "none";
     });
 }
 
-function closeConfirmModal() {
-    document.getElementById("confirmModal")?.classList.remove("show");
-}
-
-function showToast(message, type = "success") {
-    const container = document.getElementById("toastContainer");
-    if (!container) return;
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<div class="toast-inner"><span class="toast-icon">${type === "success" ? "✓" : "ℹ"}</span><span class="toast-msg">${message}</span><div class="toast-bar"></div></div>`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-// ============================================================================
-// 12. NOTIFICATIONS SYSTEM
-// ============================================================================
-
-function addNotification(title, message, type = "info") {
-    if (!currentUser) return;
-    currentUser.notifications.unshift({ id: Date.now(), title, message, type, read: false, timestamp: new Date().toISOString() });
-    if (currentUser.notifications.length > 50) currentUser.notifications = currentUser.notifications.slice(0, 50);
-    saveUserData();
-    updateNotificationBadge();
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// 12. 🔔 نظام الإشعارات (Notifications)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
     const badge = document.getElementById("notificationBadge");
     if (badge && currentUser) {
-        const unread = currentUser.notifications.filter(n => !n.read).length;
+        const unread = currentUser.notifications?.filter(n => !n.read).length || 0;
         badge.textContent = unread;
         badge.style.display = unread > 0 ? "flex" : "none";
     }
@@ -680,39 +924,44 @@ function renderNotifications() {
     const notifs = currentUser.notifications || [];
     if (notifs.length === 0) { container.innerHTML = '<div class="empty-state">No notifications</div>'; return; }
     let html = "";
-    notifs.forEach(n => {
+    for (const n of notifs) {
         const date = new Date(n.timestamp);
-        const formatted = date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        html += `<div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead(${n.id})"><div class="notification-icon ${n.type}"><i class="fas fa-bell"></i></div><div class="notification-content"><div class="notification-title">${n.title}</div><div class="notification-message">${n.message}</div><div class="notification-time">${formatted}</div></div></div>`;
-    });
+        html += `
+            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
+                <div class="notification-icon ${n.type}"><i class="fas fa-bell"></i></div>
+                <div class="notification-content">
+                    <div class="notification-title">${n.title}</div>
+                    <div class="notification-message">${n.message}</div>
+                    <div class="notification-time">${date.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+    }
     container.innerHTML = html;
 }
 
-function markNotificationRead(id) { const n = currentUser.notifications?.find(n => n.id == id); if (n && !n.read) { n.read = true; saveUserData(); updateNotificationBadge(); renderNotifications(); } }
-function clearReadNotifications() { if (!currentUser.notifications) return; currentUser.notifications = currentUser.notifications.filter(n => !n.read); saveUserData(); updateNotificationBadge(); renderNotifications(); showToast("Cleared read notifications", "success"); }
-function clearAllNotifications() { currentUser.notifications = []; saveUserData(); updateNotificationBadge(); renderNotifications(); showToast("All notifications cleared", "success"); }
+function markNotificationRead(id) {
+    const n = currentUser.notifications?.find(n => n.id == id);
+    if (n && !n.read) { n.read = true; saveUserData(); updateNotificationBadge(); renderNotifications(); }
+}
+
+function clearReadNotifications() {
+    if (!currentUser.notifications) return;
+    currentUser.notifications = currentUser.notifications.filter(n => !n.read);
+    saveUserData(); updateNotificationBadge(); renderNotifications(); showToast("Cleared read notifications", "success");
+}
+
+function clearAllNotifications() {
+    currentUser.notifications = [];
+    saveUserData(); updateNotificationBadge(); renderNotifications(); showToast("All notifications cleared", "success");
+}
+
 function showNotificationsModal() { renderNotifications(); document.getElementById("notificationsModal")?.classList.add("show"); }
 function closeNotificationsModal() { document.getElementById("notificationsModal")?.classList.remove("show"); }
 
-// ============================================================================
-// 13. TON CONNECT
-// ============================================================================
-
-async function initTONConnect() {
-    if (typeof TON_CONNECT_UI === "undefined") return;
-    try {
-        window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: window.location.origin + "/tonconnect-manifest.json",
-            buttonRootId: "tonConnectButton"
-        });
-        const restored = await window.tonConnectUI.connectionRestored;
-        if (restored && window.tonConnectUI.wallet) {
-            tonConnected = true;
-            tonWalletAddress = window.tonConnectUI.wallet.account.address;
-            updateTONUI();
-        }
-    } catch(e) { console.error("TON init error:", e); }
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// 13. 💎 TON Connect
+// ═══════════════════════════════════════════════════════════════════════════
 
 async function connectTONWallet() {
     if (tonConnected && window.tonConnectUI) {
@@ -723,7 +972,7 @@ async function connectTONWallet() {
         showToast("Wallet disconnected", "info");
         return;
     }
-    if (!window.tonConnectUI) return;
+    if (!window.tonConnectUI) { showToast("TON Connect not ready", "error"); return; }
     try {
         await window.tonConnectUI.openModal();
         const interval = setInterval(() => {
@@ -755,26 +1004,48 @@ function updateTONUI() {
     if (btn) btn.textContent = tonConnected ? "Disconnect TON" : "Connect TON";
 }
 
-// ============================================================================
-// 14. UI UPDATES
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 14. 🎨 تحديث واجهة المستخدم (UI Updates)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function updateUI() {
     if (!currentUser) return;
-    document.getElementById("balance") && (document.getElementById("balance").textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`);
-    document.getElementById("adsWatchedToday") && (document.getElementById("adsWatchedToday").textContent = `${currentUser.adsToday || 0}/${APP_CONFIG.dailyAdLimit}`);
-    document.getElementById("adsWatchedTotal") && (document.getElementById("adsWatchedTotal").textContent = currentUser.adsWatched || 0);
-    document.getElementById("totalEarned") && (document.getElementById("totalEarned").textContent = `$${currentUser.totalEarned?.toFixed(2) || "0.00"}`);
-    const prog = ((currentUser.adsToday || 0) / APP_CONFIG.dailyAdLimit) * 100;
-    const fill = document.getElementById("adProgressFill");
-    if (fill) fill.style.width = `${prog}%`;
-    document.getElementById("adProgressLabel") && (document.getElementById("adProgressLabel").textContent = `${currentUser.adsToday || 0} / ${APP_CONFIG.dailyAdLimit} today`);
-    document.getElementById("totalInvites") && (document.getElementById("totalInvites").textContent = currentUser.inviteCount || 0);
-    document.getElementById("totalEarnedFromInvites") && (document.getElementById("totalEarnedFromInvites").textContent = `$${((currentUser.inviteCount || 0) * APP_CONFIG.referralBonus).toFixed(2)}`);
-    document.getElementById("inviteLink") && (document.getElementById("inviteLink").textContent = getReferralLink());
-    document.getElementById("wdAvailBalance") && (document.getElementById("wdAvailBalance").textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`);
-    document.getElementById("userName") && (document.getElementById("userName").textContent = currentUser.userName || "User");
-    document.getElementById("userChatId") && (document.getElementById("userChatId").textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`);
+    const balanceEl = document.getElementById("balance");
+    if (balanceEl) balanceEl.textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`;
+    
+    const progressFill = document.getElementById("adProgressFill");
+    if (progressFill) {
+        const prog = ((currentUser.adsToday || 0) / APP_CONFIG.dailyAdLimit) * 100;
+        progressFill.style.width = `${prog}%`;
+    }
+    
+    const progressLabel = document.getElementById("adProgressLabel");
+    if (progressLabel) progressLabel.textContent = `${currentUser.adsToday || 0} / ${APP_CONFIG.dailyAdLimit} today`;
+    
+    const totalAds = document.getElementById("totalAdsWatched");
+    if (totalAds) totalAds.innerHTML = `${currentUser.adsWatched || 0} <span>ads</span>`;
+    
+    const totalEarned = document.getElementById("totalAdsEarned");
+    if (totalEarned) totalEarned.textContent = `$${currentUser.totalEarned?.toFixed(2) || "0.00"}`;
+    
+    const totalInvites = document.getElementById("totalInvites");
+    if (totalInvites) totalInvites.textContent = currentUser.inviteCount || 0;
+    
+    const inviteEarned = document.getElementById("totalEarnedFromInvites");
+    if (inviteEarned) inviteEarned.textContent = `$${((currentUser.inviteCount || 0) * APP_CONFIG.referralBonus).toFixed(2)}`;
+    
+    const inviteLink = document.getElementById("inviteLink");
+    if (inviteLink) inviteLink.textContent = getReferralLink();
+    
+    const availBalance = document.getElementById("wdAvailBalance");
+    if (availBalance) availBalance.textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`;
+    
+    const userNameEl = document.getElementById("userName");
+    if (userNameEl) userNameEl.textContent = currentUser.userName || "User";
+    
+    const userChatId = document.getElementById("userChatId");
+    if (userChatId) userChatId.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
+    
     const avatarSpan = document.getElementById("userAvatarText");
     const avatarImg = document.getElementById("userAvatarImg");
     if (currentUser.userPhoto && avatarImg) {
@@ -786,19 +1057,18 @@ function updateUI() {
         avatarSpan.style.display = "flex";
         if (avatarImg) avatarImg.style.display = "none";
     }
+    
     updateNotificationBadge();
     updateTONUI();
 }
 
 function refreshCurrentPage() {
     if (currentPage === "tasks") renderTasks();
-    else if (currentPage === "invite") { const link = document.getElementById("inviteLink"); if (link) link.textContent = getReferralLink(); }
-    else if (currentPage === "withdraw") renderWithdrawMethods();
+    else if (currentPage === "invite") {
+        const link = document.getElementById("inviteLink");
+        if (link) link.textContent = getReferralLink();
+    } else if (currentPage === "withdraw") renderWithdrawMethods();
 }
-
-// ============================================================================
-// 15. NAVIGATION
-// ============================================================================
 
 function switchTab(page) {
     currentPage = page;
@@ -813,88 +1083,41 @@ function switchTab(page) {
     else if (page === "withdraw") renderWithdrawMethods();
 }
 
-// ============================================================================
-// 16. ADMIN PANEL
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 15. 🍞 Toast Messages
+// ═══════════════════════════════════════════════════════════════════════════
 
-let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0 };
-let pendingWithdrawals = [], allUsers = [];
-
-function checkAdminAndShowCrown() {
-    fetch("/api/config").then(res => res.json()).then(data => {
-        if (currentUserId === data.adminId) document.getElementById("adminCrownBtn")?.style.setProperty("display", "flex");
-    }).catch(() => {});
+function showToast(message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<div class="toast-inner"><span class="toast-icon">${type === "success" ? "✓" : "ℹ"}</span><span class="toast-msg">${message}</span><div class="toast-bar"></div></div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 
-function showAdminAuth() { document.getElementById("adminAuthModal")?.classList.add("show"); }
-async function verifyAdminPassword() {
-    const pwd = document.getElementById("adminPasswordInput")?.value;
-    const res = await fetch("/api/admin/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pwd }) });
-    const data = await res.json();
-    if (data.success) { adminAuthenticated = true; document.getElementById("adminAuthModal")?.classList.remove("show"); showAdminPanel(); }
-    else { document.getElementById("adminAuthError")?.style.setProperty("display", "block"); }
-}
-function showAdminPanel() { if (!adminAuthenticated) { showAdminAuth(); return; } document.getElementById("adminPanel")?.classList.remove("hidden"); loadAdminData(); renderAdminDashboard(); }
-function closeAdminPanel() { document.getElementById("adminPanel")?.classList.add("hidden"); }
-async function loadAdminData() {
-    const stats = await fetch("/api/admin/stats").then(r => r.json()).catch(() => ({}));
-    if (stats.success) adminStats = stats.stats;
-    const withdrawals = await fetch("/api/admin/pending-withdrawals").then(r => r.json()).catch(() => ({}));
-    if (withdrawals.success) pendingWithdrawals = withdrawals.withdrawals || [];
-    const users = await fetch("/api/admin/users").then(r => r.json()).catch(() => ({}));
-    if (users.success) allUsers = users.users || [];
-}
-function renderAdminDashboard() {
-    const container = document.getElementById("adminContent"); if (!container) return;
-    container.innerHTML = `<div class="admin-stats-grid"><div class="admin-stat-card"><i class="fas fa-users"></i><div class="stat-value">${adminStats.totalUsers}</div><div class="stat-label">Total Users</div></div><div class="admin-stat-card"><i class="fas fa-clock"></i><div class="stat-value">${adminStats.pendingWithdrawals}</div><div class="stat-label">Pending</div></div><div class="admin-stat-card"><i class="fas fa-dollar-sign"></i><div class="stat-value">$${adminStats.totalBalance.toFixed(2)}</div><div class="stat-label">Total Balance</div></div></div><div class="admin-tabs"><button class="admin-tab active" onclick="showAdminSection('pending')">Pending Withdrawals</button><button class="admin-tab" onclick="showAdminSection('users')">Users</button></div><div id="adminSectionContent"></div>`;
-    showAdminSection("pending");
-}
-function showAdminSection(section) {
-    const container = document.getElementById("adminSectionContent"); if (!container) return;
-    if (section === "pending") renderPendingWithdrawals(container);
-    else if (section === "users") renderUsersList(container);
-}
-function renderPendingWithdrawals(container) {
-    if (pendingWithdrawals.length === 0) { container.innerHTML = '<div class="empty-state">No pending withdrawals</div>'; return; }
-    let html = "";
-    pendingWithdrawals.forEach(w => { const date = new Date(w.date);
-        html += `<div class="admin-card"><div class="admin-card-header"><span>👤 ${w.userName || w.userId}</span><span class="withdraw-amount">$${w.amount.toFixed(2)}</span></div><div class="admin-card-details"><div>ID: ${w.userId}</div><div>👥 Invites: ${w.inviteCount || 0}</div><div>📺 Ads: ${w.adsWatched || 0}</div><div>Method: ${w.method}</div><div>Destination: ${w.destination}</div><div>Date: ${date.toLocaleString()}</div></div><div class="admin-card-actions"><button class="btn-approve" onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})">✅ Approve</button><button class="btn-reject" onclick="rejectWithdrawal('${w.id}', '${w.userId}', ${w.amount})">❌ Reject</button></div></div>`;
-    });
-    container.innerHTML = html;
-}
-function renderUsersList(container) {
-    if (allUsers.length === 0) { container.innerHTML = '<div class="empty-state">No users found</div>'; return; }
-    let html = '<div class="search-bar"><input type="text" id="userSearchInput" placeholder="Search by ID..." onkeyup="filterUsers()"></div>';
-    allUsers.forEach(u => { html += `<div class="admin-card user-card" data-user-id="${u.userId}" data-user-name="${u.userName}"><div class="admin-card-header"><span>👤 ${u.userName || "User"}</span><span class="user-balance">💰 $${u.balance?.toFixed(2) || "0.00"}</span></div><div class="admin-card-details"><div>ID: ${u.userId}</div><div>👥 Invites: ${u.inviteCount || 0} | 📺 Ads: ${u.adsWatched || 0}</div></div><div class="admin-card-actions"><button class="btn-add" onclick="adminAddBalance('${u.userId}')">➕ Add</button><button class="btn-remove" onclick="adminRemoveBalance('${u.userId}')">➖ Remove</button><button class="btn-block" onclick="adminBlockUser('${u.userId}')">🔒 Block</button></div></div>`; });
-    container.innerHTML = html;
-}
-function filterUsers() { const term = document.getElementById("userSearchInput")?.value.toLowerCase(); document.querySelectorAll(".user-card").forEach(c => { const match = c.getAttribute("data-user-id")?.toLowerCase().includes(term) || c.getAttribute("data-user-name")?.toLowerCase().includes(term); c.style.display = match ? "block" : "none"; }); }
-async function approveWithdrawal(id, uid, amt) { await fetch("/api/admin/approve-withdrawal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ withdrawalId: id }) }); showToast("Approved!", "success"); loadAdminData(); renderPendingWithdrawals(document.getElementById("adminSectionContent")); }
-async function rejectWithdrawal(id, uid, amt) { const reason = prompt("Rejection reason:"); if (!reason) return; await fetch("/api/admin/reject-withdrawal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ withdrawalId: id, reason }) }); showToast("Rejected!", "success"); loadAdminData(); renderPendingWithdrawals(document.getElementById("adminSectionContent")); }
-async function adminAddBalance(uid) { const amt = parseFloat(prompt("Amount to add (USD):")); if (isNaN(amt) || amt <= 0) return; await fetch("/api/admin/add-balance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: uid, amount: amt }) }); showToast(`$${amt} added!`, "success"); loadAdminData(); renderUsersList(document.getElementById("adminSectionContent")); if (uid === currentUserId) { currentUser.balance += amt; updateUI(); } }
-async function adminRemoveBalance(uid) { const amt = parseFloat(prompt("Amount to remove (USD):")); if (isNaN(amt) || amt <= 0) return; await fetch("/api/admin/remove-balance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: uid, amount: amt }) }); showToast(`$${amt} removed!`, "success"); loadAdminData(); renderUsersList(document.getElementById("adminSectionContent")); if (uid === currentUserId) { currentUser.balance -= amt; updateUI(); } }
-async function adminBlockUser(uid) { if (!confirm("⚠️ Permanently block this user?")) return; await fetch("/api/admin/block-user", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: uid }) }); showToast("User blocked!", "success"); loadAdminData(); renderUsersList(document.getElementById("adminSectionContent")); }
-
-// ============================================================================
-// 17. INITIALIZATION
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 16. 🚀 تهيئة التطبيق (Initialization)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function hideSplash() {
     const splash = document.getElementById("splash-screen");
     const main = document.getElementById("mainContent");
-    if (splash) { splash.style.display = "none"; }
+    if (splash) splash.style.display = "none";
     if (main) main.style.display = "block";
     console.log("[AdNova] Ready!");
 }
 
 async function init() {
     console.log("[AdNova] Initializing...");
+    await loadAppConfig();
     applyLanguage();
     await loadUserData();
     renderWithdrawMethods();
     checkAdminAndShowCrown();
     initAdPlatforms();
-    initTONConnect();
+    await initTONConnect();
     setTimeout(hideSplash, 500);
     setInterval(() => {
         if (currentUser) {
@@ -909,22 +1132,37 @@ async function init() {
     }, 60000);
 }
 
+async function initTONConnect() {
+    if (typeof TON_CONNECT_UI !== "undefined") {
+        try {
+            window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: window.location.origin + "/tonconnect-manifest.json",
+                buttonRootId: "tonConnectButton"
+            });
+            const restored = await window.tonConnectUI.connectionRestored;
+            if (restored && window.tonConnectUI.wallet) {
+                tonConnected = true;
+                tonWalletAddress = window.tonConnectUI.wallet.account.address;
+                updateTONUI();
+            }
+        } catch(e) { console.error("TON init error:", e); }
+    }
+}
+
 setTimeout(hideSplash, 3000);
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();
 
-// ============================================================================
-// 18. GLOBAL EXPORTS
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// 17. 🌐 تصدير الدوال العالمية (Global Exports)
+// ═══════════════════════════════════════════════════════════════════════════
 
 window.switchTab = switchTab;
-window.toggleLanguage = toggleLanguage;
 window.openLanguageModal = openLanguageModal;
 window.closeLanguageModal = closeLanguageModal;
 window.setLanguage = setLanguage;
 window.watchAd = watchAd;
-window.verifyChannel = verifyChannel;
-window.startBot = startBot;
+window.verifyTask = verifyTask;
 window.copyInviteLink = copyInviteLink;
 window.shareInviteLink = shareInviteLink;
 window.submitWithdraw = submitWithdraw;
@@ -939,6 +1177,7 @@ window.adminAddBalance = adminAddBalance;
 window.adminRemoveBalance = adminRemoveBalance;
 window.adminBlockUser = adminBlockUser;
 window.filterUsers = filterUsers;
+window.sendBroadcast = sendBroadcast;
 window.markNotificationRead = markNotificationRead;
 window.clearReadNotifications = clearReadNotifications;
 window.clearAllNotifications = clearAllNotifications;
@@ -947,3 +1186,8 @@ window.closeNotificationsModal = closeNotificationsModal;
 window.connectTONWallet = connectTONWallet;
 
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
+console.log("[AdNova] Features: Referrals | Dynamic Tasks | SBP | Admin Panel | 10 Languages");
+
+// ============================================================================
+// نهاية الملف 🎯
+// ============================================================================
