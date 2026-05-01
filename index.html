@@ -1,1 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AdNova Network - Earn Real Money</title>
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Monetag Ad SDK -->
+    <script src='//libtl.com/sdk.js' data-zone='10895553' data-sdk='show_10895553'></script>
+    
+    <!-- AdsGram SDK -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    
+    <!-- OnClickA TMA SDK -->
+    <script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
+    
+    <!-- Adexium SDK -->
+    <script src="https://adexium.pro/widget.js"></script>
+    
+    <!-- RichAds SDK -->
+    <script src="https://cdn.richads.com/sdk/telegram/v1/richads.min.js"></script>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- ====== SPLASH SCREEN ====== -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-icon">
+                <i class="fas fa-ad"></i>
+            </div>
+            <h1 class="splash-title" data-i18n="app.name">AdNova Network</h1>
+            <p class="splash-subtitle">Earn Real Money</p>
+            <div class="splash-loader">
+                <div class="splash-loader-bar"></div>
+            </div>
+        </div>
+    </div>
 
+    <!-- ====== MAIN APP CONTENT ====== -->
+    <div id="mainContent" class="app-container" style="display: none;">
+        
+        <!-- ====== HEADER ====== -->
+        <div class="header">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <h3 id="userName">Loading...</h3>
+                    <p id="userTgId">ID: -----</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="langBtn" onclick="toggleLanguage()">
+                    <i class="fas fa-globe"></i>
+                </button>
+                <button class="icon-btn" id="notificationBtn" onclick="showNotificationsModal()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationBadge" style="display: none;">0</span>
+                </button>
+                <button class="icon-btn" id="adminCrownBtn" onclick="showAdminPanel()" style="display: none;">
+                    <i class="fas fa-crown" style="color: gold;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ====== PAGE 1: ADS (الصفحة الرئيسية) ====== -->
+        <div id="page-ads" class="page active">
+            
+            <!-- بطاقة الرصيد -->
+            <div class="balance-card">
+                <div class="balance-label" data-i18n="ads.balance">Your Balance</div>
+                <div class="balance-amount" id="balance">$0.00</div>
+                <div class="balance-stats">
+                    <div class="stat">
+                        <span class="stat-label" data-i18n="ads.today">Today</span>
+                        <span class="stat-value" id="adsWatchedToday">0/50</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label" data-i18n="ads.total">Total</span>
+                        <span class="stat-value" id="adsWatchedTotal">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label" data-i18n="ads.earned">Total Earned</span>
+                        <span class="stat-value" id="totalEarned">$0.00</span>
+                    </div>
+                </div>
+                <div class="daily-progress">
+                    <div class="progress-label">
+                        <span data-i18n="ads.daily.limit">Daily Limit: 50 ads</span>
+                        <span id="adProgressLabel">0 / 50 today</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="adProgressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- زر مشاهدة الإعلان -->
+            <div class="ad-button-container">
+                <button class="watch-ad-btn" id="watchAdBtn" onclick="watchAd()">
+                    <div class="watch-ad-inner">
+                        <div class="watch-ad-icon">
+                            <i class="fas fa-play"></i>
+                        </div>
+                        <div class="watch-ad-text">
+                            <div class="watch-ad-title" data-i18n="ads.watch">Watch Ad</div>
+                            <div class="watch-ad-sub" data-i18n="ads.reward">+$0.01 per ad</div>
+                        </div>
+                        <div class="watch-ad-reward">+$0.01</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- حالة الإعلان -->
+            <div id="adStatus" class="status-msg info">
+                <i class="fas fa-circle-info"></i>
+                <span id="adStatusText" data-i18n="ads.ready">Ready to earn!</span>
+            </div>
+
+            <!-- إحصائيات إضافية -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-box-icon"><i class="fas fa-calendar-day"></i></div>
+                    <div class="stat-box-info">
+                        <div class="stat-box-label" data-i18n="ads.today">Today</div>
+                        <div class="stat-box-value" id="statsToday">$0.00</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-box-info">
+                        <div class="stat-box-label" data-i18n="ads.total">Total</div>
+                        <div class="stat-box-value" id="statsTotal">$0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== PAGE 2: TASKS (صفحة المهام) ====== -->
+        <div id="page-tasks" class="page hidden">
+            
+            <div class="page-header">
+                <h2 data-i18n="tasks.title">Complete Tasks</h2>
+                <p data-i18n="tasks.subtitle">Earn extra rewards</p>
+            </div>
+
+            <!-- إحصائيات المهام -->
+            <div class="tasks-stats">
+                <div class="task-stat-card">
+                    <i class="fab fa-telegram"></i>
+                    <div>
+                        <div class="task-stat-label" data-i18n="tasks.channels">Channels</div>
+                        <div class="task-stat-value" id="channelsCount">0/3</div>
+                    </div>
+                </div>
+                <div class="task-stat-card">
+                    <i class="fas fa-robot"></i>
+                    <div>
+                        <div class="task-stat-label" data-i18n="tasks.bots">Bots</div>
+                        <div class="task-stat-value" id="botsCount">0/2</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- شريط تقدم المهام -->
+            <div class="tasks-progress">
+                <div class="progress-label">
+                    <span data-i18n="tasks.progress">Progress</span>
+                    <span id="tasksTotalReward">$0.00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="tasksProgressFill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- قائمة المهام -->
+            <div id="tasksContainer" class="tasks-container"></div>
+
+            <!-- شرح المهام -->
+            <div class="tasks-info">
+                <div class="info-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Join each channel or bot via Telegram, then come back to claim your reward automatically after 3 seconds.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== PAGE 3: INVITE (صفحة الدعوات) ====== -->
+        <div id="page-invite" class="page hidden">
+            
+            <div class="page-header">
+                <h2 data-i18n="invite.title">Invite & Earn</h2>
+                <p data-i18n="invite.subtitle">Get $0.50 for each friend</p>
+            </div>
+
+            <!-- إحصائيات الدعوات -->
+            <div class="invite-stats">
+                <div class="invite-stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="invite-stat-value" id="inviteCount">0</div>
+                    <div class="invite-stat-label" data-i18n="invite.total">Total Invites</div>
+                </div>
+                <div class="invite-stat-card">
+                    <i class="fas fa-dollar-sign"></i>
+                    <div class="invite-stat-value" id="inviteEarned">$0.00</div>
+                    <div class="invite-stat-label" data-i18n="invite.earned">Earned from Invites</div>
+                </div>
+                <div class="invite-stat-card">
+                    <i class="fas fa-flag-checkered"></i>
+                    <div class="invite-stat-value" id="referralNeeded">10</div>
+                    <div class="invite-stat-label">Needed to Withdraw</div>
+                </div>
+            </div>
+
+            <!-- رابط الدعوة -->
+            <div class="invite-link-card">
+                <div class="invite-link-label" data-i18n="invite.link">Your Invite Link</div>
+                <div class="invite-link-container">
+                    <input type="text" id="inviteLink" class="invite-link-input" readonly>
+                    <button class="invite-copy-btn" onclick="copyInviteLink()">
+                        <i class="fas fa-copy"></i>
+                        <span data-i18n="invite.copy">Copy</span>
+                    </button>
+                </div>
+                <button class="invite-share-btn" onclick="shareInviteLink()">
+                    <i class="fab fa-telegram"></i>
+                    <span data-i18n="invite.share">Share on Telegram</span>
+                </button>
+            </div>
+
+            <!-- شرح نظام الدعوات -->
+            <div class="invite-info">
+                <div class="info-item">
+                    <i class="fas fa-gift"></i>
+                    <div>
+                        <strong>$0.50 per referral</strong>
+                        <p>Each friend who joins using your link gives you $0.50 instantly!</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-rocket"></i>
+                    <div>
+                        <strong>10 referrals needed</strong>
+                        <p>You need 10 referrals to unlock withdrawals (minimum $10 balance also required)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== PAGE 4: WITHDRAW (صفحة السحب) ====== -->
+        <div id="page-withdraw" class="page hidden">
+            
+            <div class="page-header">
+                <h2 data-i18n="withdraw.title">Withdraw Funds</h2>
+                <p data-i18n="withdraw.subtitle">Minimum $10</p>
+            </div>
+
+            <!-- معلومات السحب -->
+            <div class="withdraw-info-card">
+                <div class="withdraw-balance">
+                    <span data-i18n="withdraw.available">Available:</span>
+                    <strong id="withdrawAvailable">$0.00</strong>
+                </div>
+                <div class="withdraw-requirements">
+                    <div class="requirement">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Minimum: <strong id="withdrawMinAmount">$10.00</strong></span>
+                    </div>
+                    <div class="requirement">
+                        <i class="fas fa-users"></i>
+                        <span>Referrals needed: <strong id="withdrawReferralsNeeded">10</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- طرق الدفع -->
+            <div class="withdraw-methods">
+                <div class="section-title" data-i18n="withdraw.method">Payment Method</div>
+                <div id="withdrawMethodsContainer" class="methods-grid"></div>
+            </div>
+
+            <!-- نموذج السحب -->
+            <div class="withdraw-form">
+                <div class="form-group">
+                    <label data-i18n="withdraw.destination">Destination</label>
+                    <input type="text" id="withdrawDestination" class="form-input" placeholder="Enter your wallet address / email / phone number">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="withdraw.amount">Amount (USD)</label>
+                    <input type="number" id="withdrawAmount" class="form-input" placeholder="Enter amount (min $10)" step="0.01">
+                </div>
+                <button class="withdraw-submit-btn" id="submitWithdrawBtn" onclick="submitWithdraw()">
+                    <i class="fas fa-paper-plane"></i>
+                    <span data-i18n="withdraw.submit">Submit Request</span>
+                </button>
+            </div>
+
+            <!-- قائمة السحوبات السابقة -->
+            <div class="withdraw-history">
+                <div class="section-title">History</div>
+                <div id="withdrawHistoryList" class="withdraw-history-list">
+                    <div class="empty-state">No withdrawals yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== BOTTOM NAVIGATION ====== -->
+        <div id="bottomNav" class="bottom-nav">
+            <button class="nav-item active" data-page="ads" onclick="switchTab('ads')">
+                <div class="nav-icon"><i class="fas fa-ad"></i></div>
+                <span class="nav-label" data-i18n="nav.ads">Ads</span>
+            </button>
+            <button class="nav-item" data-page="tasks" onclick="switchTab('tasks')">
+                <div class="nav-icon"><i class="fas fa-tasks"></i></div>
+                <span class="nav-label" data-i18n="nav.tasks">Tasks</span>
+            </button>
+            <button class="nav-item" data-page="invite" onclick="switchTab('invite')">
+                <div class="nav-icon"><i class="fas fa-user-plus"></i></div>
+                <span class="nav-label" data-i18n="nav.invite">Invite</span>
+            </button>
+            <button class="nav-item" data-page="withdraw" onclick="switchTab('withdraw')">
+                <div class="nav-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <span class="nav-label" data-i18n="nav.withdraw">Withdraw</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== NOTIFICATIONS MODAL ====== -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="notifications.title">Notifications</h3>
+                <button class="close-btn" onclick="closeNotificationsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="notification-actions">
+                    <button class="notif-action-btn" onclick="clearReadNotifications()">
+                        <i class="fas fa-check-double"></i>
+                        <span data-i18n="notifications.clear.read">Clear Read</span>
+                    </button>
+                    <button class="notif-action-btn danger" onclick="clearAllNotifications()">
+                        <i class="fas fa-trash-alt"></i>
+                        <span data-i18n="notifications.clear.all">Clear All</span>
+                    </button>
+                </div>
+                <div id="notificationsList" class="notifications-list">
+                    <div class="empty-state">📭 No notifications</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== ADMIN AUTH MODAL ====== -->
+    <div id="adminAuthModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="admin.auth.title">Admin Authentication</h3>
+                <button class="close-btn" onclick="document.getElementById('adminAuthModal').classList.remove('show')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc" data-i18n="admin.auth.desc">Enter admin password to continue</p>
+                <input type="password" id="adminPasswordInput" class="form-input" placeholder="Enter password" autocomplete="off">
+                <p id="adminAuthError" class="error-text" style="display: none; color: #ef4444; margin-top: 10px;" data-i18n="admin.auth.error">Invalid password</p>
+                <button class="admin-auth-btn" onclick="verifyAdminPassword()">
+                    <i class="fas fa-check"></i>
+                    <span data-i18n="admin.auth.verify">Verify</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== ADMIN PANEL ====== -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <div class="admin-panel-header">
+            <h2><i class="fas fa-crown" style="color: gold;"></i> <span data-i18n="admin.title">Admin Panel</span></h2>
+            <button class="close-admin-btn" onclick="closeAdminPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="admin-panel-content" id="adminContent">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading admin panel...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== TOAST CONTAINER ====== -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ====== MAIN SCRIPT ====== -->
+    <script src="app.js"></script>
+</body>
+</html>
