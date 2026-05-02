@@ -47,7 +47,7 @@ let APP_CONFIG = {
     adReward: 0.01,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
-    requiredReferrals: 10,
+    requiredReferrals: 1,
     botUsername: "AdNovaNetworkBot",
     adminId: null
 };
