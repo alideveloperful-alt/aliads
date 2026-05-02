@@ -1,6 +1,8 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v4.0 (النسخة الأسطورية)
-// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، لوحة مشرف متطورة
+// ADNOVA NETWORK - SERVER v5.0 (النسخة الأسطورية النهائية)
+// ============================================================================
+// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة،
+// التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -12,6 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const { Telegraf } = require('telegraf');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
@@ -29,7 +32,7 @@ let TON_API_KEY = null;
 let BOT_TOKEN = null;
 let APP_URL = null;
 
-// محاولة تحميل Firebase Admin Key
+// تحميل Firebase Admin Key
 try {
     const firebasePath = '/etc/secrets/firebase-admin-key.json';
     if (fs.existsSync(firebasePath)) {
@@ -40,31 +43,37 @@ try {
     console.error('❌ Firebase Admin key error:', error.message);
 }
 
-// محاولة تحميل Firebase Web Config
+// تحميل Firebase Web Config
 try {
     const configPath = '/etc/secrets/firebase-web-config.json';
-    firebaseWebConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    console.log('✅ Firebase Web config loaded');
+    if (fs.existsSync(configPath)) {
+        firebaseWebConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        console.log('✅ Firebase Web config loaded');
+    }
 } catch (error) {
     console.error('❌ Firebase Web config error:', error.message);
 }
 
-// محاولة تحميل إعدادات المشرف
+// تحميل إعدادات المشرف
 try {
     const adminPath = '/etc/secrets/admin-config.json';
-    const adminConfig = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-    ADMIN_ID = adminConfig.admin_id;
-    ADMIN_PASSWORD = adminConfig.admin_password;
-    console.log('✅ Admin config loaded | ID:', ADMIN_ID);
+    if (fs.existsSync(adminPath)) {
+        const adminConfig = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+        ADMIN_ID = adminConfig.admin_id;
+        ADMIN_PASSWORD = adminConfig.admin_password;
+        console.log('✅ Admin config loaded | ID:', ADMIN_ID);
+    }
 } catch (error) {
     console.error('❌ Admin config error:', error.message);
 }
 
-// محاولة تحميل TON API Key
+// تحميل TON API Key
 try {
     const tonPath = '/etc/secrets/ton-api-key.txt';
-    TON_API_KEY = fs.readFileSync(tonPath, 'utf8').trim();
-    console.log('✅ TON API key loaded');
+    if (fs.existsSync(tonPath)) {
+        TON_API_KEY = fs.readFileSync(tonPath, 'utf8').trim();
+        console.log('✅ TON API key loaded');
+    }
 } catch (error) {
     console.error('❌ TON API key error:', error.message);
 }
@@ -87,6 +96,21 @@ const APP_CONFIG = {
     botUsername: "AdNovaNetworkBot"
 };
 
+// طرق السحب المدعومة (للمستخدم)
+const WITHDRAWAL_METHODS = [
+    { id: "paypal", name: "PayPal", icon: "fab fa-paypal" },
+    { id: "skrill", name: "Skrill", icon: "fab fa-skrill" },
+    { id: "payoneer", name: "Payoneer", icon: "fab fa-payoneer" },
+    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin" },
+    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin" },
+    { id: "ton", name: "TON", icon: "fab fa-telegram" },
+    { id: "binance_pay", name: "Binance Pay", icon: "fab fa-binance" },
+    { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone" },
+    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt" },
+    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad" },
+    { id: "freefire", name: "Free Fire", icon: "fas fa-fire" }
+];
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 4. 🔥 Firebase Admin SDK
 // ═══════════════════════════════════════════════════════════════════════════
@@ -107,13 +131,13 @@ if (serviceAccount) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 5. 🤖 Telegram Bot
+// 5. 🤖 Telegram Bot مع رسالة ترحيب أسطورية
 // ═══════════════════════════════════════════════════════════════════════════
 
 const bot = new Telegraf(BOT_TOKEN);
 const botAdminSessions = new Map();
 
-// أمر /start
+// رسالة الترحيب الأسطورية
 bot.start(async (ctx) => {
     const refCode = ctx.startPayload;
     const userId = ctx.from.id.toString();
@@ -123,6 +147,7 @@ bot.start(async (ctx) => {
     console.log(`🚀 /start from ${userId}, ref: ${refCode || 'none'}`);
     
     let isNewUser = false;
+    let userBalance = 0;
     
     if (db) {
         const userRef = db.collection('users').doc(userId);
@@ -132,35 +157,139 @@ bot.start(async (ctx) => {
             isNewUser = true;
             const userData = createNewUser(userId, userName, userUsername, refCode);
             await userRef.set(userData);
+            userBalance = APP_CONFIG.welcomeBonus;
             console.log(`✅ New user created via bot: ${userId}`);
             
-            // معالجة الإحالة
             if (refCode && refCode !== userId) {
                 await processReferralFromBot(refCode, userId, userName);
             }
+        } else {
+            const data = userDoc.data();
+            userBalance = data.balance || 0;
         }
     }
     
-    const welcomeText = `🌟 *Welcome to AdNova Network, ${userName}!*\n\n` +
-        (isNewUser ? `🎁 Welcome Bonus: *$${APP_CONFIG.welcomeBonus.toFixed(2)}*\n\n` : '') +
-        `💰 *How to earn:*\n` +
-        `📺 Watch ads: *$${APP_CONFIG.adReward.toFixed(2)}* per ad (${APP_CONFIG.dailyAdLimit}/day)\n` +
-        `👥 Invite friends: *$${APP_CONFIG.referralBonus.toFixed(2)}* per referral\n` +
-        `🎯 Need *${APP_CONFIG.requiredReferrals} referrals* + *$${APP_CONFIG.minWithdraw}* to withdraw\n\n` +
-        `👇 *Open the app:*`;
+    // ========== رسالة الترحيب الأسطورية ==========
+    const welcomeMessage = `
+🌟 *WELCOME TO ADNOVA NETWORK* 🌟
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*Hello ${userName}!* 👋
+
+We're excited to have you join the *#1 Earning Platform* on Telegram!
+
+${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 *+$${APP_CONFIG.welcomeBonus}* added to your balance!\n💎 *Current Balance:* $${userBalance.toFixed(2)}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` : ''}
+
+📺 *WATCH ADS & EARN*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 💰 *$${APP_CONFIG.adReward}* per ad watched
+• 📊 *${APP_CONFIG.dailyAdLimit} ads* per day
+• ⚡ *Instant credit* to your balance
+
+👥 *INVITE FRIENDS & EARN*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 🎁 *$${APP_CONFIG.referralBonus}* for each friend who joins
+• 👑 No limit on referrals
+• 🏆 *Special bonuses* at milestones
+
+✅ *COMPLETE TASKS*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 📢 Join Telegram channels
+• 🤖 Start Telegram bots
+• 🎥 Subscribe to YouTube
+• 🎵 Follow on TikTok
+• 💰 Earn *$0.05 - $0.50* per task
+
+💳 *WITHDRAWAL METHODS*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 💳 PayPal / Skrill / Payoneer
+• ₿ USDT (BEP20 & TRC20)
+• 📱 TON / SBP (Russia)
+• 🎮 PUBG UC / Free Fire
+• 📞 Mobile Recharge
+
+📊 *REQUIREMENTS TO WITHDRAW*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 💰 Minimum: *$${APP_CONFIG.minWithdraw}*
+• 👥 Required referrals: *${APP_CONFIG.requiredReferrals}*
+• ✅ Must complete at least *10 tasks*
+
+🚀 *READY TO START?*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👇 *Click the button below to open the app*
+
+🔒 *Your funds are SAFE* | ⚡ *Instant withdrawals* | 🎯 *24/7 Support*
+    `;
     
-    await ctx.reply(welcomeText, {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '🚀 Open AdNova App', web_app: { url: APP_URL } }],
-                [{ text: '👥 Support Group', url: 'https://t.me/AdNovaSupport' }]
+    // لوحة أزرار جميلة
+    const keyboard = {
+        inline_keyboard: [
+            [{ text: "🚀 OPEN ADNOVA APP", web_app: { url: APP_URL } }],
+            [
+                { text: "📊 MY STATS", callback_data: "my_stats" },
+                { text: "💸 WITHDRAW", callback_data: "quick_withdraw" }
+            ],
+            [
+                { text: "👥 SUPPORT GROUP", url: "https://t.me/AdNovaSupport" },
+                { text: "📢 OFFICIAL CHANNEL", url: "https://t.me/AdNovaNetwork" }
             ]
-        }
+        ]
+    };
+    
+    await ctx.reply(welcomeMessage, {
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
     });
 });
 
-// أمر /stats
+// أمر الإحصائيات السريع
+bot.action('my_stats', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (!db) return ctx.reply('⚠️ Database maintenance...');
+    
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+        const data = userDoc.data();
+        await ctx.reply(
+            `📊 *YOUR STATS* 📊\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
+            `👥 *Referrals:* ${data.inviteCount || 0} / ${APP_CONFIG.requiredReferrals}\n` +
+            `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
+            `📅 *Today:* ${data.adsToday || 0} / ${APP_CONFIG.dailyAdLimit}\n` +
+            `💵 *Total Earned:* $${data.totalEarned?.toFixed(2) || '0.00'}\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🔗 *Your referral link:*\n` +
+            `\`t.me/${APP_CONFIG.botUsername}?start=${userId}\``,
+            { parse_mode: 'Markdown' }
+        );
+    } else {
+        ctx.reply('❌ User not found. Please start the app first.');
+    }
+    await ctx.answerCbQuery();
+});
+
+// أمر سحب سريع
+bot.action('quick_withdraw', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (!db) return ctx.reply('⚠️ Database maintenance...');
+    
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+        const data = userDoc.data();
+        const minWithdraw = APP_CONFIG.minWithdraw;
+        const requiredRefs = APP_CONFIG.requiredReferrals;
+        
+        if (data.balance < minWithdraw) {
+            await ctx.reply(`❌ *Minimum withdrawal is $${minWithdraw}*\nYour balance: $${data.balance?.toFixed(2) || '0.00'}\n\nKeep watching ads and inviting friends!`, { parse_mode: 'Markdown' });
+        } else if ((data.inviteCount || 0) < requiredRefs) {
+            await ctx.reply(`❌ *Need ${requiredRefs} referrals to withdraw*\nYour referrals: ${data.inviteCount || 0}\n\nShare your referral link to earn more!`, { parse_mode: 'Markdown' });
+        } else {
+            await ctx.reply(`✅ *You can withdraw!*\nYour balance: $${data.balance?.toFixed(2)}\n\nOpen the app to request withdrawal.`, { parse_mode: 'Markdown' });
+        }
+    }
+    await ctx.answerCbQuery();
+});
+
+// أمر الإحصائيات عبر النص
 bot.command('stats', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (!db) return ctx.reply('⚠️ Maintenance mode...');
@@ -168,12 +297,13 @@ bot.command('stats', async (ctx) => {
     if (userDoc.exists) {
         const data = userDoc.data();
         await ctx.reply(
-            `📊 *Your AdNova Stats*\n\n` +
-            `💰 Balance: *$${data.balance?.toFixed(2) || '0.00'}*\n` +
-            `👥 Invites: *${data.inviteCount || 0}* / ${APP_CONFIG.requiredReferrals}\n` +
-            `📺 Ads watched: *${data.adsWatched || 0}*\n` +
-            `📅 Today: *${data.adsToday || 0}* / ${APP_CONFIG.dailyAdLimit}\n\n` +
-            `🔗 Your referral link:\nt.me/${APP_CONFIG.botUsername}?start=${userId}`,
+            `📊 *YOUR ADNOVA STATS*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
+            `👥 *Invites:* ${data.inviteCount || 0} / ${APP_CONFIG.requiredReferrals}\n` +
+            `📺 *Ads watched:* ${data.adsWatched || 0}\n` +
+            `📅 *Today:* ${data.adsToday || 0} / ${APP_CONFIG.dailyAdLimit}\n` +
+            `💵 *Total earned:* $${data.totalEarned?.toFixed(2) || '0.00'}\n\n` +
+            `🔗 *Your referral link:*\n\`t.me/${APP_CONFIG.botUsername}?start=${userId}\``,
             { parse_mode: 'Markdown' }
         );
     } else {
@@ -181,7 +311,93 @@ bot.command('stats', async (ctx) => {
     }
 });
 
-// دالة مساعدة لإضافة إشعار
+// أمر مساعدة
+bot.command('help', async (ctx) => {
+    await ctx.reply(
+        `📚 *HELP CENTER*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📺 *How to earn?*\n• Watch ads daily (${APP_CONFIG.dailyAdLimit} ads/day)\n• Complete tasks (channels & bots)\n• Invite friends (unlimited)\n\n` +
+        `💳 *Withdrawal methods:*\n• PayPal / Skrill / Payoneer\n• USDT (BEP20 & TRC20)\n• TON / SBP\n• Mobile recharge\n• PUBG UC / Free Fire\n\n` +
+        `📊 *Requirements:*\n• Minimum $${APP_CONFIG.minWithdraw}\n• ${APP_CONFIG.requiredReferrals} referrals\n\n` +
+        `❓ *Need help?* Contact @AdNovaSupport`,
+        { parse_mode: 'Markdown' }
+    );
+});
+
+// أمر المشرف
+bot.command('admin', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!* You are not authorized to use admin commands.', { parse_mode: 'Markdown' });
+    ctx.reply('🔐 *Admin Access*\n━━━━━━━━━━━━━━━━━━━━━━\nPlease enter your admin password to continue:', { parse_mode: 'Markdown' });
+    botAdminSessions.set(userId, { step: 'awaiting_password' });
+});
+
+// معالجة الرسائل النصية للمشرف
+bot.on('text', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    const session = botAdminSessions.get(userId);
+    if (!session) return;
+    
+    const text = ctx.message.text;
+    
+    if (session.step === 'awaiting_password') {
+        if (text === ADMIN_PASSWORD) {
+            botAdminSessions.set(userId, { step: 'authenticated' });
+            ctx.reply(
+                `✅ *Authenticated!*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `📋 *Admin Commands:*\n` +
+                `• /broadcast - Send message to all users\n` +
+                `• /stats - Bot statistics\n` +
+                `• /users - Total users count`,
+                { parse_mode: 'Markdown' }
+            );
+        } else {
+            ctx.reply('❌ *Wrong password!* Access denied.', { parse_mode: 'Markdown' });
+            botAdminSessions.delete(userId);
+        }
+        return;
+    }
+    
+    if (session.step === 'authenticated') {
+        if (text === '/broadcast') {
+            ctx.reply('📝 *Send me the message to broadcast to all users:*', { parse_mode: 'Markdown' });
+            botAdminSessions.set(userId, { step: 'awaiting_broadcast' });
+        } else if (text === '/stats') {
+            const stats = await getBotStats();
+            ctx.reply(stats, { parse_mode: 'Markdown' });
+        } else if (text === '/users') {
+            const usersCount = await getTotalUsersCount();
+            ctx.reply(`👥 *Total Registered Users:* ${usersCount}`, { parse_mode: 'Markdown' });
+        }
+        return;
+    }
+    
+    if (session.step === 'awaiting_broadcast') {
+        ctx.reply('📢 *Broadcasting message to all users...*', { parse_mode: 'Markdown' });
+        const result = await broadcastToAllUsers(text);
+        if (result.success) {
+            ctx.reply(`✅ *Broadcast sent to ${result.notifiedCount} users!*`, { parse_mode: 'Markdown' });
+        } else {
+            ctx.reply('❌ *Error sending broadcast:* ' + result.error, { parse_mode: 'Markdown' });
+        }
+        botAdminSessions.delete(userId);
+    }
+});
+
+// دوال مساعدة للبوت
+async function getBotStats() {
+    if (!db) return '📊 *Database not connected*';
+    const usersSnapshot = await db.collection('users').get();
+    const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
+    const tasksSnapshot = await db.collection('tasks').get();
+    return `📊 *BOT STATISTICS*\n━━━━━━━━━━━━━━━━━━━━━━\n👥 *Total Users:* ${usersSnapshot.size}\n💸 *Pending Withdrawals:* ${pendingWithdrawals.size}\n📋 *Active Tasks:* ${tasksSnapshot.size}\n🕐 *Uptime:* ${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m`;
+}
+
+async function getTotalUsersCount() {
+    if (!db) return 0;
+    const snapshot = await db.collection('users').get();
+    return snapshot.size;
+}
+
 async function addNotification(targetUserId, notification) {
     if (!db) return false;
     try {
@@ -203,86 +419,6 @@ async function addNotification(targetUserId, notification) {
     }
 }
 
-// دالة إنشاء مستخدم جديد
-function createNewUser(userId, userName, userUsername, refCode) {
-    const now = new Date().toISOString();
-    const today = now.split('T')[0];
-    return {
-        userId: userId,
-        userName: userName || 'User',
-        userUsername: userUsername || '',
-        balance: APP_CONFIG.welcomeBonus,
-        totalEarned: APP_CONFIG.welcomeBonus,
-        adsWatched: 0,
-        adsToday: 0,
-        lastAdDate: today,
-        inviteCount: 0,
-        referredBy: refCode || null,
-        referrals: [],
-        withdrawals: [],
-        claimedMilestones: [],
-        tonWallet: null,
-        withdrawBlocked: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        notifications: [{
-            id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
-            type: 'welcome',
-            title: '🎉 Welcome to AdNova!',
-            message: `You received $${APP_CONFIG.welcomeBonus} welcome bonus!`,
-            read: false,
-            timestamp: new Date().toISOString()
-        }]
-    };
-}
-
-// معالجة الإحالة من البوت
-async function processReferralFromBot(referrerId, newUserId, newUserName) {
-    if (!db) return;
-    try {
-        const referrerRef = db.collection('users').doc(referrerId);
-        const referrerDoc = await referrerRef.get();
-        
-        if (referrerDoc.exists) {
-            const referrerData = referrerDoc.data();
-            if (!referrerData.referrals?.includes(newUserId)) {
-                await referrerRef.update({
-                    referrals: admin.firestore.FieldValue.arrayUnion(newUserId),
-                    inviteCount: admin.firestore.FieldValue.increment(1),
-                    balance: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus),
-                    totalEarned: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus)
-                });
-                
-                await addNotification(referrerId, {
-                    type: 'referral',
-                    title: '🎉 New Referral!',
-                    message: `+$${APP_CONFIG.referralBonus.toFixed(2)} added to your balance!`
-                });
-                
-                // إرسال رسالة للمُحيل
-                bot.telegram.sendMessage(referrerId, 
-                    `🎉 *New Referral!*\n\n+$${APP_CONFIG.referralBonus.toFixed(2)} added!\nTotal referrals: ${(referrerData.inviteCount || 0) + 1}`, 
-                    { parse_mode: 'Markdown' }
-                ).catch(() => {});
-            }
-        }
-    } catch (error) {
-        console.error('Referral processing error:', error);
-    }
-}
-
-// التحقق من عضوية المستخدم في قناة
-async function verifyChannelMembership(userId, channelUsername) {
-    try {
-        const chatMember = await bot.telegram.getChatMember(`@${channelUsername}`, parseInt(userId));
-        const status = chatMember.status;
-        return ['member', 'administrator', 'creator'].includes(status);
-    } catch (error) {
-        console.error(`Verify channel error for ${channelUsername}:`, error.message);
-        return false;
-    }
-}
-
-// إرسال إشعار جماعي
 async function broadcastToAllUsers(message) {
     if (!db) return { success: false, error: 'Database not connected' };
     try {
@@ -318,9 +454,86 @@ async function broadcastToAllUsers(message) {
     }
 }
 
+function createNewUser(userId, userName, userUsername, refCode) {
+    const now = new Date().toISOString();
+    const today = now.split('T')[0];
+    return {
+        userId: userId,
+        userName: userName || 'User',
+        userUsername: userUsername || '',
+        balance: APP_CONFIG.welcomeBonus,
+        totalEarned: APP_CONFIG.welcomeBonus,
+        adsWatched: 0,
+        adsToday: 0,
+        lastAdDate: today,
+        inviteCount: 0,
+        referredBy: refCode || null,
+        referrals: [],
+        withdrawals: [],
+        claimedMilestones: [],
+        tonWallet: null,
+        withdrawBlocked: false,
+        completedTasks: [],
+        taskLastCompletions: {},
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        notifications: [{
+            id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
+            type: 'welcome',
+            title: '🎉 Welcome to AdNova!',
+            message: `You received $${APP_CONFIG.welcomeBonus} welcome bonus!`,
+            read: false,
+            timestamp: new Date().toISOString()
+        }]
+    };
+}
+
+async function processReferralFromBot(referrerId, newUserId, newUserName) {
+    if (!db) return;
+    try {
+        const referrerRef = db.collection('users').doc(referrerId);
+        const referrerDoc = await referrerRef.get();
+        
+        if (referrerDoc.exists) {
+            const referrerData = referrerDoc.data();
+            if (!referrerData.referrals?.includes(newUserId)) {
+                await referrerRef.update({
+                    referrals: admin.firestore.FieldValue.arrayUnion(newUserId),
+                    inviteCount: admin.firestore.FieldValue.increment(1),
+                    balance: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus),
+                    totalEarned: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus)
+                });
+                
+                await addNotification(referrerId, {
+                    type: 'referral',
+                    title: '🎉 New Referral!',
+                    message: `+$${APP_CONFIG.referralBonus.toFixed(2)} added to your balance!`
+                });
+                
+                bot.telegram.sendMessage(referrerId, 
+                    `🎉 *NEW REFERRAL!* 🎉\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *${newUserName}* joined using your link!\n💰 *+$${APP_CONFIG.referralBonus.toFixed(2)}* added to your balance!\n👥 *Total referrals:* ${(referrerData.inviteCount || 0) + 1}`, 
+                    { parse_mode: 'Markdown' }
+                ).catch(() => {});
+            }
+        }
+    } catch (error) {
+        console.error('Referral processing error:', error);
+    }
+}
+
+async function verifyChannelMembership(userId, channelUsername) {
+    try {
+        const chatMember = await bot.telegram.getChatMember(`@${channelUsername.replace('@', '')}`, parseInt(userId));
+        const status = chatMember.status;
+        return ['member', 'administrator', 'creator'].includes(status);
+    } catch (error) {
+        console.error(`Verify channel error for ${channelUsername}:`, error.message);
+        return false;
+    }
+}
+
 // تشغيل البوت
 bot.launch({ dropPendingUpdates: true })
-    .then(() => console.log('🤖 Bot started'))
+    .then(() => console.log('🤖 Telegram Bot started successfully'))
     .catch(err => console.error('❌ Bot error:', err));
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
@@ -334,7 +547,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// التحقق من صلاحيات المشرف
 function isAdmin(req) {
     const authHeader = req.headers.authorization;
     if (!authHeader) return false;
@@ -353,14 +565,15 @@ app.get('/api/config', (req, res) => {
     res.json({
         firebaseConfig: firebaseWebConfig,
         appUrl: APP_URL,
-        adminId: ADMIN_ID,  // مهم جداً لإظهار تاج المشرف
+        adminId: ADMIN_ID,
         welcomeBonus: APP_CONFIG.welcomeBonus,
         referralBonus: APP_CONFIG.referralBonus,
         adReward: APP_CONFIG.adReward,
         dailyAdLimit: APP_CONFIG.dailyAdLimit,
         minWithdraw: APP_CONFIG.minWithdraw,
         requiredReferrals: APP_CONFIG.requiredReferrals,
-        botUsername: APP_CONFIG.botUsername
+        botUsername: APP_CONFIG.botUsername,
+        withdrawalMethods: WITHDRAWAL_METHODS
     });
 });
 
@@ -498,17 +711,14 @@ app.post('/api/reward', async (req, res) => {
         const userData = userDoc.data();
         const today = new Date().toISOString().split('T')[0];
         
-        // إعادة تعيين العداد اليومي
         if (userData.lastAdDate !== today) {
             userData.adsToday = 0;
         }
         
-        // التحقق من الحد اليومي
         if (userData.adsToday >= APP_CONFIG.dailyAdLimit) {
             return res.json({ success: false, error: 'Daily limit reached', limitReached: true });
         }
         
-        // إضافة المكافأة مباشرة
         const newBalance = (userData.balance || 0) + APP_CONFIG.adReward;
         const newTotalEarned = (userData.totalEarned || 0) + APP_CONFIG.adReward;
         const newAdsWatched = (userData.adsWatched || 0) + 1;
@@ -522,13 +732,7 @@ app.post('/api/reward', async (req, res) => {
             lastAdDate: today
         });
         
-        res.json({ 
-            success: true, 
-            balance: newBalance, 
-            totalEarned: newTotalEarned, 
-            adsWatched: newAdsWatched, 
-            adsToday: newAdsToday 
-        });
+        res.json({ success: true, balance: newBalance, totalEarned: newTotalEarned, adsWatched: newAdsWatched, adsToday: newAdsToday });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -546,29 +750,37 @@ app.post('/api/verify-channel', async (req, res) => {
             return res.json({ success: false, error: 'Missing required fields' });
         }
         
-        // التحقق الحقيقي من عضوية المستخدم
         const isMember = await verifyChannelMembership(userId, channelUsername);
         
         if (!isMember) {
             return res.json({ success: false, error: 'User is not a member of the channel' });
         }
         
-        // إذا كان التحقق ناجحاً، نضيف المكافأة
         if (db && reward) {
             const userRef = db.collection('users').doc(userId);
             const userDoc = await userRef.get();
             
             if (userDoc.exists) {
-                await userRef.update({
-                    balance: admin.firestore.FieldValue.increment(reward),
-                    totalEarned: admin.firestore.FieldValue.increment(reward)
-                });
+                // التحقق من أن المهمة لم تكتمل من قبل (أو تحتاج تجديد)
+                const userData = userDoc.data();
+                const completedTasks = userData.completedTasks || [];
                 
-                await addNotification(userId, {
-                    type: 'success',
-                    title: '✅ Task Completed!',
-                    message: `+$${reward.toFixed(2)} added from ${channelUsername}`
-                });
+                if (!completedTasks.includes(taskId)) {
+                    const newCompletedTasks = [...completedTasks, taskId];
+                    
+                    await userRef.update({
+                        balance: admin.firestore.FieldValue.increment(reward),
+                        totalEarned: admin.firestore.FieldValue.increment(reward),
+                        completedTasks: newCompletedTasks,
+                        [`taskLastCompletions.${taskId}`]: new Date().toISOString()
+                    });
+                    
+                    await addNotification(userId, {
+                        type: 'success',
+                        title: '✅ Task Completed!',
+                        message: `+$${reward.toFixed(2)} added from ${channelUsername}`
+                    });
+                }
             }
         }
         
@@ -601,30 +813,24 @@ app.post('/api/withdraw/request', async (req, res) => {
         
         const userData = userDoc.data();
         
-        // التحقق من الحظر
         if (userData.withdrawBlocked) {
             return res.json({ success: false, error: 'Account blocked from withdrawals' });
         }
         
-        // التحقق من الحد الأدنى
         if (amount < APP_CONFIG.minWithdraw) {
             return res.json({ success: false, error: `Minimum withdrawal is $${APP_CONFIG.minWithdraw}` });
         }
         
-        // التحقق من الرصيد
         if (amount > (userData.balance || 0)) {
             return res.json({ success: false, error: 'Insufficient balance' });
         }
         
-        // التحقق من عدد الإحالات
         if ((userData.inviteCount || 0) < APP_CONFIG.requiredReferrals) {
             return res.json({ success: false, error: `Need ${APP_CONFIG.requiredReferrals} referrals to withdraw` });
         }
         
-        // خصم الرصيد
         const newBalance = (userData.balance || 0) - amount;
         
-        // إنشاء طلب السحب
         const withdrawRequest = {
             userId, userName, amount, method, destination,
             status: 'pending',
@@ -635,20 +841,17 @@ app.post('/api/withdraw/request', async (req, res) => {
         
         const docRef = await db.collection('withdrawals').add(withdrawRequest);
         
-        // تحديث رصيد المستخدم
         await userRef.update({ balance: newBalance });
         
-        // إضافة إشعار
         await addNotification(userId, {
             type: 'withdraw',
             title: '💸 Withdrawal Requested',
             message: `Your withdrawal of $${amount.toFixed(2)} via ${method} is being processed.`
         });
         
-        // إرسال إشعار للمشرف
         if (ADMIN_ID) {
             bot.telegram.sendMessage(ADMIN_ID, 
-                `💸 *New Withdrawal Request*\n\n👤 ${userName} (${userId})\n💰 $${amount.toFixed(2)}\n💳 Method: ${method}\n📮 Destination: ${destination}\n👥 Invites: ${userData.inviteCount || 0}`,
+                `💸 *NEW WITHDRAWAL REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *User:* ${userName} (${userId})\n💰 *Amount:* $${amount.toFixed(2)}\n💳 *Method:* ${method}\n📮 *Destination:* ${destination}\n👥 *Referrals:* ${userData.inviteCount || 0}\n📺 *Ads:* ${userData.adsWatched || 0}`,
                 { parse_mode: 'Markdown' }
             ).catch(() => {});
         }
@@ -663,7 +866,6 @@ app.post('/api/withdraw/request', async (req, res) => {
 // 13. 👑 لوحة المشرف (Admin APIs)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// التحقق من كلمة مرور المشرف
 app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body;
     if (!password) return res.json({ success: false, error: 'Password required' });
@@ -674,7 +876,6 @@ app.post('/api/admin/verify', (req, res) => {
     }
 });
 
-// إحصائيات المشرف
 app.get('/api/admin/stats', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -688,18 +889,12 @@ app.get('/api/admin/stats', async (req, res) => {
             totalBalance += data.balance || 0;
             totalEarned += data.totalEarned || 0;
         });
-        res.json({ success: true, stats: { 
-            totalUsers: usersSnapshot.size, 
-            pendingWithdrawals: pendingWithdrawals.size, 
-            totalBalance, 
-            totalEarned 
-        } });
+        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// قائمة جميع المستخدمين
 app.get('/api/admin/users', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, users: [] });
@@ -709,13 +904,9 @@ app.get('/api/admin/users', async (req, res) => {
         snapshot.forEach(doc => {
             const data = doc.data();
             users.push({
-                userId: data.userId, 
-                userName: data.userName, 
-                balance: data.balance,
-                inviteCount: data.inviteCount, 
-                adsWatched: data.adsWatched,
-                totalEarned: data.totalEarned, 
-                withdrawBlocked: data.withdrawBlocked || false
+                userId: data.userId, userName: data.userName, balance: data.balance,
+                inviteCount: data.inviteCount, adsWatched: data.adsWatched,
+                totalEarned: data.totalEarned, withdrawBlocked: data.withdrawBlocked || false
             });
         });
         res.json({ success: true, users });
@@ -724,7 +915,6 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// طلبات السحب المعلقة
 app.get('/api/admin/pending-withdrawals', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, withdrawals: [] });
@@ -741,7 +931,6 @@ app.get('/api/admin/pending-withdrawals', async (req, res) => {
     }
 });
 
-// الموافقة على طلب سحب
 app.post('/api/admin/approve-withdrawal', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -751,13 +940,9 @@ app.post('/api/admin/approve-withdrawal', async (req, res) => {
         const withdrawalDoc = await withdrawalRef.get();
         if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
         const data = withdrawalDoc.data();
-        await withdrawalRef.update({ 
-            status: 'approved', 
-            approvedAt: admin.firestore.FieldValue.serverTimestamp() 
-        });
+        await withdrawalRef.update({ status: 'approved', approvedAt: admin.firestore.FieldValue.serverTimestamp() });
         await addNotification(data.userId, {
-            type: 'withdraw', 
-            title: '✅ Withdrawal Approved!',
+            type: 'withdraw', title: '✅ Withdrawal Approved!',
             message: `Your withdrawal of $${data.amount.toFixed(2)} has been approved.`
         });
         res.json({ success: true });
@@ -766,7 +951,6 @@ app.post('/api/admin/approve-withdrawal', async (req, res) => {
     }
 });
 
-// رفض طلب سحب
 app.post('/api/admin/reject-withdrawal', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -776,17 +960,11 @@ app.post('/api/admin/reject-withdrawal', async (req, res) => {
         const withdrawalDoc = await withdrawalRef.get();
         if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
         const data = withdrawalDoc.data();
-        // إعادة الرصيد للمستخدم
         const userRef = db.collection('users').doc(data.userId);
         await userRef.update({ balance: admin.firestore.FieldValue.increment(data.amount) });
-        await withdrawalRef.update({ 
-            status: 'rejected', 
-            rejectedAt: admin.firestore.FieldValue.serverTimestamp(), 
-            rejectReason: reason 
-        });
+        await withdrawalRef.update({ status: 'rejected', rejectedAt: admin.firestore.FieldValue.serverTimestamp(), rejectReason: reason });
         await addNotification(data.userId, {
-            type: 'withdraw', 
-            title: '❌ Withdrawal Rejected',
+            type: 'withdraw', title: '❌ Withdrawal Rejected',
             message: `Your withdrawal of $${data.amount.toFixed(2)} was rejected. Reason: ${reason || 'Not specified'}\nThe amount has been returned.`
         });
         res.json({ success: true });
@@ -795,69 +973,45 @@ app.post('/api/admin/reject-withdrawal', async (req, res) => {
     }
 });
 
-// إضافة رصيد لمستخدم
 app.post('/api/admin/add-balance', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
     try {
         const { userId, amount } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            balance: admin.firestore.FieldValue.increment(amount), 
-            totalEarned: admin.firestore.FieldValue.increment(amount) 
-        });
-        await addNotification(userId, { 
-            type: 'admin', 
-            title: '💰 Balance Added', 
-            message: `Admin added $${amount.toFixed(2)} to your account.` 
-        });
+        await db.collection('users').doc(userId).update({ balance: admin.firestore.FieldValue.increment(amount), totalEarned: admin.firestore.FieldValue.increment(amount) });
+        await addNotification(userId, { type: 'admin', title: '💰 Balance Added', message: `Admin added $${amount.toFixed(2)} to your account.` });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// خصم رصيد من مستخدم
 app.post('/api/admin/remove-balance', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
     try {
         const { userId, amount } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            balance: admin.firestore.FieldValue.increment(-amount) 
-        });
-        await addNotification(userId, { 
-            type: 'admin', 
-            title: '💰 Balance Adjusted', 
-            message: `Admin removed $${amount.toFixed(2)} from your account.` 
-        });
+        await db.collection('users').doc(userId).update({ balance: admin.firestore.FieldValue.increment(-amount) });
+        await addNotification(userId, { type: 'admin', title: '💰 Balance Adjusted', message: `Admin removed $${amount.toFixed(2)} from your account.` });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// حظر مستخدم من السحب
 app.post('/api/admin/block-user', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
     try {
         const { userId } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            withdrawBlocked: true, 
-            withdrawBlockedAt: admin.firestore.FieldValue.serverTimestamp() 
-        });
-        await addNotification(userId, { 
-            type: 'blocked', 
-            title: '🚫 Account Restricted', 
-            message: 'Your withdrawal access has been permanently blocked.' 
-        });
+        await db.collection('users').doc(userId).update({ withdrawBlocked: true, withdrawBlockedAt: admin.firestore.FieldValue.serverTimestamp() });
+        await addNotification(userId, { type: 'blocked', title: '🚫 Account Restricted', message: 'Your withdrawal access has been permanently blocked.' });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// إرسال إشعار جماعي
 app.post('/api/admin/broadcast', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     const { message } = req.body;
@@ -870,11 +1024,10 @@ app.post('/api/admin/broadcast', async (req, res) => {
 // 14. 📋 إدارة المهام (Task Management APIs)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// الحصول على جميع المهام
 app.get('/api/tasks', async (req, res) => {
     if (!db) return res.json({ success: true, tasks: [] });
     try {
-        const tasksSnapshot = await db.collection('tasks').get();
+        const tasksSnapshot = await db.collection('tasks').where('active', '==', true).get();
         const tasks = [];
         tasksSnapshot.forEach(doc => {
             tasks.push({ id: doc.id, ...doc.data() });
@@ -885,25 +1038,26 @@ app.get('/api/tasks', async (req, res) => {
     }
 });
 
-// إضافة مهمة جديدة (للمشرف فقط)
 app.post('/api/admin/tasks', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
     try {
-        const { type, name, username, link, reward, resetPeriod } = req.body;
+        const { type, name, identifier, username, link, reward, resetPeriod, active } = req.body;
         if (!type || !name || !reward) {
             return res.json({ success: false, error: 'Missing required fields' });
         }
         const newTask = {
-            id: Date.now().toString(),
-            type, // 'telegram_channel', 'telegram_bot', 'youtube', 'tiktok'
+            id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+            type,
             name,
-            username: username || null,
-            link: link || null,
+            identifier: identifier || username || link || '',
+            username: username || identifier || link || '',
+            link: link || identifier || username || '',
             reward: parseFloat(reward),
-            resetPeriod: resetPeriod || 'once', // 'daily', 'weekly', 'once'
+            resetPeriod: resetPeriod || 'once',
+            active: active !== false,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            active: true
+            createdBy: ADMIN_ID
         };
         await db.collection('tasks').doc(newTask.id).set(newTask);
         res.json({ success: true, task: newTask });
@@ -912,20 +1066,6 @@ app.post('/api/admin/tasks', async (req, res) => {
     }
 });
 
-// حذف مهمة (للمشرف فقط)
-app.delete('/api/admin/tasks/:taskId', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { taskId } = req.params;
-        await db.collection('tasks').doc(taskId).delete();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// تحديث مهمة (للمشرف فقط)
 app.put('/api/admin/tasks/:taskId', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -939,11 +1079,73 @@ app.put('/api/admin/tasks/:taskId', async (req, res) => {
     }
 });
 
+app.delete('/api/admin/tasks/:taskId', async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
+    if (!db) return res.json({ success: false });
+    try {
+        const { taskId } = req.params;
+        await db.collection('tasks').doc(taskId).delete();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
-// 15. 🚀 تشغيل الخادم
+// 15. 🕐 مهمة مجدولة لإعادة تعيين المهام اليومية (Cron Job)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// تقديم الواجهة الأمامية
+cron.schedule('0 0 * * *', async () => {
+    console.log('🔄 Running daily task reset...');
+    if (!db) return;
+    
+    try {
+        const tasksSnapshot = await db.collection('tasks').where('resetPeriod', 'in', ['daily', 'weekly']).get();
+        const usersSnapshot = await db.collection('users').get();
+        
+        let resetCount = 0;
+        const today = new Date().toISOString().split('T')[0];
+        
+        for (const taskDoc of tasksSnapshot.docs) {
+            const task = taskDoc.data();
+            
+            for (const userDoc of usersSnapshot.docs) {
+                const user = userDoc.data();
+                const lastCompletion = user.taskLastCompletions?.[task.id];
+                
+                if (lastCompletion) {
+                    const lastDate = lastCompletion.split('T')[0];
+                    let shouldReset = false;
+                    
+                    if (task.resetPeriod === 'daily') {
+                        shouldReset = lastDate !== today;
+                    } else if (task.resetPeriod === 'weekly') {
+                        const lastWeek = new Date(lastCompletion);
+                        const now = new Date();
+                        const daysDiff = (now - lastWeek) / (1000 * 60 * 60 * 24);
+                        shouldReset = daysDiff >= 7;
+                    }
+                    
+                    if (shouldReset && user.completedTasks?.includes(task.id)) {
+                        await db.collection('users').doc(userDoc.id).update({
+                            completedTasks: admin.firestore.FieldValue.arrayRemove(task.id)
+                        });
+                        resetCount++;
+                    }
+                }
+            }
+        }
+        
+        console.log(`✅ Reset ${resetCount} task completions`);
+    } catch (error) {
+        console.error('Cron job error:', error);
+    }
+}, { timezone: "UTC" });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 16. 🚀 تقديم الواجهة الأمامية وتشغيل الخادم
+// ═══════════════════════════════════════════════════════════════════════════
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -958,19 +1160,22 @@ app.get('/tonconnect-manifest.json', (req, res) => {
     });
 });
 
-// تشغيل الخادم
 app.listen(PORT, () => {
-    console.log(`\n🌟 AdNova Network Server v4.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v5.0`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
     console.log(`👑 Admin ID: ${ADMIN_ID || '❌ Not configured'}`);
     console.log(`🤖 Bot: ${BOT_TOKEN ? '✅ Configured' : '❌ Missing'}`);
     console.log(`🌐 App URL: ${APP_URL}`);
-    console.log(`\n💰 Ad Reward: $${APP_CONFIG.adReward}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`💰 Ad Reward: $${APP_CONFIG.adReward}`);
     console.log(`📊 Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
     console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw}`);
     console.log(`👥 Required Referrals: ${APP_CONFIG.requiredReferrals}`);
-    console.log(`\n✅ Server ready for production!\n`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`✅ Server ready for production!`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 });
 
 // ============================================================================
