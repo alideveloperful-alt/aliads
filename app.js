@@ -560,21 +560,38 @@ function showEarnToast() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 9. 📋 TASKS SYSTEM
+// 9. 📋 TASKS SYSTEM (المهام المتجددة من Firebase)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function loadTasksFromFirebase() {
     try {
+        console.log("📋 Loading tasks from Firebase...");
         const res = await fetch("/api/tasks");
         const data = await res.json();
-        if (data.success && data.tasks) { tasksList = data.tasks; renderTasks(); }
-    } catch(e) { console.error("Load tasks error:", e); }
+        if (data.success && data.tasks) { 
+            tasksList = data.tasks; 
+            console.log(`✅ Loaded ${tasksList.length} tasks`);
+            renderTasks(); 
+        } else {
+            console.log("⚠️ No tasks found");
+            tasksList = [];
+            renderTasks();
+        }
+    } catch(e) { 
+        console.error("Load tasks error:", e);
+        tasksList = [];
+        renderTasks();
+    }
 }
 
 function renderTasks() {
     const container = document.getElementById("tasksContainer");
     if (!container) return;
-    if (tasksList.length === 0) { container.innerHTML = '<div class="empty-state"><i class="fas fa-tasks"></i><p>No tasks available</p></div>'; return; }
+    
+    if (tasksList.length === 0) { 
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-tasks"></i><p>No tasks available</p><span>Check back later for new tasks!</span></div>'; 
+        return; 
+    }
     
     let html = '<div class="tasks-grid">';
     for (const task of tasksList) {
@@ -588,11 +605,17 @@ function renderTasks() {
             <div class="task-card ${isCompleted ? 'completed' : ''}">
                 <div class="task-left">
                     <div class="task-icon"><i class="${icon}"></i></div>
-                    <div class="task-info"><h4>${escapeHtml(task.name)}</h4><p>${escapeHtml(identifier)}</p></div>
+                    <div class="task-info">
+                        <h4>${escapeHtml(task.name)}</h4>
+                        <p>${escapeHtml(identifier)}</p>
+                    </div>
                 </div>
                 <div class="task-right">
                     <div class="task-reward">+$${task.reward.toFixed(2)}</div>
-                    ${!isCompleted ? `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>` : `<span class="task-completed-badge">✅ Completed</span>`}
+                    ${!isCompleted ? 
+                        `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>` : 
+                        `<span class="task-completed-badge">✅ Completed</span>`
+                    }
                 </div>
             </div>`;
     }
@@ -600,7 +623,10 @@ function renderTasks() {
     container.innerHTML = html;
 }
 
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m); }
+function escapeHtml(str) { 
+    if (!str) return ''; 
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m); 
+}
 
 async function verifyTask(taskId, type, identifier, reward) {
     let url = "";
@@ -608,20 +634,39 @@ async function verifyTask(taskId, type, identifier, reward) {
     else if (type === "telegram_bot") url = `https://t.me/${identifier.replace('@', '')}`;
     else if (type === "youtube") url = identifier.startsWith("http") ? identifier : `https://youtube.com/@${identifier.replace('@', '')}`;
     else if (type === "tiktok") url = identifier.startsWith("http") ? identifier : `https://tiktok.com/@${identifier.replace('@', '')}`;
+    
     if (url) window.open(url, "_blank");
+    
     showToast("Verifying membership...", "info");
+    
     setTimeout(async () => {
         try {
-            const res = await fetch("/api/verify-channel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: currentUserId, channelUsername: identifier, taskId, reward }) });
+            const res = await fetch("/api/verify-channel", { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ 
+                    userId: currentUserId, 
+                    channelUsername: identifier, 
+                    taskId, 
+                    reward 
+                }) 
+            });
             const data = await res.json();
+            
             if (data.success && !userCompletedTasks.includes(taskId)) {
                 userCompletedTasks.push(taskId);
                 currentUser.balance += reward;
                 currentUser.totalEarned += reward;
-                saveUserData(); updateUI(); renderTasks();
+                saveUserData(); 
+                updateUI(); 
+                renderTasks();
                 showToast(t("taskCompleted", { amount: reward.toFixed(2) }), "success");
-            } else { showToast("Please join first", "error"); }
-        } catch(e) { showToast("Verification error", "error"); }
+            } else { 
+                showToast(data.error || "Please join first", "error"); 
+            }
+        } catch(e) { 
+            showToast("Verification error", "error"); 
+        }
     }, 3000);
 }
 
