@@ -4,17 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
+    <meta name="description" content="AdNova Network - Earn Real Money by Watching Ads. Instant withdrawals, referral bonuses, and daily rewards!">
     <title>AdNova Network - Earn Real Money</title>
     
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- Font Awesome 6 -->
+    <!-- Font Awesome 6 (الأيقونات) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     
+    <!-- ========== منصات الإعلانات (5 منصات) ========== -->
     <!-- Monetag Ad SDK -->
     <script src='//libtl.com/sdk.js' data-zone='10950362' data-sdk='show_10950362'></script>
     
@@ -24,83 +26,63 @@
     <!-- RichAds SDK -->
     <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
     
-    <!-- Adexium SDK -->
+    <!-- Adexium Ad SDK -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+    
+    <!-- AdsGram Ad SDK -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <!-- ========== نهاية منصات الإعلانات ========== -->
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 1. 🚀 SPLASH SCREEN - شاشة البداية الأسطورية -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 1. 🚀 SPLASH SCREEN - شاشة التحميل -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-logo-wrap">
-                <svg class="splash-logo-img" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="100" cy="100" r="95" fill="url(#splashBgGrad)" stroke="url(#splashBorderGrad)" stroke-width="3"/>
-                    <path d="M100 40 L115 75 L155 80 L125 105 L135 145 L100 125 L65 145 L75 105 L45 80 L85 75 L100 40Z" fill="url(#splashIconGrad)" stroke="#fff" stroke-width="2"/>
-                    <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(212,175,55,0.3)" stroke-width="1" stroke-dasharray="4 8">
-                        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="8s" repeatCount="indefinite"/>
-                    </circle>
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(212,175,55,0.2)" stroke-width="1" stroke-dasharray="3 10">
-                        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="6s" repeatCount="indefinite"/>
-                    </circle>
+                <svg class="splash-logo-img" viewBox="0 0 200 200" fill="none">
+                    <circle cx="100" cy="100" r="95" fill="#1a1a2e" stroke="#d4af37" stroke-width="3"/>
+                    <path d="M100 40 L115 75 L155 80 L125 105 L135 145 L100 125 L65 145 L75 105 L45 80 L85 75 L100 40Z" fill="#d4af37" stroke="#fff" stroke-width="2"/>
                     <defs>
                         <linearGradient id="splashBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#2d2d3d"/>
-                            <stop offset="50%" stop-color="#1a1a2e"/>
                             <stop offset="100%" stop-color="#0d0d1a"/>
-                        </linearGradient>
-                        <linearGradient id="splashBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#d4af37"/>
-                            <stop offset="50%" stop-color="#f5d97e"/>
-                            <stop offset="100%" stop-color="#c8a830"/>
-                        </linearGradient>
-                        <linearGradient id="splashIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f5d97e"/>
-                            <stop offset="50%" stop-color="#d4af37"/>
-                            <stop offset="100%" stop-color="#c8a830"/>
                         </linearGradient>
                     </defs>
                 </svg>
             </div>
             <div class="splash-sub">
-                <span class="splash-deco"><span class="splash-deco-gem">✦</span></span>
+                <span class="splash-deco">✦</span>
                 <span id="splashTitle">AdNova Network</span>
-                <span class="splash-deco splash-deco-right"><span class="splash-deco-gem">✦</span></span>
+                <span class="splash-deco">✦</span>
             </div>
             <div class="splash-loader">
                 <div class="splash-loader-bar"></div>
             </div>
-            <div class="splash-version">v4.0</div>
+            <div class="splash-version">v5.0</div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 2. 📱 MAIN APP CONTENT - المحتوى الرئيسي -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 2. 📱 MAIN APP CONTENT -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="mainContent" style="display: none;">
         
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 3. 🎨 HEADER - رأس الصفحة مع الإشعارات واللغة -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 3. 🎨 HEADER -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <header>
             <div class="app-title">
-                <svg class="app-logo-img" viewBox="0 0 100 100" fill="none">
-                    <circle cx="50" cy="50" r="48" fill="url(#goldGrad)" stroke="#d4af37" stroke-width="2"/>
-                    <path d="M30 50 L45 35 L55 45 L70 30 L65 65 L50 55 L35 70 Z" fill="#d4af37" opacity="0.8"/>
+                <svg class="app-logo-img" viewBox="0 0 100 100" width="36" height="36">
+                    <circle cx="50" cy="50" r="48" fill="#d4af37" stroke="#b8920e" stroke-width="2"/>
                     <text x="50" y="68" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">A</text>
-                    <defs>
-                        <radialGradient id="goldGrad" cx="50%" cy="40%" r="60%">
-                            <stop offset="0%" stop-color="#f5d97e"/>
-                            <stop offset="100%" stop-color="#c8a830"/>
-                        </radialGradient>
-                    </defs>
                 </svg>
             </div>
             <div class="header-right">
@@ -118,12 +100,11 @@
             </div>
         </header>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 4. 💰 BALANCE CARD - بطاقة الرصيد الرئيسية -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 4. 💰 BALANCE CARD -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <div class="balance-card">
-            <div class="balance-card-shine"></div>
             <div class="balance-card-top">
                 <div>
                     <div class="balance-label" data-i18n="totalBalance">Total Balance</div>
@@ -143,37 +124,26 @@
             </div>
             <div class="balance-divider"></div>
             <div class="balance-earn-row">
-                <span class="balance-earn-item">
-                    <i class="fas fa-play-circle"></i>
-                    <span data-i18n="watchAds">Watch Ads</span>
-                </span>
+                <span class="balance-earn-item"><i class="fas fa-play-circle"></i> <span data-i18n="watchAds">Watch Ads</span></span>
                 <span class="balance-earn-dot">·</span>
-                <span class="balance-earn-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span data-i18n="completeTasks">Complete Tasks</span>
-                </span>
+                <span class="balance-earn-item"><i class="fas fa-check-circle"></i> <span data-i18n="completeTasks">Complete Tasks</span></span>
                 <span class="balance-earn-dot">·</span>
-                <span class="balance-earn-item">
-                    <i class="fas fa-user-plus"></i>
-                    <span data-i18n="inviteFriends">Invite Friends</span>
-                </span>
+                <span class="balance-earn-item"><i class="fas fa-user-plus"></i> <span data-i18n="inviteFriends">Invite Friends</span></span>
             </div>
             <div class="ton-connect-row">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <i class="fab fa-telegram" style="color: #d4af37; font-size: 12px;"></i>
-                    <span style="font-size: 10px; color: rgba(212,175,55,0.7);">TON Wallet</span>
+                <div class="ton-connect-left">
+                    <i class="fab fa-telegram"></i>
+                    <span>TON Wallet</span>
                 </div>
-                <button id="connectTONBtn" onclick="connectTONWallet()" style="background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 4px 12px; font-size: 10px; color: #d4af37; cursor: pointer;">
-                    Connect TON
-                </button>
-                <span id="tonWalletStatus" style="font-size: 9px; color: #64748b;"></span>
+                <button id="connectTONBtn" class="ton-connect-btn" onclick="connectTONWallet()">Connect TON</button>
+                <span id="tonWalletStatus" class="ton-status">Not connected</span>
             </div>
             <div id="tonConnectButton" style="display: none;"></div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 5. 📺 PAGE: ADS - صفحة مشاهدة الإعلانات -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 5. 📺 PAGE: ADS -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <div id="page-ads" class="page active">
             <div class="card">
@@ -181,7 +151,7 @@
                     <div class="card-icon gold"><i class="fas fa-ad"></i></div>
                     <div>
                         <div class="card-title" data-i18n="watchAndEarn">Watch Ads &amp; Earn</div>
-                        <div class="card-desc" id="adsCardDesc">Watch ads and earn <strong>$0.01</strong> each</div>
+                        <div class="card-desc">Watch ads and earn <strong>$0.01</strong> each</div>
                     </div>
                 </div>
 
@@ -193,17 +163,14 @@
                                 <div class="earn-toast-label">Reward Credited</div>
                                 <div class="earn-toast-amount" id="earnToastAmount">+ $0.01 Earned</div>
                             </div>
-                            <div class="earn-toast-bar-wrap">
-                                <div class="earn-toast-bar"></div>
-                            </div>
                         </div>
                     </div>
                     
                     <button id="watchAdBtn" class="watch-ad-btn" onclick="watchAd()">
                         <div class="watch-ad-inner">
                             <div class="watch-ad-play-wrap">
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <polygon points="6 4 20 12 6 20 6 4"/>
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <polygon points="6 4 20 12 6 20 6 4" fill="white"/>
                                 </svg>
                             </div>
                             <div class="watch-ad-text">
@@ -239,14 +206,14 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 6. 📋 PAGE: TASKS - صفحة المهام المتجددة -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 6. 📋 PAGE: TASKS -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <div id="page-tasks" class="page">
             <div class="task-wrapper-card">
                 <div class="task-wrapper-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2.5">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="#d4af37" stroke-width="2">
                         <polyline points="9 11 12 14 22 4"/>
                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
@@ -256,9 +223,9 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 7. 👥 PAGE: INVITE - صفحة الإحالات -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 7. 👥 PAGE: INVITE -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <div id="page-invite" class="page">
             <div class="invite-wrapper-card">
@@ -268,7 +235,7 @@
                         <div class="invite-hero-text">
                             <div class="invite-hero-title" data-i18n="inviteAndEarn">Invite &amp; Earn</div>
                             <div class="invite-hero-earn">Earn <strong>$0.50</strong> for each invite</div>
-                            <div class="invite-hero-subtitle" data-i18n="inviteHeroSub">Copy and share your invite link to earn more</div>
+                            <div class="invite-hero-subtitle">Copy and share your invite link to earn more</div>
                         </div>
                     </div>
                     <div class="invite-hero-divider"></div>
@@ -277,9 +244,13 @@
                         <div class="invite-link-wrap">
                             <div class="invite-link-icon"><i class="fas fa-link"></i></div>
                             <div class="invite-link-text" id="inviteLink">Loading...</div>
-                            <button class="btn-dark" id="copyInviteBtn" onclick="copyInviteLink()"><i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span></button>
+                            <button class="btn-dark" id="copyInviteBtn" onclick="copyInviteLink()">
+                                <i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span>
+                            </button>
                         </div>
-                        <button class="btn-ghost" id="shareInviteBtn" onclick="shareInviteLink()"><i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share</span></button>
+                        <button class="btn-ghost" id="shareInviteBtn" onclick="shareInviteLink()">
+                            <i class="fab fa-telegram"></i> <span data-i18n="shareWithFriends">Share</span>
+                        </button>
                     </div>
                 </div>
                 <div class="invite-stats-row">
@@ -295,15 +266,15 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 8. 💸 PAGE: WITHDRAW - صفحة السحب (مع SBP) -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 8. 💸 PAGE: WITHDRAW -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <div id="page-withdraw" class="page">
             <div class="wd-outer-card">
                 <div class="wd-wrapper-card">
                     <div class="wd-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2.5">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="#d4af37" stroke-width="2">
                             <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
                         </svg>
                         <span data-i18n="paymentMethod">Payment Method</span>
@@ -327,9 +298,9 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 9. 🧭 BOTTOM NAVIGATION - القائمة السفلية -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 9. 🧭 BOTTOM NAVIGATION -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <nav class="bottom-nav">
             <button class="nav-item active" data-page="ads" onclick="switchTab('ads')">
@@ -351,9 +322,9 @@
         </nav>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 10. 🌍 LANGUAGE MODAL - نافذة اختيار اللغة -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 10. 🌍 LANGUAGE MODAL -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="langModal" class="lang-modal-overlay" onclick="closeLanguageModal(event)">
         <div class="lang-modal">
@@ -363,9 +334,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 11. 🔔 NOTIFICATIONS MODAL - نافذة الإشعارات -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 11. 🔔 NOTIFICATIONS MODAL -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="notificationsModal" class="modal">
         <div class="modal-content">
@@ -383,45 +354,44 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 12. ✅ CONFIRM MODAL - نافذة التأكيد -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 12. ✅ CONFIRM MODAL -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="confirmModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <div class="modal-icon" id="confirmModalIcon">❓</div>
             <h3 id="confirmModalTitle">Confirm</h3>
             <p id="confirmModalMessage">Are you sure?</p>
-            <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn-cancel" onclick="closeConfirmModal()" style="flex:1; padding: 10px; background: #e2e8f0; border: none; border-radius: 10px; cursor: pointer;">Cancel</button>
-                <button class="btn-confirm" id="confirmModalBtn" style="flex:1; padding: 10px; background: linear-gradient(135deg, #d4af37, #b8920e); border: none; border-radius: 10px; color: white; cursor: pointer;">Confirm</button>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmModalBtn">Confirm</button>
             </div>
-            <button class="close-btn" onclick="closeConfirmModal()" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 13. 👑 ADMIN AUTH MODAL - نافذة دخول المشرف -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 13. 👑 ADMIN AUTH MODAL -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="adminAuthModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 data-i18n="adminAuthTitle">Admin Authentication</h3>
+                <h3>Admin Authentication</h3>
                 <button class="close-btn" onclick="closeModal('adminAuthModal')"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <p class="modal-desc" data-i18n="adminAuthDesc">Enter admin password to continue</p>
+                <p class="modal-desc">Enter admin password to continue</p>
                 <input type="password" id="adminPasswordInput" class="form-input" placeholder="Enter password">
                 <p id="adminAuthError" class="error-text" style="display: none;">Invalid password</p>
-                <button class="admin-auth-btn" onclick="verifyAdminPassword()"><i class="fas fa-check"></i> <span data-i18n="verify">Verify</span></button>
+                <button class="admin-auth-btn" onclick="verifyAdminPassword()"><i class="fas fa-check"></i> Verify</button>
             </div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 14. 🎛️ ADMIN PANEL - لوحة المشرف المتطورة -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 14. 🎛️ ADMIN PANEL -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-panel-header">
@@ -431,13 +401,16 @@
         <div id="adminContent"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 15. 🍞 TOAST CONTAINER - حاوية الإشعارات المنبثقة -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 15. 🍞 TOAST CONTAINER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Main Script -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- 16. 📜 MAIN SCRIPT -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    
     <script src="app.js"></script>
 </body>
 </html>
