@@ -2456,6 +2456,89 @@ body.rtl .close-btn {
         background: linear-gradient(135deg, #2a2418, #1c1810);
     }
 }
+
+/* ============================================================================
+   إضافات v6.0 - لوحة المشرف وإدارة المهام
+   ============================================================================ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   19. 🎛️ ADMIN PANEL - TASKS MANAGEMENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-section-header h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.btn-add-task {
+    background: linear-gradient(135deg, #d4af37, #b8920e);
+    border: none;
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-task:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.tasks-management-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-management-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.task-management-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.task-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.task-type-badge {
+    background: #fef3c7;
+    border-radius: 30px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #b8860b;
+}
+
+.task-type-badge.telegram_channel { background: #e0f2fe; color: #0284c7; }
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
