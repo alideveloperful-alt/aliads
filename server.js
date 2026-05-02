@@ -1,9 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v13.0 (النسخة النهائية الكاملة)
+// ADNOVA NETWORK - SERVER v14.0 (النسخة النهائية الكاملة)
 // ============================================================================
 // خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
 // التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة، إدارة طلبات السحب عبر البوت
-// نظام الطلبات المعلقة: pending_withdrawals مجلد منفصل (بدون فهارس)
+// نظام الطلبات المعلقة: pending_withdrawals مجلد منفصل (مثل tasks و users)
 // أنواع المهام: channel, bot, youtube, tiktok, twitter
 // ============================================================================
 
@@ -421,7 +421,7 @@ bot.command('alimenfi', async (ctx) => {
     botAdminSessions.set(userId, { step: 'awaiting_password' });
 });
 
-// أمر /pending - عرض طلبات السحب المعلقة (من مجلد منفصل)
+// أمر /pending - عرض طلبات السحب المعلقة
 bot.command('pending', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -433,7 +433,7 @@ bot.command('pending', async (ctx) => {
     
     if (!db) return ctx.reply('⚠️ Database not connected');
     
-    // ✅ استعلام بسيط من مجلد pending_withdrawals (بدون فهارس)
+    // ✅ جلب الطلبات من مجلد pending_withdrawals (مثل tasks و users)
     const pendingSnapshot = await db.collection('pending_withdrawals').get();
     
     if (pendingSnapshot.empty) {
@@ -726,7 +726,6 @@ bot.action(/approve_withdraw_(.+)/, async (ctx) => {
     await ctx.answerCbQuery("✅ Processing approval...");
     
     try {
-        // 1. قراءة من مجلد pending_withdrawals
         const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
         const pendingDoc = await pendingRef.get();
         
@@ -736,7 +735,6 @@ bot.action(/approve_withdraw_(.+)/, async (ctx) => {
         
         const data = pendingDoc.data();
         
-        // 2. حفظ نسخة في withdrawals (للأرشيف)
         await db.collection('withdrawals').add({
             ...data,
             status: 'approved',
@@ -744,7 +742,6 @@ bot.action(/approve_withdraw_(.+)/, async (ctx) => {
             approvedBy: adminId
         });
         
-        // 3. حذف من pending_withdrawals
         await pendingRef.delete();
         
         await addNotification(data.userId, {
@@ -850,7 +847,6 @@ bot.on('text', async (ctx) => {
         const withdrawalId = authSession.withdrawalId;
         
         try {
-            // 1. قراءة من مجلد pending_withdrawals
             const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
             const pendingDoc = await pendingRef.get();
             
@@ -860,13 +856,11 @@ bot.on('text', async (ctx) => {
             
             const data = pendingDoc.data();
             
-            // 2. إعادة الرصيد للمستخدم
             const userRef = db.collection('users').doc(data.userId);
             await userRef.update({
                 balance: admin.firestore.FieldValue.increment(data.amount)
             });
             
-            // 3. حفظ نسخة في withdrawals (للأرشيف)
             await db.collection('withdrawals').add({
                 ...data,
                 status: 'rejected',
@@ -875,7 +869,6 @@ bot.on('text', async (ctx) => {
                 rejectedBy: userId
             });
             
-            // 4. حذف من pending_withdrawals
             await pendingRef.delete();
             
             await addNotification(data.userId, {
@@ -1465,7 +1458,7 @@ app.post('/api/withdraw/request', async (req, res) => {
             userAds: userData.adsWatched || 0
         };
         
-        // ✅ حفظ في مجلد pending_withdrawals (بدلاً من withdrawals مباشرة)
+        // ✅ حفظ في مجلد pending_withdrawals (مثل tasks و users)
         const docRef = await db.collection('pending_withdrawals').add(withdrawRequest);
         
         await userRef.update({ balance: newBalance });
@@ -1547,13 +1540,9 @@ app.get('/api/admin/users', async (req, res) => {
         snapshot.forEach(doc => {
             const data = doc.data();
             users.push({
-                userId: data.userId,
-                userName: data.userName,
-                balance: data.balance,
-                inviteCount: data.inviteCount,
-                adsWatched: data.adsWatched,
-                totalEarned: data.totalEarned,
-                withdrawBlocked: data.withdrawBlocked || false
+                userId: data.userId, userName: data.userName, balance: data.balance,
+                inviteCount: data.inviteCount, adsWatched: data.adsWatched,
+                totalEarned: data.totalEarned, withdrawBlocked: data.withdrawBlocked || false
             });
         });
         res.json({ success: true, users });
@@ -1562,7 +1551,6 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// ملاحظة: هذا الـ API يعرض الطلبات من الأرشيف (withdrawals) وليس المعلقة
 app.get('/api/admin/pending-withdrawals', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, withdrawals: [] });
@@ -1806,7 +1794,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v13.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v14.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -1823,7 +1811,7 @@ app.listen(PORT, () => {
     console.log(`📋 Withdrawal Management via Bot: ✅ Ready`);
     console.log(`   • /pending - View pending withdrawals`);
     console.log(`   • Approve/Reject with inline buttons`);
-    console.log(`   • pending_withdrawals folder (no indexes needed)`);
+    console.log(`   • pending_withdrawals folder (like tasks & users)`);
     console.log(`📢 Broadcast System: ✅ Ready`);
     console.log(`👑 Admin Commands: ✅ Ready`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
