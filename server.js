@@ -1,8 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v12.0 (النسخة النهائية الكاملة)
+// ADNOVA NETWORK - SERVER v13.0 (النسخة النهائية الكاملة)
 // ============================================================================
 // خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
 // التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة، إدارة طلبات السحب عبر البوت
+// نظام الطلبات المعلقة: pending_withdrawals مجلد منفصل (بدون فهارس)
 // أنواع المهام: channel, bot, youtube, tiktok, twitter
 // ============================================================================
 
@@ -420,7 +421,7 @@ bot.command('alimenfi', async (ctx) => {
     botAdminSessions.set(userId, { step: 'awaiting_password' });
 });
 
-// أمر /pending - عرض طلبات السحب المعلقة
+// أمر /pending - عرض طلبات السحب المعلقة (من مجلد منفصل)
 bot.command('pending', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -432,24 +433,30 @@ bot.command('pending', async (ctx) => {
     
     if (!db) return ctx.reply('⚠️ Database not connected');
     
-    const pendingSnapshot = await db.collection('withdrawals')
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .get();
+    // ✅ استعلام بسيط من مجلد pending_withdrawals (بدون فهارس)
+    const pendingSnapshot = await db.collection('pending_withdrawals').get();
     
     if (pendingSnapshot.empty) {
         return ctx.reply('✅ *No pending withdrawals!*\n━━━━━━━━━━━━━━━━━━━━━━\nAll requests have been processed.', { parse_mode: 'Markdown' });
     }
     
+    const withdrawals = [];
+    for (const doc of pendingSnapshot.docs) {
+        withdrawals.push({ id: doc.id, ...doc.data() });
+    }
+    
+    // ترتيب يدوي حسب التاريخ
+    withdrawals.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+        return dateB - dateA;
+    });
+    
     let message = '📋 *PENDING WITHDRAWALS*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
     let index = 1;
     let totalAmount = 0;
-    const withdrawals = [];
     
-    for (const doc of pendingSnapshot.docs) {
-        const w = doc.data();
-        withdrawals.push({ id: doc.id, ...w });
-        
+    for (const w of withdrawals) {
         const date = w.createdAt?.toDate ? w.createdAt.toDate() : new Date(w.createdAt);
         const timeAgo = getTimeAgo(date);
         
@@ -608,12 +615,12 @@ bot.command('botstats', async (ctx) => {
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
     if (!db) return ctx.reply('⚠️ Database not connected');
     const usersSnapshot = await db.collection('users').get();
-    const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
+    const pendingSnapshot = await db.collection('pending_withdrawals').get();
     const tasksSnapshot = await db.collection('tasks').get();
     await ctx.reply(
         `📊 *BOT STATISTICS*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
         `👥 *Total Users:* ${usersSnapshot.size}\n` +
-        `💸 *Pending Withdrawals:* ${pendingWithdrawals.size}\n` +
+        `💸 *Pending Withdrawals:* ${pendingSnapshot.size}\n` +
         `📋 *Total Tasks:* ${tasksSnapshot.size}\n` +
         `🕐 *Uptime:* ${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m\n` +
         `━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -719,24 +726,26 @@ bot.action(/approve_withdraw_(.+)/, async (ctx) => {
     await ctx.answerCbQuery("✅ Processing approval...");
     
     try {
-        const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-        const withdrawalDoc = await withdrawalRef.get();
+        // 1. قراءة من مجلد pending_withdrawals
+        const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
+        const pendingDoc = await pendingRef.get();
         
-        if (!withdrawalDoc.exists) {
+        if (!pendingDoc.exists) {
             return ctx.reply("❌ Withdrawal request not found!");
         }
         
-        const data = withdrawalDoc.data();
+        const data = pendingDoc.data();
         
-        if (data.status !== 'pending') {
-            return ctx.reply(`⚠️ This withdrawal has already been ${data.status}!`);
-        }
-        
-        await withdrawalRef.update({
+        // 2. حفظ نسخة في withdrawals (للأرشيف)
+        await db.collection('withdrawals').add({
+            ...data,
             status: 'approved',
             approvedAt: new Date().toISOString(),
             approvedBy: adminId
         });
+        
+        // 3. حذف من pending_withdrawals
+        await pendingRef.delete();
         
         await addNotification(data.userId, {
             type: 'withdraw',
@@ -841,30 +850,33 @@ bot.on('text', async (ctx) => {
         const withdrawalId = authSession.withdrawalId;
         
         try {
-            const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-            const withdrawalDoc = await withdrawalRef.get();
+            // 1. قراءة من مجلد pending_withdrawals
+            const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
+            const pendingDoc = await pendingRef.get();
             
-            if (!withdrawalDoc.exists) {
+            if (!pendingDoc.exists) {
                 return ctx.reply("❌ Withdrawal request not found!");
             }
             
-            const data = withdrawalDoc.data();
+            const data = pendingDoc.data();
             
-            if (data.status !== 'pending') {
-                return ctx.reply(`⚠️ This withdrawal has already been ${data.status}!`);
-            }
-            
+            // 2. إعادة الرصيد للمستخدم
             const userRef = db.collection('users').doc(data.userId);
             await userRef.update({
                 balance: admin.firestore.FieldValue.increment(data.amount)
             });
             
-            await withdrawalRef.update({
+            // 3. حفظ نسخة في withdrawals (للأرشيف)
+            await db.collection('withdrawals').add({
+                ...data,
                 status: 'rejected',
                 rejectedAt: new Date().toISOString(),
                 rejectReason: reason,
                 rejectedBy: userId
             });
+            
+            // 4. حذف من pending_withdrawals
+            await pendingRef.delete();
             
             await addNotification(data.userId, {
                 type: 'withdraw',
@@ -1406,7 +1418,7 @@ app.post('/api/verify-channel', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 11. 💸 API طلبات السحب
+// 11. 💸 API طلبات السحب (يتم حفظها في مجلد pending_withdrawals)
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.post('/api/withdraw/request', async (req, res) => {
@@ -1453,7 +1465,8 @@ app.post('/api/withdraw/request', async (req, res) => {
             userAds: userData.adsWatched || 0
         };
         
-        const docRef = await db.collection('withdrawals').add(withdrawRequest);
+        // ✅ حفظ في مجلد pending_withdrawals (بدلاً من withdrawals مباشرة)
+        const docRef = await db.collection('pending_withdrawals').add(withdrawRequest);
         
         await userRef.update({ balance: newBalance });
         
@@ -1511,7 +1524,7 @@ app.get('/api/admin/stats', async (req, res) => {
     if (!db) return res.json({ success: false });
     try {
         const usersSnapshot = await db.collection('users').get();
-        const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
+        const pendingSnapshot = await db.collection('pending_withdrawals').get();
         let totalBalance = 0;
         let totalEarned = 0;
         usersSnapshot.forEach(doc => {
@@ -1519,7 +1532,7 @@ app.get('/api/admin/stats', async (req, res) => {
             totalBalance += data.balance || 0;
             totalEarned += data.totalEarned || 0;
         });
-        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned } });
+        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingSnapshot.size, totalBalance, totalEarned } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1549,11 +1562,12 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
+// ملاحظة: هذا الـ API يعرض الطلبات من الأرشيف (withdrawals) وليس المعلقة
 app.get('/api/admin/pending-withdrawals', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, withdrawals: [] });
     try {
-        const snapshot = await db.collection('withdrawals').where('status', '==', 'pending').orderBy('createdAt', 'desc').get();
+        const snapshot = await db.collection('pending_withdrawals').get();
         const withdrawals = [];
         for (const doc of snapshot.docs) {
             withdrawals.push({ id: doc.id, ...doc.data() });
@@ -1569,15 +1583,27 @@ app.post('/api/admin/approve-withdrawal', async (req, res) => {
     if (!db) return res.json({ success: false });
     try {
         const { withdrawalId } = req.body;
-        const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-        const withdrawalDoc = await withdrawalRef.get();
-        if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
-        const data = withdrawalDoc.data();
-        await withdrawalRef.update({ status: 'approved', approvedAt: admin.firestore.FieldValue.serverTimestamp() });
+        
+        const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
+        const pendingDoc = await pendingRef.get();
+        
+        if (!pendingDoc.exists) return res.json({ success: false, error: 'Not found' });
+        
+        const data = pendingDoc.data();
+        
+        await db.collection('withdrawals').add({
+            ...data,
+            status: 'approved',
+            approvedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await pendingRef.delete();
+        
         await addNotification(data.userId, {
             type: 'withdraw', title: '✅ Withdrawal Approved!',
             message: `Your withdrawal of $${data.amount.toFixed(2)} has been approved.`
         });
+        
         console.log(`✅ Withdrawal approved: ${withdrawalId}`);
         res.json({ success: true });
     } catch (error) {
@@ -1590,17 +1616,31 @@ app.post('/api/admin/reject-withdrawal', async (req, res) => {
     if (!db) return res.json({ success: false });
     try {
         const { withdrawalId, reason } = req.body;
-        const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-        const withdrawalDoc = await withdrawalRef.get();
-        if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
-        const data = withdrawalDoc.data();
+        
+        const pendingRef = db.collection('pending_withdrawals').doc(withdrawalId);
+        const pendingDoc = await pendingRef.get();
+        
+        if (!pendingDoc.exists) return res.json({ success: false, error: 'Not found' });
+        
+        const data = pendingDoc.data();
+        
         const userRef = db.collection('users').doc(data.userId);
         await userRef.update({ balance: admin.firestore.FieldValue.increment(data.amount) });
-        await withdrawalRef.update({ status: 'rejected', rejectedAt: admin.firestore.FieldValue.serverTimestamp(), rejectReason: reason });
+        
+        await db.collection('withdrawals').add({
+            ...data,
+            status: 'rejected',
+            rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            rejectReason: reason
+        });
+        
+        await pendingRef.delete();
+        
         await addNotification(data.userId, {
             type: 'withdraw', title: '❌ Withdrawal Rejected',
             message: `Your withdrawal of $${data.amount.toFixed(2)} was rejected. Reason: ${reason || 'Not specified'}\nThe amount has been returned.`
         });
+        
         console.log(`❌ Withdrawal rejected: ${withdrawalId}`);
         res.json({ success: true });
     } catch (error) {
@@ -1766,7 +1806,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v12.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v13.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -1783,6 +1823,7 @@ app.listen(PORT, () => {
     console.log(`📋 Withdrawal Management via Bot: ✅ Ready`);
     console.log(`   • /pending - View pending withdrawals`);
     console.log(`   • Approve/Reject with inline buttons`);
+    console.log(`   • pending_withdrawals folder (no indexes needed)`);
     console.log(`📢 Broadcast System: ✅ Ready`);
     console.log(`👑 Admin Commands: ✅ Ready`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
