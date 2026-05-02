@@ -1,8 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v9.0 (النسخة النهائية - إدارة المهام عبر البوت)
+// ADNOVA NETWORK - SERVER v10.0 (النسخة النهائية الكاملة)
 // ============================================================================
 // خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
 // التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة
+// أنواع المهام: channel, bot, youtube, tiktok, twitter
 // ============================================================================
 
 const express = require('express');
@@ -288,6 +289,7 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 • 🤖 Start Telegram bots
 • 🎥 Subscribe to YouTube
 • 🎵 Follow on TikTok
+• 🐦 Follow on Twitter
 • 💰 Earn *$0.05 - $0.50* per task
 
 💳 *WITHDRAWAL METHODS*
@@ -379,7 +381,12 @@ bot.command('tasks', async (ctx) => {
     let index = 1;
     for (const doc of tasksSnapshot.docs) {
         const task = doc.data();
-        const typeIcon = task.type === 'telegram_channel' ? '📢' : task.type === 'telegram_bot' ? '🤖' : task.type === 'youtube' ? '🎥' : '🎵';
+        let typeIcon = '📢';
+        if (task.type === 'channel') typeIcon = '📢';
+        else if (task.type === 'bot') typeIcon = '🤖';
+        else if (task.type === 'youtube') typeIcon = '🎥';
+        else if (task.type === 'tiktok') typeIcon = '🎵';
+        else if (task.type === 'twitter') typeIcon = '🐦';
         taskList += `${index}. ${typeIcon} *${task.name}*\n`;
         taskList += `   💰 Reward: *$${task.reward.toFixed(2)}*\n`;
         taskList += `   🔗 ${task.username || task.link || task.identifier}\n\n`;
@@ -497,7 +504,12 @@ bot.command('listtasks', async (ctx) => {
     for (const doc of tasksSnapshot.docs) {
         const task = doc.data();
         const statusIcon = task.active ? '✅' : '⏸️';
-        const typeIcon = task.type === 'telegram_channel' ? '📢' : task.type === 'telegram_bot' ? '🤖' : task.type === 'youtube' ? '🎥' : '🎵';
+        let typeIcon = '📢';
+        if (task.type === 'channel') typeIcon = '📢';
+        else if (task.type === 'bot') typeIcon = '🤖';
+        else if (task.type === 'youtube') typeIcon = '🎥';
+        else if (task.type === 'tiktok') typeIcon = '🎵';
+        else if (task.type === 'twitter') typeIcon = '🐦';
         taskList += `${index}. ${statusIcon} ${typeIcon} *${task.name}*\n`;
         taskList += `   💰 Reward: *$${task.reward.toFixed(2)}*\n`;
         taskList += `   🔗 ${task.username || task.link || task.identifier}\n`;
@@ -608,17 +620,18 @@ bot.on('text', async (ctx) => {
             ctx.reply(
                 `📝 *Task Name:* ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
                 `🏷️ *Step 2:* Choose task type:\n` +
-                `• \`telegram_channel\` - Telegram Channel\n` +
-                `• \`telegram_bot\` - Telegram Bot\n` +
+                `• \`channel\` - Telegram Channel / Group\n` +
+                `• \`bot\` - Telegram Bot\n` +
                 `• \`youtube\` - YouTube Channel\n` +
-                `• \`tiktok\` - TikTok Account\n\n` +
+                `• \`tiktok\` - TikTok Account\n` +
+                `• \`twitter\` - Twitter / X Account\n\n` +
                 `📝 *Type the type:*`,
                 { parse_mode: 'Markdown' }
             );
         } else if (taskSession.step === 'type') {
-            const validTypes = ['telegram_channel', 'telegram_bot', 'youtube', 'tiktok'];
+            const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter'];
             if (!validTypes.includes(message.toLowerCase())) {
-                return ctx.reply('❌ *Invalid type!* Please choose: telegram_channel, telegram_bot, youtube, or tiktok', { parse_mode: 'Markdown' });
+                return ctx.reply('❌ *Invalid type!* Please choose: channel, bot, youtube, tiktok, or twitter', { parse_mode: 'Markdown' });
             }
             taskSession.type = message.toLowerCase();
             taskSession.step = 'identifier';
@@ -628,7 +641,8 @@ bot.on('text', async (ctx) => {
                 `🔗 *Step 3:* Enter username or link:\n` +
                 `• For Telegram: @username\n` +
                 `• For YouTube: @channel or full URL\n` +
-                `• For TikTok: @username\n\n` +
+                `• For TikTok: @username\n` +
+                `• For Twitter: @username\n\n` +
                 `📝 *Type the identifier:*`,
                 { parse_mode: 'Markdown' }
             );
@@ -1034,25 +1048,38 @@ app.post('/api/reward', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. ✅ API التحقق من انضمام القنوات
+// 10. ✅ API التحقق من انضمام القنوات (فقط لـ channel)
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.post('/api/verify-channel', async (req, res) => {
     try {
-        const { userId, channelUsername, taskId, reward } = req.body;
+        const { userId, channelUsername, taskId, reward, taskType } = req.body;
         
-        if (!userId || !channelUsername) {
+        if (!userId || !channelUsername || !taskId) {
             return res.json({ success: false, error: 'Missing required fields' });
         }
         
-        console.log(`🔍 Verifying ${userId} in ${channelUsername} for task ${taskId}`);
+        console.log(`🔍 Verifying ${userId} for task ${taskId} (type: ${taskType})`);
         
-        const isMember = await verifyChannelMembership(userId, channelUsername);
+        let isVerified = false;
         
-        if (!isMember) {
-            return res.json({ success: false, error: 'User is not a member of the channel' });
+        // فقط التحقق للـ channel (قنوات ومجموعات التليجرام)
+        if (taskType === 'channel') {
+            const isMember = await verifyChannelMembership(userId, channelUsername);
+            isVerified = isMember;
+            console.log(`📢 Channel verification: ${isVerified}`);
+        } 
+        else {
+            // bot, youtube, tiktok, twitter - مكافأة فورية (لا نحتاج تحقق)
+            isVerified = true;
+            console.log(`✅ Auto-verified for type: ${taskType}`);
         }
         
+        if (!isVerified) {
+            return res.json({ success: false, error: 'You are not a member of this channel/group' });
+        }
+        
+        // منح المكافأة
         if (db && reward) {
             const userRef = db.collection('users').doc(userId);
             const userDoc = await userRef.get();
@@ -1076,11 +1103,14 @@ app.post('/api/verify-channel', async (req, res) => {
                     });
                     
                     console.log(`✅ Task ${taskId} completed by ${userId}, +$${reward}`);
+                } else {
+                    return res.json({ success: false, error: 'Task already completed!' });
                 }
             }
         }
         
-        res.json({ success: true, message: 'Verification successful' });
+        res.json({ success: true, message: 'Task completed successfully!' });
+        
     } catch (error) {
         console.error('Verify channel error:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -1431,7 +1461,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v9.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v10.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -1443,6 +1473,7 @@ app.listen(PORT, () => {
     console.log(`📊 Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
     console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`📋 Task Types: channel, bot, youtube, tiktok, twitter`);
     console.log(`📋 Task Management via Bot: ✅ Ready`);
     console.log(`   • /addtask - Add new task`);
     console.log(`   • /edittask - Edit task`);
