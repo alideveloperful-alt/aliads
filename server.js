@@ -1,7 +1,7 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v8.0 (النسخة النهائية الكاملة)
+// ADNOVA NETWORK - SERVER v9.0 (النسخة النهائية - إدارة المهام عبر البوت)
 // ============================================================================
-// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة،
+// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
 // التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة
 // ============================================================================
 
@@ -101,11 +101,13 @@ if (serviceAccount) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🤖 Telegram Bot مع أوامر مشرف كاملة
+// 4. 🤖 Telegram Bot مع إدارة المهام عبر البوت
 // ═══════════════════════════════════════════════════════════════════════════
 
 const bot = new Telegraf(BOT_TOKEN);
 const botAdminSessions = new Map();
+const taskCreationSessions = new Map();
+const taskEditSessions = new Map();
 
 // ========== دوال مساعدة ==========
 
@@ -161,7 +163,6 @@ async function broadcastToAllUsers(message) {
         }
         if (batchCount > 0) await batch.commit();
         
-        // إرسال عبر البوت أيضاً
         let botSentCount = 0;
         for (const doc of usersSnapshot.docs) {
             try {
@@ -310,7 +311,7 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
     await ctx.reply(welcomeText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 
-// ========== أوامر البوت ==========
+// ========== أوامر البوت العامة ==========
 
 bot.start(async (ctx) => {
     const refCode = ctx.startPayload;
@@ -368,9 +369,30 @@ bot.command('help', async (ctx) => {
     );
 });
 
-// ========== أوامر المشرف ==========
+bot.command('tasks', async (ctx) => {
+    if (!db) return ctx.reply('⚠️ Maintenance mode...');
+    const tasksSnapshot = await db.collection('tasks').where('active', '==', true).get();
+    if (tasksSnapshot.empty) {
+        return ctx.reply('📋 *No tasks available at the moment.*\nCheck back later for new earning opportunities!', { parse_mode: 'Markdown' });
+    }
+    let taskList = '📋 *AVAILABLE TASKS*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    let index = 1;
+    for (const doc of tasksSnapshot.docs) {
+        const task = doc.data();
+        const typeIcon = task.type === 'telegram_channel' ? '📢' : task.type === 'telegram_bot' ? '🤖' : task.type === 'youtube' ? '🎥' : '🎵';
+        taskList += `${index}. ${typeIcon} *${task.name}*\n`;
+        taskList += `   💰 Reward: *$${task.reward.toFixed(2)}*\n`;
+        taskList += `   🔗 ${task.username || task.link || task.identifier}\n\n`;
+        index++;
+    }
+    taskList += `━━━━━━━━━━━━━━━━━━━━━━\n💡 *Open the app to complete tasks and earn instantly!*`;
+    await ctx.reply(taskList, { parse_mode: 'Markdown' });
+});
 
-bot.command('admin', async (ctx) => {
+// ========== أوامر المشرف (بكلمة مرور) ==========
+
+// أمر /alimenfi - دخول المشرف
+bot.command('alimenfi', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) {
         console.log(`⛔ Unauthorized admin attempt from ${userId}`);
@@ -380,17 +402,127 @@ bot.command('admin', async (ctx) => {
     botAdminSessions.set(userId, { step: 'awaiting_password' });
 });
 
+// أمر /addtask - إضافة مهمة جديدة
+bot.command('addtask', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    taskCreationSessions.set(userId, { step: 'name' });
+    ctx.reply('📝 *Add New Task*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📌 *Step 1:* Enter task name:\n(e.g., "Join AdNova Channel")', { parse_mode: 'Markdown' });
+});
+
+// أمر /edittask - تعديل مهمة
+bot.command('edittask', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    const tasksSnapshot = await db.collection('tasks').get();
+    if (tasksSnapshot.empty) {
+        return ctx.reply('📋 *No tasks available to edit.*\nUse /addtask to create one.', { parse_mode: 'Markdown' });
+    }
+    
+    let taskList = '✏️ *Select task to edit:*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    let index = 1;
+    const tasks = [];
+    for (const doc of tasksSnapshot.docs) {
+        const task = doc.data();
+        tasks.push({ id: doc.id, ...task });
+        taskList += `${index}. *${task.name}* (💰 $${task.reward})\n`;
+        index++;
+    }
+    taskList += `\n📝 *Reply with the task number (1-${tasks.length})*`;
+    ctx.reply(taskList, { parse_mode: 'Markdown' });
+    taskEditSessions.set(userId, { step: 'select', tasks: tasks });
+});
+
+// أمر /deletetask - حذف مهمة
+bot.command('deletetask', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    const tasksSnapshot = await db.collection('tasks').get();
+    if (tasksSnapshot.empty) {
+        return ctx.reply('📋 *No tasks available to delete.*', { parse_mode: 'Markdown' });
+    }
+    
+    let taskList = '🗑️ *Select task to delete:*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    let index = 1;
+    const tasks = [];
+    for (const doc of tasksSnapshot.docs) {
+        const task = doc.data();
+        tasks.push({ id: doc.id, ...task });
+        taskList += `${index}. *${task.name}* (💰 $${task.reward})\n`;
+        index++;
+    }
+    taskList += `\n⚠️ *Reply with the task number to DELETE (This cannot be undone!)*`;
+    ctx.reply(taskList, { parse_mode: 'Markdown' });
+    taskEditSessions.set(userId, { step: 'delete_select', tasks: tasks });
+});
+
+// أمر /listtasks - عرض جميع المهام (للمشرف)
+bot.command('listtasks', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    const tasksSnapshot = await db.collection('tasks').get();
+    if (tasksSnapshot.empty) {
+        return ctx.reply('📋 *No tasks available.*\nUse /addtask to create one.', { parse_mode: 'Markdown' });
+    }
+    
+    let taskList = '📋 *ALL TASKS*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    let index = 1;
+    for (const doc of tasksSnapshot.docs) {
+        const task = doc.data();
+        const statusIcon = task.active ? '✅' : '⏸️';
+        const typeIcon = task.type === 'telegram_channel' ? '📢' : task.type === 'telegram_bot' ? '🤖' : task.type === 'youtube' ? '🎥' : '🎵';
+        taskList += `${index}. ${statusIcon} ${typeIcon} *${task.name}*\n`;
+        taskList += `   💰 Reward: *$${task.reward.toFixed(2)}*\n`;
+        taskList += `   🔗 ${task.username || task.link || task.identifier}\n`;
+        taskList += `   🔄 ${task.resetPeriod || 'once'}\n`;
+        taskList += `   🆔 \`${task.id}\`\n\n`;
+        index++;
+    }
+    taskList += `━━━━━━━━━━━━━━━━━━━━━━\n📌 *Commands:*\n/addtask - Add new task\n/edittask - Edit task\n/deletetask - Delete task`;
+    await ctx.reply(taskList, { parse_mode: 'Markdown' });
+});
+
+// أمر /broadcast - بث رسالة
 bot.command('broadcast', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
-        return ctx.reply('⚠️ *Please authenticate first*\nUse /admin to login.', { parse_mode: 'Markdown' });
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
     }
     ctx.reply('📢 *Send me the message to broadcast:*\n\n💡 Tip: You can use emojis and Markdown formatting.', { parse_mode: 'Markdown' });
     botAdminSessions.set(userId, { step: 'awaiting_broadcast' });
 });
 
+// أمر /botstats - إحصائيات البوت
 bot.command('botstats', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -410,6 +542,7 @@ bot.command('botstats', async (ctx) => {
     );
 });
 
+// أمر /users - عدد المستخدمين
 bot.command('users', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -421,16 +554,20 @@ bot.command('users', async (ctx) => {
 // معالجة الرسائل النصية للمشرف
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id.toString();
-    const session = botAdminSessions.get(userId);
-    if (!session) return;
-    const text = ctx.message.text;
+    const message = ctx.message.text;
     
-    if (session.step === 'awaiting_password') {
-        if (text === ADMIN_PASSWORD) {
+    // معالجة المصادقة
+    const authSession = botAdminSessions.get(userId);
+    if (authSession && authSession.step === 'awaiting_password') {
+        if (message === ADMIN_PASSWORD) {
             botAdminSessions.set(userId, { step: 'authenticated' });
             ctx.reply(
                 `✅ *Authentication Successful!*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
                 `📋 *Admin Commands:*\n` +
+                `• /addtask - Add new task\n` +
+                `• /edittask - Edit task\n` +
+                `• /deletetask - Delete task\n` +
+                `• /listtasks - List all tasks\n` +
                 `• /broadcast - Send message to all users\n` +
                 `• /botstats - View bot statistics\n` +
                 `• /users - View total users count\n\n` +
@@ -444,9 +581,10 @@ bot.on('text', async (ctx) => {
         return;
     }
     
-    if (session.step === 'awaiting_broadcast') {
+    // معالجة البث
+    if (authSession && authSession.step === 'awaiting_broadcast') {
         ctx.reply('📢 *Broadcasting to all users...*', { parse_mode: 'Markdown' });
-        const result = await broadcastToAllUsers(text);
+        const result = await broadcastToAllUsers(message);
         if (result.success) {
             ctx.reply(
                 `✅ *Broadcast Complete!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -458,6 +596,198 @@ bot.on('text', async (ctx) => {
             ctx.reply('❌ *Error sending broadcast:* ' + result.error, { parse_mode: 'Markdown' });
         }
         botAdminSessions.delete(userId);
+        return;
+    }
+    
+    // معالجة إضافة مهمة جديدة
+    const taskSession = taskCreationSessions.get(userId);
+    if (taskSession) {
+        if (taskSession.step === 'name') {
+            taskSession.name = message;
+            taskSession.step = 'type';
+            ctx.reply(
+                `📝 *Task Name:* ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🏷️ *Step 2:* Choose task type:\n` +
+                `• \`telegram_channel\` - Telegram Channel\n` +
+                `• \`telegram_bot\` - Telegram Bot\n` +
+                `• \`youtube\` - YouTube Channel\n` +
+                `• \`tiktok\` - TikTok Account\n\n` +
+                `📝 *Type the type:*`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (taskSession.step === 'type') {
+            const validTypes = ['telegram_channel', 'telegram_bot', 'youtube', 'tiktok'];
+            if (!validTypes.includes(message.toLowerCase())) {
+                return ctx.reply('❌ *Invalid type!* Please choose: telegram_channel, telegram_bot, youtube, or tiktok', { parse_mode: 'Markdown' });
+            }
+            taskSession.type = message.toLowerCase();
+            taskSession.step = 'identifier';
+            ctx.reply(
+                `📝 *Task Name:* ${taskSession.name}\n` +
+                `🏷️ *Type:* ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🔗 *Step 3:* Enter username or link:\n` +
+                `• For Telegram: @username\n` +
+                `• For YouTube: @channel or full URL\n` +
+                `• For TikTok: @username\n\n` +
+                `📝 *Type the identifier:*`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (taskSession.step === 'identifier') {
+            taskSession.identifier = message;
+            taskSession.step = 'reward';
+            ctx.reply(
+                `📝 *Task Name:* ${taskSession.name}\n` +
+                `🏷️ *Type:* ${taskSession.type}\n` +
+                `🔗 *Identifier:* ${taskSession.identifier}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `💰 *Step 4:* Enter reward amount (USD):\n` +
+                `• Example: 0.05, 0.10, 0.25\n\n` +
+                `📝 *Type the reward:*`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (taskSession.step === 'reward') {
+            const reward = parseFloat(message);
+            if (isNaN(reward) || reward <= 0) {
+                return ctx.reply('❌ *Invalid reward!* Please enter a valid number (e.g., 0.05)', { parse_mode: 'Markdown' });
+            }
+            taskSession.reward = reward;
+            taskSession.step = 'resetPeriod';
+            ctx.reply(
+                `📝 *Task Name:* ${taskSession.name}\n` +
+                `🏷️ *Type:* ${taskSession.type}\n` +
+                `🔗 *Identifier:* ${taskSession.identifier}\n` +
+                `💰 *Reward:* $${reward}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🔄 *Step 5:* Choose reset period:\n` +
+                `• \`daily\` - Resets every day\n` +
+                `• \`weekly\` - Resets every week\n` +
+                `• \`once\` - One time only\n\n` +
+                `📝 *Type the reset period:*`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (taskSession.step === 'resetPeriod') {
+            const validPeriods = ['daily', 'weekly', 'once'];
+            if (!validPeriods.includes(message.toLowerCase())) {
+                return ctx.reply('❌ *Invalid period!* Please choose: daily, weekly, or once', { parse_mode: 'Markdown' });
+            }
+            taskSession.resetPeriod = message.toLowerCase();
+            
+            // حفظ المهمة في Firebase
+            const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+            const newTask = {
+                id: taskId,
+                type: taskSession.type,
+                name: taskSession.name,
+                identifier: taskSession.identifier,
+                username: taskSession.identifier,
+                link: taskSession.identifier,
+                reward: taskSession.reward,
+                resetPeriod: taskSession.resetPeriod,
+                active: true,
+                createdAt: new Date().toISOString(),
+                createdBy: ADMIN_ID
+            };
+            
+            try {
+                await db.collection('tasks').doc(taskId).set(newTask);
+                ctx.reply(
+                    `✅ *Task Created Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `📌 *Name:* ${taskSession.name}\n` +
+                    `🏷️ *Type:* ${taskSession.type}\n` +
+                    `🔗 *Identifier:* ${taskSession.identifier}\n` +
+                    `💰 *Reward:* $${taskSession.reward}\n` +
+                    `🔄 *Reset:* ${taskSession.resetPeriod}\n` +
+                    `🆔 *ID:* \`${taskId}\`\n\n` +
+                    `📋 Use /listtasks to see all tasks.`,
+                    { parse_mode: 'Markdown' }
+                );
+                console.log(`✅ Task created via bot: ${taskId} - ${taskSession.name}`);
+            } catch (error) {
+                console.error('Error creating task:', error);
+                ctx.reply('❌ *Error creating task!* Please try again.', { parse_mode: 'Markdown' });
+            }
+            
+            taskCreationSessions.delete(userId);
+        }
+        return;
+    }
+    
+    // معالجة تعديل/حذف المهام
+    const editSession = taskEditSessions.get(userId);
+    if (editSession) {
+        if (editSession.step === 'select') {
+            const num = parseInt(message);
+            if (isNaN(num) || num < 1 || num > editSession.tasks.length) {
+                return ctx.reply(`❌ *Invalid number!* Please enter a number between 1 and ${editSession.tasks.length}`, { parse_mode: 'Markdown' });
+            }
+            editSession.selectedTask = editSession.tasks[num - 1];
+            editSession.step = 'new_reward';
+            ctx.reply(
+                `✏️ *Editing Task:* ${editSession.selectedTask.name}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `💰 *Current reward:* $${editSession.selectedTask.reward}\n\n` +
+                `📝 *Enter new reward amount (USD):*`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (editSession.step === 'new_reward') {
+            const reward = parseFloat(message);
+            if (isNaN(reward) || reward <= 0) {
+                return ctx.reply('❌ *Invalid reward!* Please enter a valid number (e.g., 0.10)', { parse_mode: 'Markdown' });
+            }
+            
+            try {
+                await db.collection('tasks').doc(editSession.selectedTask.id).update({
+                    reward: reward,
+                    updatedAt: new Date().toISOString()
+                });
+                ctx.reply(
+                    `✅ *Task Updated Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `📌 *Name:* ${editSession.selectedTask.name}\n` +
+                    `💰 *New Reward:* $${reward}\n` +
+                    `💰 *Old Reward:* $${editSession.selectedTask.reward}`,
+                    { parse_mode: 'Markdown' }
+                );
+                console.log(`✅ Task updated via bot: ${editSession.selectedTask.id}`);
+            } catch (error) {
+                console.error('Error updating task:', error);
+                ctx.reply('❌ *Error updating task!* Please try again.', { parse_mode: 'Markdown' });
+            }
+            taskEditSessions.delete(userId);
+        } else if (editSession.step === 'delete_select') {
+            const num = parseInt(message);
+            if (isNaN(num) || num < 1 || num > editSession.tasks.length) {
+                return ctx.reply(`❌ *Invalid number!* Please enter a number between 1 and ${editSession.tasks.length}`, { parse_mode: 'Markdown' });
+            }
+            const taskToDelete = editSession.tasks[num - 1];
+            editSession.selectedTask = taskToDelete;
+            editSession.step = 'confirm_delete';
+            ctx.reply(
+                `⚠️ *CONFIRM DELETION* ⚠️\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `📌 *Task:* ${taskToDelete.name}\n` +
+                `💰 *Reward:* $${taskToDelete.reward}\n\n` +
+                `❌ *Are you sure?* Type \`CONFIRM\` to delete permanently.\n` +
+                `🔄 Type anything else to cancel.`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (editSession.step === 'confirm_delete') {
+            if (message === 'CONFIRM') {
+                try {
+                    await db.collection('tasks').doc(editSession.selectedTask.id).delete();
+                    ctx.reply(
+                        `✅ *Task Deleted Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                        `📌 *Name:* ${editSession.selectedTask.name}\n` +
+                        `💰 *Reward:* $${editSession.selectedTask.reward}`,
+                        { parse_mode: 'Markdown' }
+                    );
+                    console.log(`✅ Task deleted via bot: ${editSession.selectedTask.id}`);
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    ctx.reply('❌ *Error deleting task!* Please try again.', { parse_mode: 'Markdown' });
+                }
+            } else {
+                ctx.reply('✅ *Deletion cancelled.*', { parse_mode: 'Markdown' });
+            }
+            taskEditSessions.delete(userId);
+        }
+        return;
     }
 });
 
@@ -514,17 +844,8 @@ app.use(express.static(__dirname));
 
 function isAdmin(req) {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        console.log('❌ No Authorization header');
-        return false;
-    }
-    const isValid = authHeader === `Bearer ${ADMIN_PASSWORD}`;
-    if (!isValid) {
-        console.log('❌ Invalid admin password');
-    } else {
-        console.log('✅ Admin authenticated');
-    }
-    return isValid;
+    if (!authHeader) return false;
+    return authHeader === `Bearer ${ADMIN_PASSWORD}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -800,7 +1121,6 @@ app.post('/api/withdraw/request', async (req, res) => {
             return res.json({ success: false, error: 'Insufficient balance' });
         }
         
-        // شرط الإحالات (موجود في الكود لكن لا نذكره للمستخدم في الرسالة)
         if ((userData.inviteCount || 0) < APP_CONFIG.requiredReferrals) {
             return res.json({ success: false, error: `You need ${APP_CONFIG.requiredReferrals} referrals to withdraw (security measure)` });
         }
@@ -842,7 +1162,6 @@ app.post('/api/withdraw/request', async (req, res) => {
 // 12. 👑 لوحة المشرف (Admin APIs)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// التحقق من كلمة مرور المشرف
 app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body;
     if (!password) return res.json({ success: false, error: 'Password required' });
@@ -855,7 +1174,6 @@ app.post('/api/admin/verify', (req, res) => {
     }
 });
 
-// إحصائيات المشرف
 app.get('/api/admin/stats', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -875,7 +1193,6 @@ app.get('/api/admin/stats', async (req, res) => {
     }
 });
 
-// قائمة جميع المستخدمين
 app.get('/api/admin/users', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, users: [] });
@@ -896,7 +1213,6 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// طلبات السحب المعلقة
 app.get('/api/admin/pending-withdrawals', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false, withdrawals: [] });
@@ -913,7 +1229,6 @@ app.get('/api/admin/pending-withdrawals', async (req, res) => {
     }
 });
 
-// الموافقة على طلب سحب
 app.post('/api/admin/approve-withdrawal', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -935,7 +1250,6 @@ app.post('/api/admin/approve-withdrawal', async (req, res) => {
     }
 });
 
-// رفض طلب سحب
 app.post('/api/admin/reject-withdrawal', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -959,7 +1273,6 @@ app.post('/api/admin/reject-withdrawal', async (req, res) => {
     }
 });
 
-// إضافة رصيد لمستخدم
 app.post('/api/admin/add-balance', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -981,7 +1294,6 @@ app.post('/api/admin/add-balance', async (req, res) => {
     }
 });
 
-// خصم رصيد من مستخدم
 app.post('/api/admin/remove-balance', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -1002,7 +1314,6 @@ app.post('/api/admin/remove-balance', async (req, res) => {
     }
 });
 
-// حظر مستخدم من السحب
 app.post('/api/admin/block-user', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -1024,7 +1335,6 @@ app.post('/api/admin/block-user', async (req, res) => {
     }
 });
 
-// بث رسالة من الـ API (للوحة المشرف)
 app.post('/api/admin/broadcast', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     const { message } = req.body;
@@ -1034,10 +1344,9 @@ app.post('/api/admin/broadcast', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 13. 📋 إدارة المهام (Task Management APIs) - كاملة
+// 13. 📋 API جلب المهام (للتطبيق)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// جلب المهام النشطة للمستخدمين
 app.get('/api/tasks', async (req, res) => {
     if (!db) return res.json({ success: true, tasks: [] });
     try {
@@ -1046,148 +1355,11 @@ app.get('/api/tasks', async (req, res) => {
         tasksSnapshot.forEach(doc => {
             tasks.push({ id: doc.id, ...doc.data() });
         });
-        console.log(`📋 Loaded ${tasks.length} active tasks`);
+        console.log(`📋 Loaded ${tasks.length} active tasks for users`);
         res.json({ success: true, tasks });
     } catch (error) {
         console.error('Error loading tasks:', error);
         res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// جلب جميع المهام للمشرف (حتى المعطلة)
-app.get('/api/admin/tasks/all', async (req, res) => {
-    if (!isAdmin(req)) {
-        console.log('❌ Unauthorized access to /api/admin/tasks/all');
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-    if (!db) return res.json({ success: false, tasks: [] });
-    try {
-        const tasksSnapshot = await db.collection('tasks').get();
-        const tasks = [];
-        tasksSnapshot.forEach(doc => {
-            tasks.push({ id: doc.id, ...doc.data() });
-        });
-        console.log(`👑 Admin loaded ${tasks.length} total tasks`);
-        res.json({ success: true, tasks });
-    } catch (error) {
-        console.error('Error loading admin tasks:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// إضافة مهمة جديدة
-app.post('/api/admin/tasks', async (req, res) => {
-    if (!isAdmin(req)) {
-        console.log('❌ Unauthorized task creation');
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-    if (!db) return res.json({ success: false, error: 'Database not connected' });
-    
-    try {
-        const { type, name, identifier, reward, resetPeriod, active } = req.body;
-        
-        console.log(`📝 Creating task: ${name} (${type})`);
-        
-        if (!type || !name || !reward) {
-            return res.json({ success: false, error: 'Missing required fields: type, name, reward' });
-        }
-        
-        const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-        
-        const newTask = {
-            id: taskId,
-            type: type,
-            name: name,
-            identifier: identifier || '',
-            username: identifier || '',
-            link: identifier || '',
-            reward: parseFloat(reward),
-            resetPeriod: resetPeriod || 'once',
-            active: active !== false,
-            createdAt: new Date().toISOString(),
-            createdBy: ADMIN_ID || 'admin'
-        };
-        
-        await db.collection('tasks').doc(taskId).set(newTask);
-        
-        console.log(`✅ Task created: ${taskId} - ${name}`);
-        
-        // إشعار للمشرف عبر البوت
-        if (ADMIN_ID) {
-            bot.telegram.sendMessage(ADMIN_ID, 
-                `📋 *New Task Created*\n━━━━━━━━━━━━━━━━━━━━━━\n📌 *Name:* ${name}\n🏷️ *Type:* ${type}\n💰 *Reward:* $${reward}\n🆔 *ID:* ${taskId}`,
-                { parse_mode: 'Markdown' }
-            ).catch(() => {});
-        }
-        
-        res.json({ success: true, task: newTask });
-        
-    } catch (error) {
-        console.error('❌ Error creating task:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// تحديث مهمة
-app.put('/api/admin/tasks/:taskId', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    
-    try {
-        const { taskId } = req.params;
-        const updates = req.body;
-        updates.updatedAt = new Date().toISOString();
-        
-        await db.collection('tasks').doc(taskId).update(updates);
-        
-        console.log(`✅ Task updated: ${taskId}`);
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('❌ Error updating task:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// حذف مهمة
-app.delete('/api/admin/tasks/:taskId', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    
-    try {
-        const { taskId } = req.params;
-        
-        await db.collection('tasks').doc(taskId).delete();
-        
-        console.log(`✅ Task deleted: ${taskId}`);
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('❌ Error deleting task:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// تبديل حالة المهمة (تفعيل/تعطيل)
-app.patch('/api/admin/tasks/:taskId/toggle', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    
-    try {
-        const { taskId } = req.params;
-        const { active } = req.body;
-        
-        await db.collection('tasks').doc(taskId).update({ 
-            active: active,
-            updatedAt: new Date().toISOString()
-        });
-        
-        console.log(`✅ Task toggled: ${taskId} -> active=${active}`);
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('❌ Error toggling task:', error);
-        res.status(500).json({ error: error.message });
     }
 });
 
@@ -1259,7 +1431,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v8.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v9.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -1271,9 +1443,13 @@ app.listen(PORT, () => {
     console.log(`📊 Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
     console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`📋 Tasks Management: ✅ Ready (CRUD operations)`);
-    console.log(`👑 Admin Panel: ✅ Ready (users, withdrawals, balance)`);
-    console.log(`📢 Broadcast System: ✅ Ready (notifications + bot messages)`);
+    console.log(`📋 Task Management via Bot: ✅ Ready`);
+    console.log(`   • /addtask - Add new task`);
+    console.log(`   • /edittask - Edit task`);
+    console.log(`   • /deletetask - Delete task`);
+    console.log(`   • /listtasks - List all tasks`);
+    console.log(`📢 Broadcast System: ✅ Ready`);
+    console.log(`👑 Admin Commands: ✅ Ready`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`✅ Server ready for production!`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
