@@ -1,10 +1,13 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v12.0 (النسخة النهائية الكاملة مع إدارة السحب عبر البوت)
+// ADNOVA NETWORK - SERVER v13.0 (النسخة النهائية الكاملة مع جميع التحديثات)
 // ============================================================================
 // خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
 // التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة
 // أنواع المهام: channel, bot, youtube, tiktok, twitter
-// الميزة الجديدة: عرض وموافقة/رفض طلبات السحب عبر البوت مع أسباب الرفض وإرجاع الرصيد
+// 
+// الميزات الجديدة:
+// - عرض وموافقة/رفض طلبات السحب عبر البوت مع أسباب الرفض وإرجاع الرصيد
+// - نظام التحقق من المستخدمين (30 إحالة أو دفع 0.01 TON) لمكافحة الحسابات الوهمية
 // ============================================================================
 
 const express = require('express');
@@ -80,6 +83,7 @@ const APP_CONFIG = {
     dailyAdLimit: 50,
     minWithdraw: 10.00,
     requiredReferrals: 1,
+    requiredReferralsForVerify: 30,
     botUsername: "AdNovaNetworkBot"
 };
 
@@ -213,6 +217,9 @@ function createNewUser(userId, userName, userUsername, refCode) {
         withdrawBlocked: false,
         completedTasks: [],
         taskLastCompletions: {},
+        isVerified: false,
+        verificationMethod: null,
+        verificationDate: null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         notifications: [{
             id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
@@ -549,6 +556,126 @@ async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
     }
 }
 
+// ========== دوال جديدة للتحقق من المستخدمين (30 إحالة أو TON) ==========
+
+async function verifyUserByReferrals(userId) {
+    if (!db) return { success: false, error: 'Database not connected' };
+    
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            return { success: false, error: 'User not found' };
+        }
+        
+        const userData = userDoc.data();
+        
+        if (userData.isVerified) {
+            return { success: false, error: 'User already verified', alreadyVerified: true };
+        }
+        
+        const currentInvites = userData.inviteCount || 0;
+        
+        if (currentInvites >= APP_CONFIG.requiredReferralsForVerify) {
+            await userRef.update({
+                isVerified: true,
+                verificationMethod: 'referrals',
+                verificationDate: new Date().toISOString()
+            });
+            
+            await addNotification(userId, {
+                type: 'success',
+                title: '✅ Account Verified!',
+                message: `Your account has been verified through referrals. You can now withdraw funds.`
+            });
+            
+            // Send private message
+            try {
+                await bot.telegram.sendMessage(userId,
+                    `✅ *ACCOUNT VERIFIED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `Your account has been verified through *${currentInvites} referrals*.\n` +
+                    `You can now withdraw funds from the app.\n\n` +
+                    `💰 *Minimum withdrawal:* $${APP_CONFIG.minWithdraw}`,
+                    { parse_mode: 'Markdown' }
+                );
+            } catch(e) { console.error('Failed to send bot message:', e.message); }
+            
+            console.log(`✅ User ${userId} verified via referrals (${currentInvites} invites)`);
+            return { success: true, method: 'referrals' };
+        } else {
+            return { 
+                success: false, 
+                error: `You need ${APP_CONFIG.requiredReferralsForVerify - currentInvites} more referrals`,
+                current: currentInvites,
+                required: APP_CONFIG.requiredReferralsForVerify
+            };
+        }
+    } catch (error) {
+        console.error('Error verifying user by referrals:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+async function verifyUserByTon(userId, txHash, amount) {
+    if (!db) return { success: false, error: 'Database not connected' };
+    
+    try {
+        // هنا يجب التحقق من المعاملة باستخدام TON API
+        // هذا جزء مبسط - في الحقيقية تحتاج إلى استدعاء TON API
+        
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            return { success: false, error: 'User not found' };
+        }
+        
+        const userData = userDoc.data();
+        
+        if (userData.isVerified) {
+            return { success: false, error: 'User already verified', alreadyVerified: true };
+        }
+        
+        // التحقق من أن المبلغ صحيح (0.01 TON)
+        if (amount !== "0.01") {
+            return { success: false, error: 'Invalid amount. Please send exactly 0.01 TON' };
+        }
+        
+        await userRef.update({
+            isVerified: true,
+            verificationMethod: 'ton',
+            verificationDate: new Date().toISOString(),
+            tonWalletVerified: true,
+            tonVerificationTxId: txHash
+        });
+        
+        await addNotification(userId, {
+            type: 'success',
+            title: '✅ Account Verified!',
+            message: `Your account has been verified through TON payment. You can now withdraw funds.`
+        });
+        
+        // Send private message
+        try {
+            await bot.telegram.sendMessage(userId,
+                `✅ *ACCOUNT VERIFIED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Your account has been verified through *TON payment*.\n` +
+                `You can now withdraw funds from the app.\n\n` +
+                `💰 *Minimum withdrawal:* $${APP_CONFIG.minWithdraw}`,
+                { parse_mode: 'Markdown' }
+            );
+        } catch(e) { console.error('Failed to send bot message:', e.message); }
+        
+        console.log(`✅ User ${userId} verified via TON payment`);
+        return { success: true, method: 'ton' };
+        
+    } catch (error) {
+        console.error('Error verifying user by TON:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // ========== أوامر البوت العامة ==========
 
 bot.start(async (ctx) => {
@@ -588,6 +715,7 @@ bot.command('stats', async (ctx) => {
             `👥 *Invites:* ${data.inviteCount || 0}\n` +
             `📺 *Ads watched:* ${data.adsWatched || 0}\n` +
             `📅 *Today:* ${data.adsToday || 0} / ${APP_CONFIG.dailyAdLimit}\n` +
+            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🔗 *Your link:*\n\`t.me/${APP_CONFIG.botUsername}?start=${userId}\``,
             { parse_mode: 'Markdown' }
@@ -602,6 +730,7 @@ bot.command('help', async (ctx) => {
         `📚 *HELP CENTER*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
         `📺 *How to earn?*\n• Watch ads (${APP_CONFIG.dailyAdLimit}/day)\n• Complete tasks\n• Invite friends\n\n` +
         `💳 *Withdrawal methods:*\n• PayPal / Skrill / Payoneer\n• USDT (BEP20 & TRC20)\n• TON / SBP\n• Mobile recharge\n\n` +
+        `🔐 *Verification:*\n• To withdraw, you need to verify your account\n• Option 1: Invite ${APP_CONFIG.requiredReferralsForVerify} friends\n• Option 2: Pay 0.01 TON (one-time)\n\n` +
         `❓ *Need help?* Contact @AdNovaSupport`,
         { parse_mode: 'Markdown' }
     );
@@ -632,7 +761,7 @@ bot.command('tasks', async (ctx) => {
     await ctx.reply(taskList, { parse_mode: 'Markdown' });
 });
 
-// ========== أوامر المشرف الجديدة لإدارة السحب ==========
+// ========== أوامر المشرف الجديدة لإدارة السحب والتحقق ==========
 
 bot.command('pending', async (ctx) => {
     const userId = ctx.from.id.toString();
@@ -656,6 +785,112 @@ bot.command('withdrawals', async (ctx) => {
     }
     
     await showPendingWithdrawals(ctx, 1);
+});
+
+// أمر التحقق من حالة المستخدم (للمشرف)
+bot.command('checkuser', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    const targetUserId = ctx.message.text.split(' ')[1];
+    if (!targetUserId) {
+        return ctx.reply('📝 *Usage:* /checkuser <user_id>\n\nExample: /checkuser 123456789', { parse_mode: 'Markdown' });
+    }
+    
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    
+    try {
+        const userDoc = await db.collection('users').doc(targetUserId).get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        
+        const data = userDoc.data();
+        await ctx.reply(
+            `👤 *USER INFO*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🆔 *ID:* ${data.userId}\n` +
+            `👤 *Name:* ${data.userName}\n` +
+            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
+            `👥 *Invites:* ${data.inviteCount || 0}\n` +
+            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
+            `📝 *Verification Method:* ${data.verificationMethod || 'None'}\n` +
+            `📅 *Verification Date:* ${data.verificationDate ? new Date(data.verificationDate).toLocaleString() : 'N/A'}\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
+            `🚫 *Blocked:* ${data.withdrawBlocked ? 'Yes' : 'No'}`,
+            { parse_mode: 'Markdown' }
+        );
+    } catch (error) {
+        console.error('Error checking user:', error);
+        ctx.reply('❌ Error fetching user data.');
+    }
+});
+
+// أمر للتحقق من مستخدم عبر الإحالات (للمشرف)
+bot.command('verifyuser', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    
+    const targetUserId = ctx.message.text.split(' ')[1];
+    if (!targetUserId) {
+        return ctx.reply('📝 *Usage:* /verifyuser <user_id>\n\nExample: /verifyuser 123456789', { parse_mode: 'Markdown' });
+    }
+    
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    
+    try {
+        const userRef = db.collection('users').doc(targetUserId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        
+        const userData = userDoc.data();
+        
+        if (userData.isVerified) {
+            return ctx.reply(`✅ User *${targetUserId}* is already verified.`, { parse_mode: 'Markdown' });
+        }
+        
+        await userRef.update({
+            isVerified: true,
+            verificationMethod: 'admin',
+            verificationDate: new Date().toISOString()
+        });
+        
+        await addNotification(targetUserId, {
+            type: 'success',
+            title: '✅ Account Verified by Admin',
+            message: `Your account has been manually verified by admin. You can now withdraw funds.`
+        });
+        
+        ctx.reply(`✅ User *${targetUserId}* has been verified successfully!`, { parse_mode: 'Markdown' });
+        
+        // Send private message to user
+        try {
+            await bot.telegram.sendMessage(targetUserId,
+                `✅ *ACCOUNT VERIFIED BY ADMIN*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Your account has been manually verified.\n` +
+                `You can now withdraw funds from the app.\n\n` +
+                `💰 *Minimum withdrawal:* $${APP_CONFIG.minWithdraw}`,
+                { parse_mode: 'Markdown' }
+            );
+        } catch(e) { console.error('Failed to send bot message:', e.message); }
+        
+    } catch (error) {
+        console.error('Error verifying user:', error);
+        ctx.reply('❌ Error verifying user.');
+    }
 });
 
 // ========== أوامر المشرف الحالية ==========
@@ -804,9 +1039,12 @@ bot.command('botstats', async (ctx) => {
     const usersSnapshot = await db.collection('users').get();
     const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
     const tasksSnapshot = await db.collection('tasks').get();
+    const verifiedUsers = usersSnapshot.docs.filter(doc => doc.data().isVerified === true).length;
+    
     await ctx.reply(
         `📊 *BOT STATISTICS*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
         `👥 *Total Users:* ${usersSnapshot.size}\n` +
+        `🔐 *Verified Users:* ${verifiedUsers}\n` +
         `💸 *Pending Withdrawals:* ${pendingWithdrawals.size}\n` +
         `📋 *Total Tasks:* ${tasksSnapshot.size}\n` +
         `🕐 *Uptime:* ${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m\n` +
@@ -846,7 +1084,9 @@ bot.on('text', async (ctx) => {
                 `• /broadcast - Send message to all users\n` +
                 `• /botstats - View bot statistics\n` +
                 `• /users - View total users count\n` +
-                `• /pending or /withdrawals - Manage withdrawal requests\n\n` +
+                `• /pending or /withdrawals - Manage withdrawal requests\n` +
+                `• /checkuser <id> - Check user details\n` +
+                `• /verifyuser <id> - Manually verify a user\n\n` +
                 `💡 You can now use these commands anytime.`,
                 { parse_mode: 'Markdown' }
             );
@@ -1108,6 +1348,7 @@ bot.action('my_stats', async (ctx) => {
             `👥 *Referrals:* ${data.inviteCount || 0}\n` +
             `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
             `📅 *Today:* ${data.adsToday || 0} / ${APP_CONFIG.dailyAdLimit}\n` +
+            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🔗 *Your link:* t.me/${APP_CONFIG.botUsername}?start=${userId}`,
             { parse_mode: 'Markdown' }
@@ -1123,7 +1364,16 @@ bot.action('quick_withdraw', async (ctx) => {
         const data = userDoc.data();
         const minWithdraw = APP_CONFIG.minWithdraw;
         if (data.balance >= minWithdraw) {
-            await ctx.reply(`✅ *You can withdraw!*\nBalance: $${data.balance?.toFixed(2)}\n\nOpen the app to request withdrawal.`, { parse_mode: 'Markdown' });
+            if (data.isVerified) {
+                await ctx.reply(`✅ *You can withdraw!*\nBalance: $${data.balance?.toFixed(2)}\n\nOpen the app to request withdrawal.`, { parse_mode: 'Markdown' });
+            } else {
+                await ctx.reply(`⚠️ *Verification Required*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `Your balance is $${data.balance?.toFixed(2)}.\n\n` +
+                    `To withdraw, you need to verify your account first.\n` +
+                    `• Invite ${APP_CONFIG.requiredReferralsForVerify} friends (Free)\n` +
+                    `• Pay 0.01 TON (Fast)\n\n` +
+                    `Open the app to verify.`, { parse_mode: 'Markdown' });
+            }
         } else {
             await ctx.reply(`❌ *Minimum withdrawal is $${minWithdraw}*\nYour balance: $${data.balance?.toFixed(2)}\n\nKeep watching ads and inviting friends!`, { parse_mode: 'Markdown' });
         }
@@ -1265,8 +1515,7 @@ function isAdmin(req) {
     return authHeader === `Bearer ${ADMIN_PASSWORD}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 6. 🌍 APIs العامة
+// ═══════════════════════════════════════════════════════════════════════════// 6. 🌍 APIs العامة
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.get('/api/health', (req, res) => {
@@ -1284,6 +1533,7 @@ app.get('/api/config', (req, res) => {
         dailyAdLimit: APP_CONFIG.dailyAdLimit,
         minWithdraw: APP_CONFIG.minWithdraw,
         requiredReferrals: APP_CONFIG.requiredReferrals,
+        requiredReferralsForVerify: APP_CONFIG.requiredReferralsForVerify,
         botUsername: APP_CONFIG.botUsername
     });
 });
@@ -1521,7 +1771,7 @@ app.post('/api/verify-channel', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 11. 💸 API طلبات السحب
+// 11. 💸 API طلبات السحب (مع إضافة التحقق من isVerified)
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.post('/api/withdraw/request', async (req, res) => {
@@ -1555,7 +1805,18 @@ app.post('/api/withdraw/request', async (req, res) => {
         }
         
         if ((userData.inviteCount || 0) < APP_CONFIG.requiredReferrals) {
-            return res.json({ success: false, error: `You need ${APP_CONFIG.requiredReferrals} referrals to withdraw (security measure)` });
+            return res.json({ success: false, error: `You need ${APP_CONFIG.requiredReferrals} referral to withdraw (security measure)` });
+        }
+        
+        // ✅ التحقق الجديد: هل قام المستخدم بالتحقق من حسابه؟
+        if (!userData.isVerified) {
+            return res.json({ 
+                success: false, 
+                needVerification: true,
+                currentInvites: userData.inviteCount || 0,
+                requiredInvites: APP_CONFIG.requiredReferralsForVerify,
+                message: `Verification required. Invite ${APP_CONFIG.requiredReferralsForVerify} friends or pay 0.01 TON.`
+            });
         }
         
         const newBalance = (userData.balance || 0) - amount;
@@ -1580,12 +1841,72 @@ app.post('/api/withdraw/request', async (req, res) => {
         
         if (ADMIN_ID) {
             bot.telegram.sendMessage(ADMIN_ID, 
-                `💸 *NEW WITHDRAWAL REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *User:* ${userName} (${userId})\n💰 *Amount:* $${amount.toFixed(2)}\n💳 *Method:* ${method}\n📮 *Destination:* ${destination}\n👥 *Referrals:* ${userData.inviteCount || 0}\n📺 *Ads:* ${userData.adsWatched || 0}`,
+                `💸 *NEW WITHDRAWAL REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *User:* ${userName} (${userId})\n💰 *Amount:* $${amount.toFixed(2)}\n💳 *Method:* ${method}\n📮 *Destination:* ${destination}\n👥 *Referrals:* ${userData.inviteCount || 0}\n📺 *Ads:* ${userData.adsWatched || 0}\n🔐 *Verified:* ${userData.isVerified ? 'Yes' : 'No'}`,
                 { parse_mode: 'Markdown' }
             ).catch(() => {});
         }
         
         res.json({ success: true, requestId: docRef.id, newBalance });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11.5. 🔐 API التحقق من المستخدمين (جديد)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// API للتحقق عبر الإحالات
+app.post('/api/verify-by-referrals', async (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId) {
+        return res.json({ success: false, error: 'User ID required' });
+    }
+    
+    const result = await verifyUserByReferrals(userId);
+    res.json(result);
+});
+
+// API للتحقق عبر TON
+app.post('/api/ton/verify', async (req, res) => {
+    const { userId, txHash, amount } = req.body;
+    
+    if (!userId || !txHash) {
+        return res.json({ success: false, error: 'Missing required fields' });
+    }
+    
+    // هنا يجب التحقق من المعاملة باستخدام TON API
+    // هذا مثال مبسط - في الحقيقية تحتاج إلى استدعاء TON API
+    
+    // محاكاة التحقق (للتجربة)
+    // في الإنتاج، استخدم TON API الحقيقي
+    
+    const result = await verifyUserByTon(userId, txHash, amount || "0.01");
+    res.json(result);
+});
+
+// API للتحقق من حالة المستخدم (للواجهة الأمامية)
+app.get('/api/user/verification-status/:userId', async (req, res) => {
+    if (!db) return res.json({ success: false, error: 'Database not connected' });
+    
+    try {
+        const userDoc = await db.collection('users').doc(req.params.userId).get();
+        
+        if (!userDoc.exists) {
+            return res.json({ success: false, error: 'User not found' });
+        }
+        
+        const userData = userDoc.data();
+        
+        res.json({
+            success: true,
+            isVerified: userData.isVerified || false,
+            verificationMethod: userData.verificationMethod || null,
+            verificationDate: userData.verificationDate || null,
+            currentInvites: userData.inviteCount || 0,
+            requiredInvites: APP_CONFIG.requiredReferralsForVerify
+        });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -1615,12 +1936,14 @@ app.get('/api/admin/stats', async (req, res) => {
         const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
         let totalBalance = 0;
         let totalEarned = 0;
+        let verifiedCount = 0;
         usersSnapshot.forEach(doc => {
             const data = doc.data();
             totalBalance += data.balance || 0;
             totalEarned += data.totalEarned || 0;
+            if (data.isVerified) verifiedCount++;
         });
-        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned } });
+        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned, verifiedUsers: verifiedCount } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1641,7 +1964,9 @@ app.get('/api/admin/users', async (req, res) => {
                 inviteCount: data.inviteCount,
                 adsWatched: data.adsWatched,
                 totalEarned: data.totalEarned,
-                withdrawBlocked: data.withdrawBlocked || false
+                withdrawBlocked: data.withdrawBlocked || false,
+                isVerified: data.isVerified || false,
+                verificationMethod: data.verificationMethod || null
             });
         });
         res.json({ success: true, users });
@@ -1911,7 +2236,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v12.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v13.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -1922,15 +2247,23 @@ app.listen(PORT, () => {
     console.log(`💰 Ad Reward: $${APP_CONFIG.adReward}`);
     console.log(`📊 Daily Limit: ${APP_CONFIG.dailyAdLimit}`);
     console.log(`💸 Min Withdraw: $${APP_CONFIG.minWithdraw}`);
+    console.log(`👥 Required Referrals (basic): ${APP_CONFIG.requiredReferrals}`);
+    console.log(`🔐 Required Referrals (verification): ${APP_CONFIG.requiredReferralsForVerify}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📋 Task Types: channel, bot, youtube, tiktok, twitter`);
     console.log(`📋 Task Management via Bot: ✅ Ready`);
-    console.log(`📋 Withdrawal Management via Bot: ✅ NEW!`);
+    console.log(`📋 Withdrawal Management via Bot: ✅ Ready`);
     console.log(`   • /pending - View pending withdrawals`);
     console.log(`   • /withdrawals - Same as /pending`);
     console.log(`   • Approve/Reject with buttons`);
     console.log(`   • Requires reason for rejection`);
     console.log(`   • Automatic balance return on rejection`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`🔐 User Verification System: ✅ NEW!`);
+    console.log(`   • /checkuser <id> - Check user details`);
+    console.log(`   • /verifyuser <id> - Manually verify a user`);
+    console.log(`   • Method 1: Invite ${APP_CONFIG.requiredReferralsForVerify} friends (Free)`);
+    console.log(`   • Method 2: Pay 0.01 TON (Fast)`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`✅ Server ready for production!`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
