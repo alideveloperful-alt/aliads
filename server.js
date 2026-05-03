@@ -1924,6 +1924,62 @@ app.get('/api/user/verification-status/:userId', async (req, res) => {
 // 12. 👑 لوحة المشرف (Admin APIs) - تابع
 // ═══════════════════════════════════════════════════════════════════════════
 
+app.get('/api/admin/stats', async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
+    if (!db) return res.json({ success: false });
+    try {
+        const usersSnapshot = await db.collection('users').get();
+        const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
+        let totalBalance = 0;
+        let totalEarned = 0;
+        usersSnapshot.forEach(doc => {
+            const data = doc.data();
+            totalBalance += data.balance || 0;
+            totalEarned += data.totalEarned || 0;
+        });
+        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned } });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
+    if (!db) return res.json({ success: false, users: [] });
+    try {
+        const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
+        const users = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            users.push({
+                userId: data.userId, userName: data.userName, balance: data.balance,
+                inviteCount: data.inviteCount, adsWatched: data.adsWatched,
+                totalEarned: data.totalEarned, withdrawBlocked: data.withdrawBlocked || false,
+                isVerified: data.isVerified || false
+            });
+        });
+        res.json({ success: true, users });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/pending-withdrawals', async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
+    if (!db) return res.json({ success: false, withdrawals: [] });
+    try {
+        const snapshot = await db.collection('withdrawals').where('status', '==', 'pending').orderBy('createdAt', 'desc').get();
+        const withdrawals = [];
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            withdrawals.push({ id: doc.id, ...data });
+        }
+        res.json({ success: true, withdrawals });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/admin/approve-withdrawal', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
     if (!db) return res.json({ success: false });
@@ -1935,8 +1991,7 @@ app.post('/api/admin/approve-withdrawal', async (req, res) => {
         const data = withdrawalDoc.data();
         await withdrawalRef.update({ status: 'approved', approvedAt: admin.firestore.FieldValue.serverTimestamp() });
         await addNotification(data.userId, {
-            type: 'withdraw',
-            title: '✅ Withdrawal Approved!',
+            type: 'withdraw', title: '✅ Withdrawal Approved!',
             message: `Your withdrawal of $${data.amount.toFixed(2)} has been approved.`
         });
         console.log(`✅ Withdrawal approved: ${withdrawalId}`);
@@ -1959,8 +2014,7 @@ app.post('/api/admin/reject-withdrawal', async (req, res) => {
         await userRef.update({ balance: admin.firestore.FieldValue.increment(data.amount) });
         await withdrawalRef.update({ status: 'rejected', rejectedAt: admin.firestore.FieldValue.serverTimestamp(), rejectReason: reason });
         await addNotification(data.userId, {
-            type: 'withdraw',
-            title: '❌ Withdrawal Rejected',
+            type: 'withdraw', title: '❌ Withdrawal Rejected',
             message: `Your withdrawal of $${data.amount.toFixed(2)} was rejected. Reason: ${reason || 'Not specified'}\nThe amount has been returned.`
         });
         console.log(`❌ Withdrawal rejected: ${withdrawalId}`);
@@ -2040,22 +2094,6 @@ app.post('/api/admin/broadcast', async (req, res) => {
     res.json(result);
 });
 
-app.get('/api/tasks', async (req, res) => {
-    if (!db) return res.json({ success: true, tasks: [] });
-    try {
-        const tasksSnapshot = await db.collection('tasks').where('active', '==', true).get();
-        const tasks = [];
-        tasksSnapshot.forEach(doc => {
-            tasks.push({ id: doc.id, ...doc.data() });
-        });
-        console.log(`📋 Loaded ${tasks.length} active tasks for users`);
-        res.json({ success: true, tasks });
-    } catch (error) {
-        console.error('Error loading tasks:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
 // Admin Tasks Management APIs
 app.post('/api/admin/tasks', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
@@ -2098,6 +2136,22 @@ app.delete('/api/admin/tasks/:taskId', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/tasks', async (req, res) => {
+    if (!db) return res.json({ success: true, tasks: [] });
+    try {
+        const tasksSnapshot = await db.collection('tasks').where('active', '==', true).get();
+        const tasks = [];
+        tasksSnapshot.forEach(doc => {
+            tasks.push({ id: doc.id, ...doc.data() });
+        });
+        console.log(`📋 Loaded ${tasks.length} active tasks for users`);
+        res.json({ success: true, tasks });
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
