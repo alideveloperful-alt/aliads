@@ -1,7 +1,8 @@
 /* ============================================================================
-   ADNOVA NETWORK - PROFESSIONAL STYLESHEET
+   ADNOVA NETWORK - PROFESSIONAL STYLESHEET v7.0
    تصميم مستوحى من PayPlus مع تحسينات احترافية
    يدعم RTL للغة العربية
+   الميزات الجديدة: كرت تاريخ السحوبات، نافذة التحقق، تنسيقات محسنة للمهام والإشعارات
    ============================================================================ */
 
 /* ============================================================================
@@ -37,7 +38,6 @@ body {
     padding-bottom: 72px;
 }
 
-/* RTL Support */
 html[dir="rtl"] body {
     font-family: 'Tahoma', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Arial', sans-serif;
 }
@@ -106,17 +106,6 @@ body.rtl {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(180, 140, 20, 0.55));
     border-radius: 1px;
-}
-
-.splash-deco-right::before {
-    background: linear-gradient(270deg, transparent, rgba(180, 140, 20, 0.55));
-}
-
-.splash-deco-gem {
-    font-size: 9px;
-    color: #c9a227;
-    line-height: 1;
-    opacity: 0.85;
 }
 
 .splash-loader {
@@ -191,8 +180,7 @@ body.rtl header::after {
     gap: 12px;
 }
 
-/* Buttons */
-.support-btn, .lang-btn, .icon-btn {
+.lang-btn, .icon-btn {
     background: linear-gradient(135deg, #fffbe8 0%, #fff3c0 100%);
     border: 1px solid rgba(212, 175, 55, 0.55);
     border-radius: 10px;
@@ -208,7 +196,7 @@ body.rtl header::after {
     white-space: nowrap;
 }
 
-.support-btn:active, .lang-btn:active, .icon-btn:active {
+.lang-btn:active, .icon-btn:active {
     background: linear-gradient(135deg, #fef0a0 0%, #fde68a 100%);
     transform: scale(0.97);
 }
@@ -284,17 +272,6 @@ body.rtl .icon-btn .badge {
 body.rtl .balance-card::after {
     right: auto;
     left: -60px;
-}
-
-.balance-card-shine {
-    position: absolute;
-    top: 0;
-    left: -80px;
-    width: 200px;
-    height: 100%;
-    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
-    pointer-events: none;
-    transform: skewX(-15deg);
 }
 
 .balance-card-top {
@@ -410,7 +387,70 @@ body.rtl .balance-card::after {
 }
 
 /* ============================================================================
-   05. PAGES
+   05. TON CONNECT داخل بطاقة الرصيد
+   ============================================================================ */
+
+.ton-connect-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.ton-connect-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ton-connect-left i {
+    color: #d4af37;
+    font-size: 12px;
+}
+
+.ton-connect-left span {
+    font-size: 10px;
+    color: rgba(212, 175, 55, 0.7);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+#connectTONBtn {
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 30px;
+    padding: 5px 14px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #d4af37;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#connectTONBtn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    border-color: #d4af37;
+    transform: scale(1.02);
+}
+
+#connectTONBtn:active {
+    transform: scale(0.98);
+}
+
+#tonWalletStatus {
+    font-size: 9px;
+    font-family: monospace;
+    color: #10b981;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ============================================================================
+   06. PAGES
    ============================================================================ */
 
 .page {
@@ -426,18 +466,12 @@ body.rtl .balance-card::after {
 }
 
 @keyframes fadeSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ============================================================================
-   06. CARDS
+   07. CARDS
    ============================================================================ */
 
 .card {
@@ -477,6 +511,11 @@ body.rtl .balance-card::after {
     box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
 }
 
+.card-icon.withdraw {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
+    color: #ef4444;
+}
+
 .card-icon i {
     font-size: 20px;
 }
@@ -496,7 +535,7 @@ body.rtl .balance-card::after {
 }
 
 /* ============================================================================
-   07. WATCH AD BUTTON
+   08. WATCH AD BUTTON
    ============================================================================ */
 
 .watch-ad-btn {
@@ -613,7 +652,7 @@ body.rtl .watch-ad-text {
 }
 
 /* ============================================================================
-   08. STATUS MESSAGE
+   09. STATUS MESSAGE
    ============================================================================ */
 
 .status-msg {
@@ -625,30 +664,31 @@ body.rtl .watch-ad-text {
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.2s ease;
 }
 
 .status-msg.info {
-    background: #f8fafc;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: #60a5fa;
 }
 
 .status-msg.success {
-    background: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #86efac;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+    color: #34d399;
 }
 
 .status-msg.warning {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fcd34d;
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+    color: #fbbf24;
 }
 
 .status-msg.error {
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #fecdd3;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #f87171;
 }
 
 .status-msg i {
@@ -656,7 +696,7 @@ body.rtl .watch-ad-text {
 }
 
 /* ============================================================================
-   09. STAT GRID
+   10. STAT GRID
    ============================================================================ */
 
 .stat-grid {
@@ -724,7 +764,90 @@ body.rtl .watch-ad-text {
 }
 
 /* ============================================================================
-   10. TASKS PAGE
+   11. EARN TOAST
+   ============================================================================ */
+
+.earn-toast {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: max-content;
+    max-width: 208px;
+    pointer-events: none;
+}
+
+.earn-toast.show {
+    display: block;
+    animation: earnToastIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+.earn-toast.hide {
+    display: block;
+    animation: earnToastOut 0.35s forwards;
+}
+
+@keyframes earnToastIn {
+    0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.94); }
+    60% { opacity: 1; transform: translateX(-50%) translateY(-3px) scale(1.01); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes earnToastOut {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
+}
+
+.earn-toast-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.72) 0%, rgba(34, 197, 94, 0.78) 50%, rgba(22, 163, 74, 0.72) 100%);
+    backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(200, 255, 220, 0.55);
+    border-radius: 10px;
+    padding: 8px 11px;
+    position: relative;
+    overflow: hidden;
+}
+
+.earn-toast-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.earn-toast-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.earn-toast-text {
+    flex: 1;
+}
+
+.earn-toast-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: rgba(220, 255, 230, 0.85);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.earn-toast-amount {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.97);
+}
+
+/* ============================================================================
+   12. TASKS PAGE
    ============================================================================ */
 
 .task-wrapper-card {
@@ -755,22 +878,10 @@ body.rtl .watch-ad-text {
     height: 18px;
 }
 
-.task-card-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 13px;
+.tasks-grid {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background: linear-gradient(145deg, rgba(238, 235, 228, 0.97) 0%, rgba(215, 210, 196, 0.93) 100%);
-    box-shadow: 0 2px 8px rgba(155, 145, 115, 0.18);
-    border: 1.5px solid rgba(188, 180, 160, 0.50);
-}
-
-.task-card-icon i {
-    font-size: 24px;
-    color: #8a6a00;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .task-card {
@@ -780,8 +891,8 @@ body.rtl .watch-ad-text {
     padding: 12px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
-    margin-bottom: 10px;
     transition: transform 0.2s ease;
 }
 
@@ -791,6 +902,13 @@ body.rtl .watch-ad-text {
 
 body.rtl .task-card:hover {
     transform: translateX(-4px);
+}
+
+.task-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
 }
 
 .task-icon {
@@ -824,11 +942,23 @@ body.rtl .task-card:hover {
     color: #64748b;
 }
 
+.task-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+body.rtl .task-right {
+    margin-left: 0;
+    margin-right: auto;
+}
+
 .task-reward {
     font-size: 13px;
     font-weight: 700;
     color: #d4af37;
-    margin-right: 8px;
 }
 
 .task-btn {
@@ -843,53 +973,25 @@ body.rtl .task-card:hover {
     transition: all 0.2s ease;
 }
 
-.task-btn.completed {
-    background: #10b981;
-    opacity: 0.7;
-    cursor: default;
-}
-
 .task-btn:hover:not(.completed) {
     background: linear-gradient(135deg, #d4af37, #b8920e);
     transform: scale(1.02);
 }
 
-.progress-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    margin-top: 8px;
-}
-
-.progress-label {
-    font-size: 11px;
+.task-completed-badge {
+    background: #10b981;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 600;
-    color: #64748b;
-}
-
-.progress-count {
-    font-size: 11px;
-    font-weight: 700;
-    color: #1a202c;
-}
-
-.progress-track {
-    background: #e8ecf0;
-    border-radius: 99px;
-    height: 6px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #d4af37, #b8920e);
-    border-radius: 99px;
-    transition: width 0.4s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* ============================================================================
-   11. INVITE PAGE
+   13. INVITE PAGE
    ============================================================================ */
 
 .invite-wrapper-card {
@@ -1072,7 +1174,7 @@ body.rtl .task-card:hover {
 }
 
 /* ============================================================================
-   12. WITHDRAW PAGE
+   14. WITHDRAW PAGE
    ============================================================================ */
 
 .wd-outer-card {
@@ -1124,22 +1226,36 @@ body.rtl .task-card:hover {
     border: 1.5px solid rgba(180, 180, 190, 0.38);
     background: linear-gradient(145deg, #ffffff 0%, #f4f4f6 100%);
     cursor: pointer;
-    transition: border-color 0.18s, background 0.18s;
+    transition: border-color 0.18s, background 0.18s, transform 0.2s;
     text-align: center;
+    position: relative;
 }
 
 .method-option.selected {
     border-color: rgba(212, 175, 55, 0.72);
     background: linear-gradient(145deg, #fffbec 0%, #fff3c4 65%, #faeea0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
-.method-option i {
+.method-option i, .method-emoji {
     font-size: 20px;
     color: #5a5a70;
+    transition: all 0.2s;
 }
 
-.method-option.selected i {
+.method-emoji {
+    filter: grayscale(0.2);
+}
+
+.method-option.selected i, .method-option.selected .method-emoji {
     color: #d4af37;
+    filter: grayscale(0);
+    transform: scale(1.05);
+}
+
+.method-option.selected span {
+    color: #5a3e0b;
 }
 
 .method-option span {
@@ -1218,260 +1334,447 @@ body.rtl .task-card:hover {
 }
 
 /* ============================================================================
-   13. EARN TOAST
+   15. WITHDRAWAL HISTORY CARD (جديد)
    ============================================================================ */
 
-.earn-toast {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 50;
-    width: max-content;
-    max-width: 208px;
-    pointer-events: none;
+.withdrawal-history-card {
+    margin-top: 12px;
 }
 
-.earn-toast.show {
-    display: block;
-    animation: earnToastIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
-}
-
-.earn-toast.hide {
-    display: block;
-    animation: earnToastOut 0.35s forwards;
-}
-
-@keyframes earnToastIn {
-    0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.94); }
-    60% { opacity: 1; transform: translateX(-50%) translateY(-3px) scale(1.01); }
-    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-}
-
-@keyframes earnToastOut {
-    0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
-}
-
-.earn-toast-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.72) 0%, rgba(34, 197, 94, 0.78) 50%, rgba(22, 163, 74, 0.72) 100%);
-    backdrop-filter: blur(16px);
-    border: 1.5px solid rgba(200, 255, 220, 0.55);
-    border-radius: 10px;
-    padding: 8px 11px;
-    position: relative;
-    overflow: hidden;
-}
-
-.earn-toast-inner::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 45%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0) 100%);
-}
-
-.earn-toast-icon {
-    font-size: 14px;
-    flex-shrink: 0;
-}
-
-.earn-toast-text {
-    flex: 1;
-}
-
-.earn-toast-label {
-    font-size: 8.5px;
-    font-weight: 700;
-    color: rgba(220, 255, 230, 0.85);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-}
-
-.earn-toast-amount {
-    font-size: 12px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.97);
-}
-
-.earn-toast-bar-wrap {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1.5px;
-    background: rgba(0, 80, 30, 0.15);
-    overflow: hidden;
-}
-
-.earn-toast-bar {
-    height: 100%;
-    background: linear-gradient(90deg, rgba(74, 200, 120, 0.55), rgba(22, 163, 74, 0.75));
-    transition: width linear;
-}
-
-/* ============================================================================
-   14. BOTTOM NAVIGATION
-   ============================================================================ */
-
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(20px);
-    border-top: 1.5px solid transparent;
-    box-shadow: 0 -1px 0 rgba(212, 175, 55, 0.25), 0 -8px 32px rgba(0, 0, 0, 0.07);
-    display: flex;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.bottom-nav::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2.1px;
-    background: linear-gradient(90deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.9) 20%, #ffd700 50%, rgba(212, 175, 55, 0.9) 80%, rgba(212, 175, 55, 0) 100%);
-}
-
-.nav-item {
-    flex: 1;
+.withdrawal-history-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 4px 9px;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    gap: 3px;
-    color: #a0aec0;
-    transition: color 0.25s;
-    position: relative;
+    gap: 8px;
+    margin-top: 8px;
 }
 
-.nav-item:active {
-    transform: scale(0.95);
-}
-
-.nav-item .nav-icon-wrap {
-    width: 42px;
-    height: 30px;
+.withdrawal-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    transition: background 0.25s;
-}
-
-.nav-item.active .nav-icon-wrap {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.18) 0%, rgba(192, 192, 192, 0.18) 100%);
-}
-
-.nav-item.active {
-    color: #b8860b;
-}
-
-.nav-item svg, .nav-item i {
-    width: 22px;
-    height: 22px;
-    font-size: 20px;
-}
-
-.nav-label {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-}
-
-.nav-item.active .nav-label {
-    background: linear-gradient(90deg, #b8860b, #8a7a3a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ============================================================================
-   15. MODALS
-   ============================================================================ */
-
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(4px);
-    z-index: 9998;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.show {
-    display: flex;
-    animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.modal-content {
-    background: #fff;
-    border-radius: 20px;
-    padding: 20px;
-    width: 100%;
-    max-width: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    display: flex;
     justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 12px;
+    transition: transform 0.2s ease;
+}
+
+.withdrawal-item.approved {
+    background: #f0fdf4;
+    border-left: 3px solid #10b981;
+}
+
+.withdrawal-item.rejected {
+    background: #fef2f2;
+    border-left: 3px solid #ef4444;
+}
+
+.withdrawal-item.pending {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+}
+
+body.rtl .withdrawal-item.approved,
+body.rtl .withdrawal-item.rejected,
+body.rtl .withdrawal-item.pending {
+    border-left: none;
+    border-right: 3px solid;
+}
+
+.withdrawal-left {
+    display: flex;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    gap: 10px;
+    flex: 1;
 }
 
-.modal-header h3 {
-    font-size: 18px;
+.withdrawal-status-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.withdrawal-item.approved .withdrawal-status-icon {
+    background: #10b981;
+    color: white;
+}
+
+.withdrawal-item.rejected .withdrawal-status-icon {
+    background: #ef4444;
+    color: white;
+}
+
+.withdrawal-item.pending .withdrawal-status-icon {
+    background: #f59e0b;
+    color: white;
+}
+
+.withdrawal-info {
+    flex: 1;
+}
+
+.withdrawal-amount {
+    font-size: 14px;
     font-weight: 700;
-    color: #1a202c;
 }
 
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #94a3b8;
-    transition: color 0.2s;
+.withdrawal-item.approved .withdrawal-amount {
+    color: #10b981;
 }
 
-.close-btn:hover {
+.withdrawal-item.rejected .withdrawal-amount {
     color: #ef4444;
 }
 
-.modal-desc {
-    font-size: 13px;
+.withdrawal-item.pending .withdrawal-amount {
+    color: #f59e0b;
+}
+
+.withdrawal-details {
+    font-size: 11px;
     color: #64748b;
-    margin-bottom: 16px;
+    margin-top: 2px;
+}
+
+.withdrawal-method {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.withdrawal-date {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-left: 8px;
+}
+
+body.rtl .withdrawal-date {
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+.withdrawal-reason {
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 4px;
+    padding-left: 42px;
+}
+
+body.rtl .withdrawal-reason {
+    padding-left: 0;
+    padding-right: 42px;
+}
+
+.view-all-btn {
+    width: 100%;
+    margin-top: 12px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 40px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.view-all-btn:hover {
+    background: #e2e8f0;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 24px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.empty-history i {
+    font-size: 32px;
+    margin-bottom: 8px;
+    display: block;
+    opacity: 0.5;
+}
+
+/* ============================================================================
+   16. VERIFICATION MODAL (نافذة التحقق الجديدة)
+   ============================================================================ */
+
+.verify-modal {
+    max-width: 380px;
     text-align: center;
 }
 
-/* Notifications Modal */
+.verify-modal-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.verify-option {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    background: #f8fafc;
+    border-radius: 16px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+body.rtl .verify-option {
+    text-align: right;
+}
+
+.verify-option:hover {
+    border-color: #d4af37;
+    background: #fffbeb;
+    transform: translateY(-2px);
+}
+
+.verify-option-icon {
+    font-size: 28px;
+}
+
+.verify-option-content {
+    flex: 1;
+}
+
+.verify-option-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.verify-option-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.verify-progress-bar-container {
+    background: #e2e8f0;
+    border-radius: 99px;
+    height: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.verify-progress-bar {
+    height: 100%;
+    background: #10b981;
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.verify-stats {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.verify-warning {
+    font-size: 11px;
+    color: #f59e0b;
+    margin-top: 4px;
+}
+
+.verify-success {
+    font-size: 11px;
+    color: #10b981;
+    margin-top: 4px;
+}
+
+.verify-benefits {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: #10b981;
+    margin: 8px 0;
+    flex-wrap: wrap;
+}
+
+.verify-ton-btn {
+    background: #0098ea;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.verify-ton-btn:hover {
+    background: #0080cc;
+}
+
+.verify-later-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 40px;
+    padding: 12px;
+    margin-top: 16px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.verify-later-btn:hover {
+    background: #f1f5f9;
+}
+
+/* ============================================================================
+   17. NOTIFICATION CARDS (تحسين احترافي)
+   ============================================================================ */
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.notification-item {
+    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.notification-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.25s;
+}
+
+body.rtl .notification-item::before {
+    left: auto;
+    right: 0;
+}
+
+.notification-item.unread::before {
+    background: #d4af37;
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
+    border-left: 1px solid #d4af37;
+}
+
+body.rtl .notification-item.unread {
+    border-left: none;
+    border-right: 1px solid #d4af37;
+}
+
+.notification-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body.rtl .notification-item:hover {
+    transform: translateX(-4px);
+}
+
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+.notification-icon.success {
+    background: linear-gradient(135deg, #10b98120, #10b98110);
+    color: #10b981;
+    border: 1px solid #10b98130;
+}
+
+.notification-icon.error {
+    background: linear-gradient(135deg, #ef444420, #ef444410);
+    color: #ef4444;
+    border: 1px solid #ef444430;
+}
+
+.notification-icon.warning {
+    background: linear-gradient(135deg, #f59e0b20, #f59e0b10);
+    color: #f59e0b;
+    border: 1px solid #f59e0b30;
+}
+
+.notification-icon.info {
+    background: linear-gradient(135deg, #3b82f620, #3b82f610);
+    color: #3b82f6;
+    border: 1px solid #3b82f630;
+}
+
+.notification-icon.withdraw {
+    background: linear-gradient(135deg, #8b5cf620, #8b5cf610);
+    color: #8b5cf6;
+    border: 1px solid #8b5cf630;
+}
+
+.notification-icon.referral {
+    background: linear-gradient(135deg, #d4af3720, #d4af3710);
+    color: #d4af37;
+    border: 1px solid #d4af3730;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1a202c;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notification-message {
+    font-size: 12px;
+    color: #4a5568;
+    line-height: 1.45;
+    margin-bottom: 6px;
+}
+
+.notification-time {
+    font-size: 9px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .notification-actions {
     display: flex;
     gap: 10px;
@@ -1487,6 +1790,7 @@ body.rtl .task-card:hover {
     color: #3b82f6;
     font-size: 12px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .notif-action-btn.danger {
@@ -1495,117 +1799,142 @@ body.rtl .task-card:hover {
     color: #ef4444;
 }
 
-.notifications-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 400px;
-    overflow-y: auto;
+.notif-action-btn:hover {
+    opacity: 0.8;
 }
 
-.notification-item {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 12px;
-    display: flex;
-    gap: 10px;
-    cursor: pointer;
-    border: 1px solid #e2e8f0;
-    transition: transform 0.2s;
-}
+/* ============================================================================
+   18. MODALS
+   ============================================================================ */
 
-.notification-item.unread {
-    border-left: 3px solid #d4af37;
-    background: #fffbeb;
-}
-
-body.rtl .notification-item.unread {
-    border-left: none;
-    border-right: 3px solid #d4af37;
-}
-
-.notification-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    padding: 20px;
 }
 
-.notification-icon.success {
-    background: #dcfce7;
-    color: #10b981;
+.modal.show {
+    display: flex;
+    animation: modalFadeIn 0.25s ease-out;
 }
 
-.notification-icon.error {
-    background: #fee2e2;
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-content {
+    background: #1a1a2e;
+    border-radius: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.2);
+    max-width: 360px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-icon {
+    font-size: 48px;
+    text-align: center;
+    margin: 20px 0 8px;
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.modal-content p {
+    font-size: 14px;
+    text-align: center;
+    color: #b0b0c0;
+    margin-bottom: 20px;
+    padding: 0 16px;
+    line-height: 1.5;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
     color: #ef4444;
 }
 
-.notification-icon.info {
-    background: #dbeafe;
-    color: #3b82f6;
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px 20px;
 }
 
-.notification-content {
+.modal-actions button {
     flex: 1;
-}
-
-.notification-title {
+    padding: 12px;
+    border-radius: 40px;
     font-weight: 600;
     font-size: 14px;
-    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.notification-message {
-    font-size: 12px;
-    color: #64748b;
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #b0b0c0;
 }
 
-.notification-time {
-    font-size: 10px;
-    color: #94a3b8;
-    margin-top: 4px;
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
-/* Admin Auth Modal */
-.error-text {
-    color: #ef4444;
-    font-size: 12px;
-    margin-top: 8px;
-    text-align: center;
-}
-
-.admin-auth-btn {
-    width: 100%;
+.btn-confirm {
     background: linear-gradient(135deg, #d4af37, #b8920e);
     border: none;
-    border-radius: 10px;
-    padding: 12px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 16px;
-    font-size: 14px;
+    color: #1a1a2e;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
 }
 
-.form-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
+.btn-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
 }
 
-.form-input:focus {
-    border-color: #d4af37;
-}
+/* ============================================================================
+   19. ADMIN PANEL
+   ============================================================================ */
 
-/* Admin Panel */
 .admin-panel {
     position: fixed;
     inset: 0;
@@ -1751,6 +2080,7 @@ body.rtl .notification-item.unread {
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
+    transition: opacity 0.2s;
 }
 
 .btn-approve { background: #10b981; color: white; }
@@ -1758,6 +2088,10 @@ body.rtl .notification-item.unread {
 .btn-add { background: #3b82f6; color: white; }
 .btn-remove { background: #f59e0b; color: white; }
 .btn-block { background: #ef4444; color: white; }
+
+.btn-approve:hover, .btn-reject:hover, .btn-add:hover, .btn-remove:hover, .btn-block:hover {
+    opacity: 0.85;
+}
 
 .search-bar {
     margin-bottom: 15px;
@@ -1783,392 +2117,10 @@ body.rtl .notification-item.unread {
     display: block;
 }
 
-/* Language Modal */
-.lang-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 9998;
-    background: rgba(0, 0, 0, 0.45);
-    align-items: flex-end;
-    justify-content: center;
-}
-
-.lang-modal-overlay.open {
-    display: flex;
-}
-
-.lang-modal {
-    background: #fff;
-    border-radius: 20px 20px 0 0;
-    padding: 20px 20px 32px;
-    width: 100%;
-    max-width: 480px;
-}
-
-.lang-modal-handle {
-    width: 36px;
-    height: 4px;
-    background: #e2e8f0;
-    border-radius: 99px;
-    margin: 0 auto 18px;
-}
-
-.lang-modal-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1a202c;
-    margin-bottom: 14px;
-    text-align: center;
-}
-
-.lang-options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.lang-option {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 11px 12px;
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    background: #fff;
-    cursor: pointer;
-    transition: border-color 0.15s;
-}
-
-.lang-option.active {
-    border-color: #1a202c;
-    background: #f8fafc;
-}
-
-.lang-option-flag {
-    font-size: 20px;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.lang-option-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1a202c;
-}
-
-.lang-option-native {
-    font-size: 11px;
-    color: #64748b;
-}
-
 /* ============================================================================
-   16. TOAST CONTAINER
+   20. LANGUAGE MODAL
    ============================================================================ */
 
-.toast-container {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.toast {
-    animation: toastSlideUp 2.5s forwards;
-}
-
-@keyframes toastSlideUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    15% { opacity: 1; transform: translateY(0); }
-    85% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-10px); }
-}
-
-.toast.hide {
-    display: none;
-}
-
-.toast-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #2d2d3a, #1a1a25);
-    border-radius: 30px;
-    padding: 10px 20px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.toast-icon {
-    font-size: 14px;
-}
-
-.toast.success .toast-icon { color: #10b981; }
-.toast.error .toast-icon { color: #ef4444; }
-.toast.warning .toast-icon { color: #f59e0b; }
-.toast.info .toast-icon { color: #3b82f6; }
-
-.toast-msg {
-    font-size: 13px;
-    font-weight: 500;
-    color: white;
-}
-
-.toast-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 2px;
-    background: #d4af37;
-    animation: toastBarShrink 2.3s linear forwards;
-}
-
-@keyframes toastBarShrink {
-    from { width: 100%; }
-    to { width: 0%; }
-}
-
-/* ============================================================================
-   17. RESPONSIVE DESIGN
-   ============================================================================ */
-
-@media (max-width: 428px) {
-    .method-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
-    .admin-stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .invite-stats-row {
-        flex-direction: column;
-    }
-    
-    .stat-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 380px) {
-    .method-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .balance-amount {
-        font-size: 22px;
-    }
-    
-    .watch-ad-inner {
-        flex-wrap: wrap;
-    }
-}
-
-/* ============================================================================
-   18. SCROLLBAR
-   ============================================================================ */
-
-::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #d4af37;
-    border-radius: 4px;
-}
-
-/* ============================================================================
-   إضافات وتحسينات CSS النهائية - AdNova Network
-   تشمل: TON Connect, نوافذ منبثقة, تحسين RTL, توافق الجوال
-   ============================================================================ */
-
-/* ====== TON CONNECT داخل بطاقة الرصيد ====== */
-.ton-connect-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.ton-connect-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.ton-connect-left i {
-    color: #d4af37;
-    font-size: 12px;
-}
-
-.ton-connect-left span {
-    font-size: 10px;
-    color: rgba(212, 175, 55, 0.7);
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-#connectTONBtn {
-    background: rgba(212, 175, 55, 0.12);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 30px;
-    padding: 5px 14px;
-    font-size: 10px;
-    font-weight: 600;
-    color: #d4af37;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-#connectTONBtn:hover {
-    background: rgba(212, 175, 55, 0.25);
-    border-color: #d4af37;
-    transform: scale(1.02);
-}
-
-#connectTONBtn:active {
-    transform: scale(0.98);
-}
-
-#tonWalletStatus {
-    font-size: 9px;
-    font-family: monospace;
-    color: #10b981;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ====== تحسين النوافذ المنبثقة ====== */
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 10000;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.modal.show {
-    display: flex;
-    animation: modalFadeIn 0.25s ease-out;
-}
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.modal-content {
-    background: var(--bg-secondary, #1a1a2e);
-    border-radius: 24px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.2);
-    max-width: 360px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-icon {
-    font-size: 48px;
-    text-align: center;
-    margin: 20px 0 8px;
-}
-
-.modal-content h3 {
-    font-size: 20px;
-    font-weight: 700;
-    text-align: center;
-    color: var(--text-primary, #fff);
-    margin-bottom: 8px;
-}
-
-.modal-content p {
-    font-size: 14px;
-    text-align: center;
-    color: var(--text-secondary, #b0b0c0);
-    margin-bottom: 20px;
-    padding: 0 16px;
-    line-height: 1.5;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 12px;
-    padding: 0 20px 20px;
-}
-
-.modal-actions button {
-    flex: 1;
-    padding: 12px;
-    border-radius: 40px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-cancel {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: var(--text-secondary, #b0b0c0);
-}
-
-.btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.btn-confirm {
-    background: linear-gradient(135deg, #d4af37, #b8920e);
-    border: none;
-    color: #1a1a2e;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
-}
-
-.btn-confirm:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-}
-
-/* ====== تحسين أزرار لوحة المشرف ====== */
-.admin-card-actions .btn-add,
-.admin-card-actions .btn-remove,
-.admin-card-actions .btn-block,
-.admin-card-actions .btn-unblock {
-    padding: 8px 12px;
-    font-size: 11px;
-    border-radius: 20px;
-    font-weight: 600;
-}
-
-/* ====== تحسين النافذة المنبثقة للغة ====== */
 .lang-modal-overlay {
     display: none;
     position: fixed;
@@ -2186,16 +2138,12 @@ body.rtl .notification-item.unread {
 }
 
 @keyframes modalSlideUp {
-    from {
-        transform: translateY(100%);
-    }
-    to {
-        transform: translateY(0);
-    }
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }
 
 .lang-modal {
-    background: var(--bg-secondary, #1a1a2e);
+    background: #1a1a2e;
     border-radius: 28px 28px 0 0;
     padding: 20px 20px 32px;
     width: 100%;
@@ -2215,7 +2163,7 @@ body.rtl .notification-item.unread {
     font-size: 16px;
     font-weight: 700;
     text-align: center;
-    color: var(--text-primary, #fff);
+    color: #fff;
     margin-bottom: 16px;
 }
 
@@ -2255,12 +2203,12 @@ body.rtl .notification-item.unread {
 .lang-option-name {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary, #fff);
+    color: #fff;
 }
 
 .lang-option-native {
     font-size: 11px;
-    color: var(--text-secondary, #b0b0c0);
+    color: #b0b0c0;
 }
 
 .lang-option-radio {
@@ -2285,7 +2233,165 @@ body.rtl .notification-item.unread {
     opacity: 1;
 }
 
-/* ====== تحسين RTL للغة العربية ====== */
+/* ============================================================================
+   21. TOAST CONTAINER
+   ============================================================================ */
+
+.toast-container {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast {
+    animation: toastSlideUp 2.5s forwards;
+}
+
+@keyframes toastSlideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.toast-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #2d2d3a, #1a1a25);
+    border-radius: 30px;
+    padding: 10px 20px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.toast-icon {
+    font-size: 14px;
+}
+
+.toast.success .toast-icon { color: #10b981; }
+.toast.error .toast-icon { color: #ef4444; }
+.toast.warning .toast-icon { color: #f59e0b; }
+.toast.info .toast-icon { color: #3b82f6; }
+
+.toast-msg {
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+}
+
+.toast-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: #d4af37;
+    animation: toastBarShrink 2.3s linear forwards;
+}
+
+@keyframes toastBarShrink {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* ============================================================================
+   22. BOTTOM NAVIGATION
+   ============================================================================ */
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(18, 18, 26, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.1px;
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.9) 20%, #ffd700 50%, rgba(212, 175, 55, 0.9) 80%, rgba(212, 175, 55, 0) 100%);
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px 9px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    gap: 3px;
+    color: #a0aec0;
+    transition: color 0.25s;
+    position: relative;
+}
+
+.nav-item:active {
+    transform: scale(0.95);
+}
+
+.nav-item .nav-icon-wrap {
+    width: 42px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    transition: background 0.25s;
+}
+
+.nav-item.active .nav-icon-wrap {
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.nav-item.active {
+    color: #d4af37;
+}
+
+.nav-item svg, .nav-item i {
+    width: 22px;
+    height: 22px;
+    font-size: 20px;
+}
+
+.nav-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.nav-item.active .nav-label {
+    background: linear-gradient(90deg, #b8860b, #8a7a3a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ============================================================================
+   23. RTL SPECIFIC STYLES
+   ============================================================================ */
+
 body.rtl .lang-option {
     flex-direction: row-reverse;
     text-align: right;
@@ -2304,8 +2410,65 @@ body.rtl .close-btn {
     left: 12px;
 }
 
-/* ====== تحسين التوافق مع الجوال ====== */
+body.rtl .task-right {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+body.rtl .withdrawal-item {
+    border-left: none;
+    border-right: 3px solid;
+}
+
+body.rtl .withdrawal-reason {
+    padding-left: 0;
+    padding-right: 42px;
+}
+
+body.rtl .withdrawal-date {
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+body.rtl .notification-item::before {
+    left: auto;
+    right: 0;
+}
+
+body.rtl .notification-item.unread {
+    border-left: none;
+    border-right: 1px solid #d4af37;
+}
+
+body.rtl .notification-item:hover {
+    transform: translateX(-4px);
+}
+
+body.rtl .verify-option {
+    text-align: right;
+}
+
+/* ============================================================================
+   24. RESPONSIVE DESIGN
+   ============================================================================ */
+
 @media (max-width: 428px) {
+    .method-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .invite-stats-row {
+        flex-direction: column;
+    }
+    
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .lang-options-grid {
         grid-template-columns: 1fr;
     }
@@ -2343,202 +2506,38 @@ body.rtl .close-btn {
     }
 }
 
-/* ====== تحسين وسائل الدفع ====== */
-.method-option {
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.method-option.selected {
-    border-color: #d4af37;
-    background: linear-gradient(145deg, #fffbec 0%, #fff3c4 65%, #faeea0 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-}
-
-.method-option.selected i {
-    color: #b8860b;
-}
-
-.method-option.selected span {
-    color: #5a3e0b;
-}
-
-/* ====== تحسين رسائل الحالة ====== */
-.status-msg {
-    transition: all 0.2s ease;
-}
-
-.status-msg.info {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: #3b82f6;
-    color: #60a5fa;
-}
-
-.status-msg.success {
-    background: rgba(16, 185, 129, 0.1);
-    border-color: #10b981;
-    color: #34d399;
-}
-
-.status-msg.warning {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: #f59e0b;
-    color: #fbbf24;
-}
-
-.status-msg.error {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: #ef4444;
-    color: #f87171;
-}
-
-/* ====== تحسين زر مشاهدة الإعلان ====== */
-.watch-ad-btn:active {
-    transform: scale(0.98);
-}
-
-.watch-ad-progress-fill {
-    transition: width 0.3s ease;
-}
-
-/* ====== تحسين القائمة السفلية ====== */
-.bottom-nav {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    background: rgba(18, 18, 26, 0.95);
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.nav-item.active .nav-icon-wrap {
-    background: rgba(212, 175, 55, 0.15);
-}
-
-.nav-item.active {
-    color: #d4af37;
-}
-
-/* ====== تحسين بطاقة الرصيد ====== */
-.balance-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.balance-card:active {
-    transform: scale(0.99);
-}
-
-/* ====== تحسين إشعارات التوست ====== */
-.toast {
-    z-index: 10002;
-}
-
-.toast-inner {
-    background: linear-gradient(135deg, #2d2d3a, #1a1a2e);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-/* ====== تحسين شاشة التحميل ====== */
-.splash-screen {
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-}
-
-.splash-screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* ====== إصلاح العرض في الوضع الليلي ====== */
-@media (prefers-color-scheme: dark) {
-    .balance-card {
-        background: linear-gradient(135deg, #2a2418, #1c1810);
+@media (max-width: 380px) {
+    .method-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .balance-amount {
+        font-size: 22px;
+    }
+    
+    .watch-ad-inner {
+        flex-wrap: wrap;
     }
 }
 
 /* ============================================================================
-   إضافات v6.0 - لوحة المشرف وإدارة المهام
+   25. SCROLLBAR
    ============================================================================ */
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   19. 🎛️ ADMIN PANEL - TASKS MANAGEMENT
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.admin-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
 }
 
-.admin-section-header h4 {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a202c;
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
-.btn-add-task {
-    background: linear-gradient(135deg, #d4af37, #b8920e);
-    border: none;
-    border-radius: 30px;
-    padding: 10px 20px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #1a1a2e;
-    cursor: pointer;
-    transition: all 0.2s ease;
+::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 4px;
 }
 
-.btn-add-task:hover {
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
-}
-
-.tasks-management-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.task-management-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
-
-.task-management-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
-}
-
-.task-info {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    flex: 1;
-}
-
-.task-type-badge {
-    background: #fef3c7;
-    border-radius: 30px;
-    padding: 5px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #b8860b;
-}
-
-.task-type-badge.telegram_channel { background: #e0f2fe; color: #0284c7; }
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
