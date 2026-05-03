@@ -2740,5 +2740,99 @@ body.rtl #notificationsModal .modal-body {
 }
 
 /* ============================================================================
+   FORCE FIX - WITHDRAWAL HISTORY COLORS
+   ============================================================================ */
+
+/* Force Approved style */
+.withdrawal-item.approved,
+.withdrawal-item.Approved,
+.withdrawal-item[data-status="approved"] {
+    background: linear-gradient(135deg, #e8faf0 0%, #d1fae5 100%) !important;
+    border-left: 5px solid #059669 !important;
+}
+
+.withdrawal-item.approved .withdrawal-amount,
+.withdrawal-item.Approved .withdrawal-amount,
+.withdrawal-item[data-status="approved"] .withdrawal-amount {
+    color: #059669 !important;
+    font-weight: 800 !important;
+}
+
+.withdrawal-item.approved .withdrawal-status-icon,
+.withdrawal-item.Approved .withdrawal-status-icon,
+.withdrawal-item[data-status="approved"] .withdrawal-status-icon {
+    background: #059669 !important;
+    color: white !important;
+}
+
+/* Force Rejected style */
+.withdrawal-item.rejected,
+.withdrawal-item.Rejected,
+.withdrawal-item[data-status="rejected"] {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+    border-left: 5px solid #dc2626 !important;
+}
+
+.withdrawal-item.rejected .withdrawal-amount,
+.withdrawal-item.Rejected .withdrawal-amount,
+.withdrawal-item[data-status="rejected"] .withdrawal-amount {
+    color: #dc2626 !important;
+    font-weight: 800 !important;
+    text-decoration: line-through !important;
+}
+
+.withdrawal-item.rejected .withdrawal-status-icon,
+.withdrawal-item.Rejected .withdrawal-status-icon,
+.withdrawal-item[data-status="rejected"] .withdrawal-status-icon {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+/* Force Pending style */
+.withdrawal-item.pending,
+.withdrawal-item.Pending,
+.withdrawal-item[data-status="pending"] {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+    border-left: 5px solid #d97706 !important;
+}
+
+.withdrawal-item.pending .withdrawal-amount,
+.withdrawal-item.Pending .withdrawal-amount,
+.withdrawal-item[data-status="pending"] .withdrawal-amount {
+    color: #d97706 !important;
+    font-weight: 800 !important;
+}
+
+.withdrawal-item.pending .withdrawal-status-icon,
+.withdrawal-item.Pending .withdrawal-status-icon,
+.withdrawal-item[data-status="pending"] .withdrawal-status-icon {
+    background: #d97706 !important;
+    color: white !important;
+}
+
+/* أيقونة داخل الدائرة */
+.withdrawal-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* RTL Support */
+body.rtl .withdrawal-item.approved,
+body.rtl .withdrawal-item.rejected,
+body.rtl .withdrawal-item.pending {
+    border-left: none !important;
+    border-right: 5px solid !important;
+}
+
+body.rtl .withdrawal-item.approved { border-right-color: #059669 !important; }
+body.rtl .withdrawal-item.rejected { border-right-color: #dc2626 !important; }
+body.rtl .withdrawal-item.pending { border-right-color: #d97706 !important; }
+/* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
