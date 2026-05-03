@@ -72,18 +72,13 @@ try {
     console.error('❌ TON API key error:', error.message);
 }
 
-try {
-    const walletPath = '/etc/secrets/ton-wallet-address.txt';
-    if (fs.existsSync(walletPath)) {
-        PLATFORM_TON_WALLET = fs.readFileSync(walletPath, 'utf8').trim();
-        console.log('✅ TON Platform Wallet address loaded:', PLATFORM_TON_WALLET);
-    } else {
-        console.log('⚠️ TON wallet address file not found, using default');
-        PLATFORM_TON_WALLET = process.env.PLATFORM_TON_WALLET || null;
-    }
-} catch (error) {
-    console.error('❌ TON Wallet address error:', error.message);
-    PLATFORM_TON_WALLET = process.env.PLATFORM_TON_WALLET || null;
+// ========== قراءة عنوان محفظة TON من Environment Variable ==========
+PLATFORM_TON_WALLET = process.env.OWNER_WALLET || null;
+
+if (PLATFORM_TON_WALLET) {
+    console.log('✅ TON Platform Wallet loaded from OWNER_WALLET:', PLATFORM_TON_WALLET);
+} else {
+    console.log('⚠️ OWNER_WALLET not set in environment variables');
 }
 
 BOT_TOKEN = process.env.BOT_TOKEN;
