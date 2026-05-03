@@ -2538,6 +2538,42 @@ body.rtl .verify-option {
     border-radius: 4px;
 }
 
+/* ========== تحسين تمرير الإشعارات ========== */
+
+#notificationsModal .modal-body {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+#notificationsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 100%;
+    overflow-y: visible;
+}
+
+/* تحسين شكل شريط التمرير */
+#notificationsModal .modal-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+#notificationsModal .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#notificationsModal .modal-body::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 4px;
+}
+
+/* للـ RTL (العربية) */
+body.rtl #notificationsModal .modal-body {
+    padding-right: 0;
+    padding-left: 5px;
+}
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
