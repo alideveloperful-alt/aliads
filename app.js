@@ -1808,7 +1808,10 @@ async function verifyAdminPassword() {
         adminToken = pwd;
         localStorage.setItem("admin_token", pwd);
         document.getElementById("adminAuthModal")?.classList.remove("show");
-        showAdminPanel();
+        // ✅ التعديل: استبدال showAdminPanel() بالأسطر التالية
+        document.getElementById("adminPanel")?.classList.remove("hidden");
+        await loadAdminData();
+        renderAdminDashboard();
     } else {
         document.getElementById("adminAuthError")?.style.setProperty("display", "block");
     }
