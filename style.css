@@ -2833,6 +2833,220 @@ body.rtl .withdrawal-item.pending {
 body.rtl .withdrawal-item.approved { border-right-color: #059669 !important; }
 body.rtl .withdrawal-item.rejected { border-right-color: #dc2626 !important; }
 body.rtl .withdrawal-item.pending { border-right-color: #d97706 !important; }
+
+/* ============================================================================
+   FIX NOTIFICATIONS - تنظيم الإشعارات داخل البطاقة
+   ============================================================================ */
+
+/* بطاقة الإشعار الواحدة */
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* أيقونة الإشعار */
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+/* محتوى الإشعار */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.5;
+}
+
+/* عنوان الإشعار */
+.notification-title {
+    font-weight: 800;
+    font-size: 14px;
+    color: #1a202c;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* نص الإشعار */
+.notification-message {
+    font-size: 12px;
+    color: #4a5568;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* وقت الإشعار */
+.notification-time {
+    font-size: 10px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* فصل التاريخ بخط فاصل */
+.notification-time::before {
+    content: "•";
+    color: #cbd5e1;
+}
+
+.notification-time:first-child::before {
+    display: none;
+}
+
+/* إشعار غير مقروء */
+.notification-item.unread {
+    background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
+    border-left: 3px solid #d4af37;
+}
+
+body.rtl .notification-item.unread {
+    border-left: none;
+    border-right: 3px solid #d4af37;
+}
+
+/* ============================================================================
+   FIX WITHDRAWAL HISTORY - ألوان واضحة
+   ============================================================================ */
+
+/* القاعدة الأساسية - تأكد من ظهور الألوان */
+.withdrawal-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+/* Approved - أخضر واضح */
+.withdrawal-item.approved {
+    background: #d1fae5 !important;
+    border-left: 5px solid #059669 !important;
+}
+
+.withdrawal-item.approved .withdrawal-amount {
+    color: #059669 !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+}
+
+.withdrawal-item.approved .withdrawal-status-icon {
+    background: #059669 !important;
+    color: white !important;
+}
+
+/* Rejected - أحمر واضح */
+.withdrawal-item.rejected {
+    background: #fee2e2 !important;
+    border-left: 5px solid #dc2626 !important;
+}
+
+.withdrawal-item.rejected .withdrawal-amount {
+    color: #dc2626 !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    text-decoration: line-through !important;
+}
+
+.withdrawal-item.rejected .withdrawal-status-icon {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+/* Pending - برتقالي واضح */
+.withdrawal-item.pending {
+    background: #fef3c7 !important;
+    border-left: 5px solid #d97706 !important;
+}
+
+.withdrawal-item.pending .withdrawal-amount {
+    color: #d97706 !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+}
+
+.withdrawal-item.pending .withdrawal-status-icon {
+    background: #d97706 !important;
+    color: white !important;
+}
+
+/* الأيقونة */
+.withdrawal-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* معلومات السحب */
+.withdrawal-info {
+    flex: 1;
+}
+
+/* المبلغ */
+.withdrawal-amount {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+/* التفاصيل */
+.withdrawal-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+/* سبب الرفض */
+.withdrawal-reason {
+    font-size: 11px;
+    font-weight: 700;
+    color: #dc2626;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(220, 38, 38, 0.1);
+    border-radius: 8px;
+    display: inline-block;
+}
+
+/* RTL */
+body.rtl .withdrawal-item.approved,
+body.rtl .withdrawal-item.rejected,
+body.rtl .withdrawal-item.pending {
+    border-left: none !important;
+    border-right: 5px solid !important;
+}
+
+body.rtl .withdrawal-item.approved { border-right-color: #059669 !important; }
+body.rtl .withdrawal-item.rejected { border-right-color: #dc2626 !important; }
+body.rtl .withdrawal-item.pending { border-right-color: #d97706 !important; }
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
