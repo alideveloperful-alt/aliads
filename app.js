@@ -1,8 +1,14 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v10.0 (النسخة النهائية الكاملة)
+// ADNOVA NETWORK - FRONTEND v11.0 (النسخة النهائية الكاملة مع جميع التحديثات)
 // ============================================================================
 // منصة احترافية لمشاهدة الإعلانات وكسب المال الحقيقي
 // جميع الميزات: إحالات، مهام متجددة، 14 طريقة سحب، لوحة مشرف، 10 لغات، TON Connect
+// التحديثات الجديدة:
+// - كرت تاريخ السحوبات في صفحة Ads
+// - نافذة التحقق من البوتات (30 إحالة أو 0.01 TON)
+// - ترتيب الإشعارات (الأحدث أولاً)
+// - أيقونات إيموجي لطرق الدفع
+// - تنسيق احترافي للمهام والإشعارات
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41,6 +47,9 @@ let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0, totalE
 let pendingWithdrawals = [];
 let allUsers = [];
 
+// متغير لتخزين بيانات السحب أثناء التحقق
+let pendingWithdrawalData = null;
+
 let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
@@ -48,26 +57,27 @@ let APP_CONFIG = {
     dailyAdLimit: 50,
     minWithdraw: 10.00,
     requiredReferrals: 1,
+    requiredReferralsForVerify: 30,
     botUsername: "AdNovaNetworkBot",
     adminId: null
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 3. 💳 WITHDRAWAL METHODS
+// 3. 💳 WITHDRAWAL METHODS (مع إضافة الإيموجي)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const WITHDRAWAL_METHODS = [
-    { id: "paypal", name: "PayPal", icon: "fab fa-paypal", placeholder: "example@email.com", label: "PayPal Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    { id: "skrill", name: "Skrill", icon: "fab fa-skrill", placeholder: "example@email.com", label: "Skrill Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    { id: "payoneer", name: "Payoneer", icon: "fab fa-payoneer", placeholder: "example@email.com", label: "Payoneer Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", placeholder: "0x...", label: "BSC Wallet Address", regex: /^0x[a-fA-F0-9]{40}$/ },
-    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", placeholder: "T...", label: "TRC20 Address", regex: /^T[a-zA-Z0-9]{33}$/ },
-    { id: "ton", name: "TON", icon: "fab fa-telegram", placeholder: "EQ...", label: "TON Address", regex: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/ },
-    { id: "binance_pay", name: "Binance Pay", icon: "fab fa-binance", placeholder: "Binance ID", label: "Binance ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
-    { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone", placeholder: "+71234567890", label: "Phone +7", regex: /^\+7\d{10}$/ },
-    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", placeholder: "+1234567890", label: "Phone Number", regex: /^\+\d{10,15}$/ },
-    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
-    { id: "freefire", name: "Free Fire", icon: "fas fa-fire", placeholder: "Player ID", label: "Free Fire ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
+    { id: "paypal", name: "PayPal", icon: "fab fa-paypal", emoji: null, placeholder: "example@email.com", label: "PayPal Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "skrill", name: "Skrill", icon: null, emoji: "💳", placeholder: "example@email.com", label: "Skrill Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "payoneer", name: "Payoneer", icon: null, emoji: "🏦", placeholder: "example@email.com", label: "Payoneer Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", emoji: null, placeholder: "0x...", label: "BSC Wallet Address", regex: /^0x[a-fA-F0-9]{40}$/ },
+    { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", emoji: null, placeholder: "T...", label: "TRC20 Address", regex: /^T[a-zA-Z0-9]{33}$/ },
+    { id: "ton", name: "TON", icon: "fab fa-telegram", emoji: null, placeholder: "EQ...", label: "TON Address", regex: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/ },
+    { id: "binance_pay", name: "Binance Pay", icon: null, emoji: "🛡️", placeholder: "Binance ID", label: "Binance ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
+    { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone", emoji: null, placeholder: "+71234567890", label: "Phone +7", regex: /^\+7\d{10}$/ },
+    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", emoji: null, placeholder: "+1234567890", label: "Phone Number", regex: /^\+\d{10,15}$/ },
+    { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", emoji: null, placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
+    { id: "freefire", name: "Free Fire", icon: null, emoji: "💎", placeholder: "Player ID", label: "Free Fire ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -920,7 +930,10 @@ async function loadUserData() {
             }],
             tonWallet: null,
             withdrawBlocked: false,
-            completedTasks: []
+            completedTasks: [],
+            isVerified: false,
+            verificationMethod: null,
+            verificationDate: null
         };
         userCompletedTasks = [];
         saveUserData();
@@ -1240,18 +1253,20 @@ async function verifyTask(taskId, type, identifier, reward) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. 💸 WITHDRAW SYSTEM
+// 10. 💸 WITHDRAW SYSTEM (مع تعديل عرض الأيقونات ونظام التحقق)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawMethods() {
     const container = document.getElementById("withdrawMethodsContainer");
     if (!container) return;
+    
     container.innerHTML = WITHDRAWAL_METHODS.map(m => `
         <div class="method-option ${m.id === selectedWithdrawMethod ? "selected" : ""}" data-method="${m.id}" onclick="selectWithdrawMethod('${m.id}')">
-            <i class="${m.icon}"></i>
+            ${m.emoji ? `<span class="method-emoji">${m.emoji}</span>` : `<i class="${m.icon}"></i>`}
             <span>${m.name}</span>
         </div>
     `).join("");
+    
     updateDestinationLabel();
 }
 
@@ -1284,26 +1299,8 @@ function validateDestination() {
     return true;
 }
 
-async function submitWithdraw() {
-    const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
-    const destination = document.getElementById("wdDestInput")?.value.trim();
-    
-    if (!amount || amount < APP_CONFIG.minWithdraw) {
-        showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
-        return;
-    }
-    if (amount > currentUser.balance) {
-        showToast(t("insufficientBalance"), "warning");
-        return;
-    }
-    if (!destination) {
-        showToast("Please enter destination", "warning");
-        return;
-    }
-    if (!validateDestination()) return;
-    
-    if (!confirm(`Submit withdrawal of $${amount.toFixed(2)} via ${selectedWithdrawMethod.toUpperCase()}?`)) return;
-    
+// دالة معالجة السحب الفعلية (منفصلة عن التحقق)
+async function processWithdrawal(amount, destination) {
     const btn = document.getElementById("submitWithdrawBtn");
     if (btn) {
         btn.disabled = true;
@@ -1322,7 +1319,9 @@ async function submitWithdraw() {
                 destination: destination
             })
         });
+        
         const data = await res.json();
+        
         if (data.success) {
             currentUser.balance = data.newBalance;
             currentUser.withdrawals.unshift({
@@ -1338,15 +1337,418 @@ async function submitWithdraw() {
             showToast("Withdrawal request submitted!", "success");
             document.getElementById("wdAmountInput").value = "";
             document.getElementById("wdDestInput").value = "";
+            renderWithdrawalHistory();
+        } else if (data.needVerification) {
+            showVerificationModal(data.currentInvites, data.requiredInvites, amount, destination);
         } else {
             showToast(data.error || t("error"), "error");
         }
     } catch(e) {
         showToast(t("error"), "error");
     }
+    
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> ' + t("submitWithdrawal");
+    }
+}
+
+// دالة طلب السحب الرئيسية (مع التحقق من حالة المستخدم)
+async function submitWithdraw() {
+    const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
+    const destination = document.getElementById("wdDestInput")?.value.trim();
+    
+    if (!amount || amount < APP_CONFIG.minWithdraw) {
+        showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
+        return;
+    }
+    if (amount > currentUser.balance) {
+        showToast(t("insufficientBalance"), "warning");
+        return;
+    }
+    if (!destination) {
+        showToast("Please enter destination", "warning");
+        return;
+    }
+    if (!validateDestination()) return;
+    
+    // التحقق من حالة التحقق
+    if (currentUser.isVerified) {
+        await processWithdrawal(amount, destination);
+        return;
+    }
+    
+    // لم يتم التحقق بعد - نعرض نافذة التحقق
+    showToast("Verification required", "info");
+    
+    // جلب أحدث بيانات المستخدم من الخادم
+    try {
+        const userRes = await fetch(`/api/users/${currentUserId}`);
+        const userData = await userRes.json();
+        const currentInvites = userData.data?.inviteCount || currentUser.inviteCount || 0;
+        showVerificationModal(currentInvites, APP_CONFIG.requiredReferralsForVerify, amount, destination);
+    } catch(e) {
+        console.error("Error fetching user data:", e);
+        showVerificationModal(currentUser.inviteCount || 0, APP_CONFIG.requiredReferralsForVerify, amount, destination);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 10.5. 📜 WITHDRAWAL HISTORY (كرت تاريخ السحوبات الجديد)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderWithdrawalHistory() {
+    const container = document.getElementById("withdrawalHistoryList");
+    const viewAllBtn = document.getElementById("viewAllWithdrawalsBtn");
+    
+    if (!container || !currentUser) return;
+    
+    const withdrawals = currentUser.withdrawals || [];
+    
+    if (withdrawals.length === 0) {
+        container.innerHTML = `
+            <div class="empty-history">
+                <i class="fas fa-receipt"></i>
+                <span>No withdrawal requests yet</span>
+            </div>
+        `;
+        if (viewAllBtn) viewAllBtn.style.display = "none";
+        return;
+    }
+    
+    // عرض آخر 3 سحوبات فقط
+    const recentWithdrawals = withdrawals.slice(0, 3);
+    let html = "";
+    
+    for (const wd of recentWithdrawals) {
+        const status = wd.status || "pending";
+        let statusIcon = "";
+        let statusClass = "";
+        
+        if (status === "approved") {
+            statusIcon = "✅";
+            statusClass = "approved";
+        } else if (status === "rejected") {
+            statusIcon = "❌";
+            statusClass = "rejected";
+        } else {
+            statusIcon = "⏳";
+            statusClass = "pending";
+        }
+        
+        const date = new Date(wd.date);
+        const formattedDate = date.toLocaleDateString(undefined, { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        
+        const methodName = getMethodName(wd.method);
+        const methodIcon = getMethodIcon(wd.method);
+        
+        html += `
+            <div class="withdrawal-item ${statusClass}">
+                <div class="withdrawal-left">
+                    <div class="withdrawal-status-icon">${statusIcon}</div>
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
+                        <div class="withdrawal-details">
+                            <span class="withdrawal-method">
+                                <i class="${methodIcon}"></i> ${methodName}
+                            </span>
+                            <span class="withdrawal-date">• ${formattedDate}</span>
+                        </div>
+                        ${wd.rejectReason ? `<div class="withdrawal-reason">❌ ${escapeHtml(wd.rejectReason)}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    
+    if (viewAllBtn) {
+        viewAllBtn.style.display = withdrawals.length > 3 ? "flex" : "none";
+    }
+}
+
+function showAllWithdrawals() {
+    const withdrawals = currentUser?.withdrawals || [];
+    
+    if (withdrawals.length === 0) {
+        showToast("No withdrawal history", "info");
+        return;
+    }
+    
+    let modalHtml = `
+        <div id="allWithdrawalsModal" class="modal show">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-history"></i> All Withdrawals</h3>
+                    <button class="close-btn" onclick="closeModal('allWithdrawalsModal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+                    <div class="withdrawal-history-list">
+    `;
+    
+    for (const wd of withdrawals) {
+        const status = wd.status || "pending";
+        let statusIcon = "";
+        let statusClass = "";
+        
+        if (status === "approved") {
+            statusIcon = "✅";
+            statusClass = "approved";
+        } else if (status === "rejected") {
+            statusIcon = "❌";
+            statusClass = "rejected";
+        } else {
+            statusIcon = "⏳";
+            statusClass = "pending";
+        }
+        
+        const date = new Date(wd.date);
+        const formattedDate = date.toLocaleDateString(undefined, { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const methodName = getMethodName(wd.method);
+        const methodIcon = getMethodIcon(wd.method);
+        
+        modalHtml += `
+            <div class="withdrawal-item ${statusClass}">
+                <div class="withdrawal-left">
+                    <div class="withdrawal-status-icon">${statusIcon}</div>
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
+                        <div class="withdrawal-details">
+                            <span class="withdrawal-method">
+                                <i class="${methodIcon}"></i> ${methodName}
+                            </span>
+                            <span class="withdrawal-date">• ${formattedDate}</span>
+                        </div>
+                        ${wd.rejectReason ? `<div class="withdrawal-reason">❌ ${escapeHtml(wd.rejectReason)}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalHtml += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById("allWithdrawalsModal");
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function getMethodName(methodId) {
+    const methods = {
+        'paypal': 'PayPal',
+        'skrill': 'Skrill',
+        'payoneer': 'Payoneer',
+        'usdt_bep20': 'USDT (BEP20)',
+        'usdt_trc20': 'USDT (TRC20)',
+        'ton': 'TON',
+        'binance_pay': 'Binance Pay',
+        'sbp': 'SBP',
+        'mobile': 'Mobile',
+        'pubg': 'PUBG UC',
+        'freefire': 'Free Fire'
+    };
+    return methods[methodId] || methodId;
+}
+
+function getMethodIcon(methodId) {
+    const icons = {
+        'paypal': 'fab fa-paypal',
+        'skrill': 'fas fa-credit-card',
+        'payoneer': 'fas fa-building',
+        'usdt_bep20': 'fab fa-bitcoin',
+        'usdt_trc20': 'fab fa-bitcoin',
+        'ton': 'fab fa-telegram',
+        'binance_pay': 'fas fa-shield-alt',
+        'sbp': 'fas fa-phone',
+        'mobile': 'fas fa-mobile-alt',
+        'pubg': 'fas fa-gamepad',
+        'freefire': 'fas fa-gem'
+    };
+    return icons[methodId] || 'fas fa-credit-card';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 10.6. 🔒 VERIFICATION MODAL (نافذة التحقق من البوتات)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
+    pendingWithdrawalData = { amount, destination };
+    
+    const remainingInvites = requiredInvites - currentInvites;
+    const progressPercent = (currentInvites / requiredInvites) * 100;
+    
+    const modalHtml = `
+        <div id="verificationModal" class="modal show">
+            <div class="modal-content verify-modal">
+                <button class="close-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="verify-modal-icon">🔒</div>
+                <h3>Verification Required</h3>
+                <p>To withdraw funds, you must verify your account. Choose one method below:</p>
+                
+                <div class="verify-option" onclick="showReferralInvite()">
+                    <div class="verify-option-icon">👥</div>
+                    <div class="verify-option-content">
+                        <div class="verify-option-title">Invite Friends Method</div>
+                        <div class="verify-option-desc">Invite ${requiredInvites} friends to the platform</div>
+                        <div class="verify-progress-bar-container">
+                            <div class="verify-progress-bar" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="verify-stats">${currentInvites} / ${requiredInvites} invites</div>
+                        ${remainingInvites > 0 ? 
+                            `<div class="verify-warning">⚠️ You need ${remainingInvites} more invites</div>` : 
+                            `<div class="verify-success">✅ You qualify! Click to verify</div>`
+                        }
+                    </div>
+                </div>
+                
+                <div class="verify-option" onclick="startTonVerification()">
+                    <div class="verify-option-icon">💰</div>
+                    <div class="verify-option-content">
+                        <div class="verify-option-title">TON Wallet Method</div>
+                        <div class="verify-option-desc">Pay 0.01 TON (~$0.02 USD) to verify instantly</div>
+                        <div class="verify-benefits">
+                            <span>✅ One-time payment only</span>
+                            <span>🔄 Will be returned on first withdrawal</span>
+                        </div>
+                        <div class="verify-ton-btn">
+                            <i class="fab fa-telegram"></i> Verify with TON
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="verify-later-btn" onclick="closeModal('verificationModal')">
+                    ⏰ Remind Me Later
+                </button>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById("verificationModal");
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function verifyByReferrals() {
+    showToast("Verifying your account...", "info");
+    
+    try {
+        const response = await fetch("/api/verify-by-referrals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUserId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.verificationMethod = 'referrals';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Account verified! Processing your withdrawal...", "success");
+            closeModal('verificationModal');
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            }
+        } else {
+            showToast(data.error, "warning");
+        }
+    } catch(e) {
+        console.error("Verification error:", e);
+        showToast("Error verifying account", "error");
+    }
+}
+
+function showReferralInvite() {
+    if (currentUser.inviteCount >= APP_CONFIG.requiredReferralsForVerify) {
+        verifyByReferrals();
+    } else {
+        closeModal('verificationModal');
+        switchTab('invite');
+        showToast(`You need ${APP_CONFIG.requiredReferralsForVerify - currentUser.inviteCount} more invites to verify!`, "info");
+    }
+}
+
+async function startTonVerification() {
+    if (!window.tonConnectUI) {
+        showToast("TON Connect not ready", "error");
+        return;
+    }
+    
+    showToast("Please confirm transaction in TON Wallet...", "info");
+    
+    // عنوان محفظة المنصة - يجب تحديثه بقيمة صحيحة
+    const PLATFORM_TON_WALLET = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABnQ"; // استبدل هذا بالعنوان الحقيقي
+    
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [{
+            address: PLATFORM_TON_WALLET,
+            amount: "10000000" // 0.01 TON = 10,000,000 nanoTON
+        }]
+    };
+    
+    try {
+        const result = await window.tonConnectUI.sendTransaction(transaction);
+        
+        const response = await fetch("/api/ton/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                txHash: result.boc,
+                amount: "0.01"
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.tonWalletVerified = true;
+            currentUser.verificationMethod = 'ton';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
+            closeModal('verificationModal');
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            } else {
+                updateUI();
+            }
+        } else {
+            showToast("Verification failed: " + (data.error || "Unknown error"), "error");
+        }
+    } catch(e) {
+        console.error("Transaction error:", e);
+        showToast("Transaction cancelled or failed", "warning");
     }
 }
 
@@ -1989,7 +2391,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM
+// 14. 🔔 NOTIFICATIONS SYSTEM (مع ترتيب الإشعارات - الأحدث أولاً)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -1998,6 +2400,15 @@ function updateNotificationBadge() {
         const unread = currentUser.notifications?.filter(n => !n.read).length || 0;
         badge.textContent = unread;
         badge.style.display = unread > 0 ? "flex" : "none";
+        
+        const bellIcon = document.querySelector("#notificationBtn i");
+        if (bellIcon) {
+            if (unread > 0) {
+                bellIcon.style.color = "#d4af37";
+            } else {
+                bellIcon.style.color = "";
+            }
+        }
     }
 }
 
@@ -2005,22 +2416,34 @@ function renderNotifications() {
     const container = document.getElementById("notificationsList");
     if (!container || !currentUser) return;
     const notifs = currentUser.notifications || [];
-    if (notifs.length === 0) {
+    
+    // عكس الترتيب: الأحدث أولاً
+    const sortedNotifs = [...notifs].reverse();
+    
+    if (sortedNotifs.length === 0) {
         container.innerHTML = '<div class="empty-state">No notifications</div>';
         return;
     }
+    
     let html = "";
-    for (const n of notifs) {
+    for (const n of sortedNotifs) {
         const date = new Date(n.timestamp);
+        let iconClass = "info";
+        if (n.type === "success") iconClass = "success";
+        else if (n.type === "error") iconClass = "error";
+        else if (n.type === "warning") iconClass = "warning";
+        else if (n.type === "withdraw") iconClass = "withdraw";
+        else if (n.type === "referral") iconClass = "referral";
+        
         html += `
             <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
-                <div class="notification-icon ${n.type || 'info'}">
-                    <i class="fas fa-bell"></i>
+                <div class="notification-icon ${iconClass}">
+                    <i class="fas ${n.type === 'success' ? 'fa-check-circle' : n.type === 'error' ? 'fa-times-circle' : n.type === 'warning' ? 'fa-exclamation-triangle' : n.type === 'withdraw' ? 'fa-money-bill-wave' : n.type === 'referral' ? 'fa-user-plus' : 'fa-bell'}"></i>
                 </div>
                 <div class="notification-content">
                     <div class="notification-title">${escapeHtml(n.title)}</div>
                     <div class="notification-message">${escapeHtml(n.message)}</div>
-                    <div class="notification-time">${date.toLocaleString()}</div>
+                    <div class="notification-time"><i class="far fa-clock"></i> ${date.toLocaleString()}</div>
                 </div>
             </div>
         `;
@@ -2143,7 +2566,7 @@ function updateTONUI() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 16. 🎨 UI UPDATES
+// 16. 🎨 UI UPDATES (مع إضافة كرت تاريخ السحوبات وتحسين صورة المستخدم)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateUI() {
@@ -2185,11 +2608,16 @@ function updateUI() {
     const userChatId = document.getElementById("userChatId");
     if (userChatId) userChatId.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
     
+    // تحسين عرض صورة المستخدم
     const avatarSpan = document.getElementById("userAvatarText");
     const avatarImg = document.getElementById("userAvatarImg");
     if (currentUser.userPhoto && avatarImg) {
         avatarImg.src = currentUser.userPhoto;
         avatarImg.style.display = "block";
+        avatarImg.style.width = "44px";
+        avatarImg.style.height = "44px";
+        avatarImg.style.borderRadius = "50%";
+        avatarImg.style.objectFit = "cover";
         if (avatarSpan) avatarSpan.style.display = "none";
     } else if (avatarSpan) {
         avatarSpan.textContent = (currentUser.userName || "U").charAt(0).toUpperCase();
@@ -2199,6 +2627,9 @@ function updateUI() {
     
     updateNotificationBadge();
     updateTONUI();
+    
+    // عرض كرت تاريخ السحوبات
+    renderWithdrawalHistory();
 }
 
 function refreshCurrentPage() {
@@ -2209,6 +2640,8 @@ function refreshCurrentPage() {
         if (link) link.textContent = getReferralLink();
     } else if (currentPage === "withdraw") {
         renderWithdrawMethods();
+    } else if (currentPage === "ads") {
+        renderWithdrawalHistory();
     }
 }
 
@@ -2226,6 +2659,8 @@ function switchTab(page) {
         refreshCurrentPage();
     } else if (page === "withdraw") {
         renderWithdrawMethods();
+    } else if (page === "ads") {
+        renderWithdrawalHistory();
     }
 }
 
@@ -2343,9 +2778,16 @@ window.connectTONWallet = connectTONWallet;
 window.closeModal = closeModal;
 window.closeConfirmModal = closeConfirmModal;
 
+// تصدير الدوال الجديدة
+window.showAllWithdrawals = showAllWithdrawals;
+window.verifyByReferrals = verifyByReferrals;
+window.showReferralInvite = showReferralInvite;
+window.startTonVerification = startTonVerification;
+
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
+console.log("[AdNova] New Features: Withdrawal History | Bot Verification | Notification Sort | Method Emojis");
 
 // ============================================================================
 // نهاية الملف 🎯
