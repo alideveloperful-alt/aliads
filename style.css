@@ -2605,6 +2605,496 @@ body.rtl #notificationsModal .modal-body {
     border-radius: 12px !important;
     margin-bottom: 12px !important;
 }
+
+/* ============================================================================
+   IMPROVED NOTIFICATION CARDS - تصميم احترافي لبطاقات الإشعارات
+   ============================================================================ */
+
+/* الحاوية الرئيسية للإشعارات */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+/* بطاقة الإشعار الواحدة - تصميم احترافي */
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.12);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* إضافة شريط جانبي للإشعارات غير المقروءة */
+.notification-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.25s;
+}
+
+body.rtl .notification-item::before {
+    left: auto;
+    right: 0;
+}
+
+/* الإشعارات غير المقروءة - شريط ذهبي وخلفية مميزة */
+.notification-item.unread::before {
+    background: #d4af37;
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, #fffef8 0%, #fffbf0 100%);
+    border-left: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1);
+}
+
+body.rtl .notification-item.unread {
+    border-left: none;
+    border-right: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* تأثير hover */
+.notification-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.rtl .notification-item:hover {
+    transform: translateX(-4px);
+}
+
+/* أيقونة الإشعار */
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+/* ألوان الأيقونات حسب النوع */
+.notification-icon.success {
+    background: linear-gradient(135deg, #10b98120, #10b98108);
+    color: #10b981;
+    border: 1px solid #10b98130;
+}
+
+.notification-icon.error {
+    background: linear-gradient(135deg, #ef444420, #ef444408);
+    color: #ef4444;
+    border: 1px solid #ef444430;
+}
+
+.notification-icon.warning {
+    background: linear-gradient(135deg, #f59e0b20, #f59e0b08);
+    color: #f59e0b;
+    border: 1px solid #f59e0b30;
+}
+
+.notification-icon.info {
+    background: linear-gradient(135deg, #3b82f620, #3b82f608);
+    color: #3b82f6;
+    border: 1px solid #3b82f630;
+}
+
+.notification-icon.withdraw {
+    background: linear-gradient(135deg, #8b5cf620, #8b5cf608);
+    color: #8b5cf6;
+    border: 1px solid #8b5cf630;
+}
+
+.notification-icon.referral {
+    background: linear-gradient(135deg, #d4af3720, #d4af3708);
+    color: #d4af37;
+    border: 1px solid #d4af3730;
+}
+
+/* محتوى الإشعار */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* عنوان الإشعار */
+.notification-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1a202c;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+/* نص الإشعار */
+.notification-message {
+    font-size: 12px;
+    color: #4a5568;
+    line-height: 1.45;
+    margin-bottom: 6px;
+}
+
+/* وقت الإشعار */
+.notification-time {
+    font-size: 10px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ============================================================================
+   WITHDRAWAL HISTORY CARDS - تصميم احترافي لبطاقات تاريخ السحوبات
+   ============================================================================ */
+
+/* الحاوية الرئيسية */
+.withdrawal-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* بطاقة السحب الواحدة */
+.withdrawal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 14px;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* حالة Approved - أخضر */
+.withdrawal-item.approved {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-left: 4px solid #10b981;
+    border-right: 1px solid #10b98120;
+}
+
+.withdrawal-item.approved .withdrawal-amount {
+    color: #10b981;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.withdrawal-item.approved .withdrawal-status-icon {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* حالة Rejected - أحمر غامق */
+.withdrawal-item.rejected {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-left: 4px solid #ef4444;
+    border-right: 1px solid #ef444420;
+}
+
+.withdrawal-item.rejected .withdrawal-amount {
+    color: #ef4444;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: line-through;
+}
+
+.withdrawal-item.rejected .withdrawal-status-icon {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* سبب الرفض - خط أحمر عريض وواضح */
+.withdrawal-reason {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    margin-top: 6px;
+    padding-left: 42px;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    width: auto;
+}
+
+body.rtl .withdrawal-reason {
+    padding-left: 0;
+    padding-right: 42px;
+}
+
+/* حالة Pending - برتقالي/ذهبي */
+.withdrawal-item.pending {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-left: 4px solid #f59e0b;
+    border-right: 1px solid #f59e0b20;
+}
+
+.withdrawal-item.pending .withdrawal-amount {
+    color: #f59e0b;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.withdrawal-item.pending .withdrawal-status-icon {
+    background: #f59e0b;
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* أيقونة الحالة */
+.withdrawal-status-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+/* معلومات السحب */
+.withdrawal-info {
+    flex: 1;
+    margin-left: 12px;
+}
+
+body.rtl .withdrawal-info {
+    margin-left: 0;
+    margin-right: 12px;
+}
+
+/* المبلغ */
+.withdrawal-amount {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+/* تفاصيل السحب (الطريقة والتاريخ) */
+.withdrawal-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.withdrawal-method {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.withdrawal-date {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+/* الحاوية الفارغة */
+.empty-history {
+    text-align: center;
+    padding: 32px 24px;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px dashed #cbd5e1;
+}
+
+.empty-history i {
+    font-size: 36px;
+    margin-bottom: 10px;
+    display: block;
+    opacity: 0.6;
+}
+
+.empty-history span {
+    font-size: 13px;
+}
+
+/* زر عرض الكل */
+.view-all-btn {
+    width: 100%;
+    margin-top: 14px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 40px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.view-all-btn:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+/* ============================================================================
+   IMPROVED NOTIFICATION BADGE - تحسين كرة الإشعارات
+   ============================================================================ */
+
+/* كرة الإشعارات الحمراء */
+.icon-btn .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    font-family: monospace;
+    letter-spacing: 0px;
+}
+
+body.rtl .icon-btn .badge {
+    right: auto;
+    left: -6px;
+}
+
+/* إذا كان الرقم مكون من رقمين */
+.icon-btn .badge:not(:empty) {
+    min-width: 20px;
+}
+
+/* ============================================================================
+   RESPONSIVE - تحسينات للشاشات الصغيرة
+   ============================================================================ */
+
+@media (max-width: 480px) {
+    .notification-item {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .notification-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
+    
+    .notification-title {
+        font-size: 13px;
+    }
+    
+    .notification-message {
+        font-size: 11px;
+    }
+    
+    .withdrawal-item {
+        padding: 12px;
+    }
+    
+    .withdrawal-amount {
+        font-size: 14px;
+    }
+    
+    .withdrawal-status-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .withdrawal-details {
+        font-size: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .withdrawal-reason {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+}
+
+/* ============================================================================
+   SCROLLBAR - شريط تمرير أنيق للإشعارات
+   ============================================================================ */
+
+.notifications-list::-webkit-scrollbar,
+.withdrawal-history-list::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.notifications-list::-webkit-scrollbar-track,
+.withdrawal-history-list::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb,
+.withdrawal-history-list::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 4px;
+}
+
+/* ============================================================================
+   RTL - تحسينات للغة العربية
+   ============================================================================ */
+
+body.rtl .withdrawal-item {
+    border-left: none;
+    border-right: 4px solid;
+}
+
+body.rtl .withdrawal-item.approved {
+    border-right: 4px solid #10b981;
+}
+
+body.rtl .withdrawal-item.rejected {
+    border-right: 4px solid #ef4444;
+}
+
+body.rtl .withdrawal-item.pending {
+    border-right: 4px solid #f59e0b;
+}
+
+body.rtl .notification-item.unread {
+    border-left: none;
+    border-right: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* ============================================================================
+   END OF IMPROVED STYLES
+   ============================================================================ */
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
