@@ -3047,6 +3047,202 @@ body.rtl .withdrawal-item.pending {
 body.rtl .withdrawal-item.approved { border-right-color: #059669 !important; }
 body.rtl .withdrawal-item.rejected { border-right-color: #dc2626 !important; }
 body.rtl .withdrawal-item.pending { border-right-color: #d97706 !important; }
+
+/* ============================================================================
+   FORCE FIX - WITHDRAWAL HISTORY & NOTIFICATIONS
+   ============================================================================ */
+
+/* ----- بداية: إصلاح كامل لبطاقات السحوبات ----- */
+.withdrawal-history-list .withdrawal-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    border-radius: 16px !important;
+    margin-bottom: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Approved */
+.withdrawal-history-list .withdrawal-item.approved {
+    background: #d1fae5 !important;
+    border-left: 5px solid #059669 !important;
+}
+.withdrawal-history-list .withdrawal-item.approved .withdrawal-amount {
+    color: #059669 !important;
+    font-weight: 800 !important;
+}
+.withdrawal-history-list .withdrawal-item.approved .withdrawal-status-icon {
+    background: #059669 !important;
+    color: white !important;
+}
+
+/* Rejected */
+.withdrawal-history-list .withdrawal-item.rejected {
+    background: #fee2e2 !important;
+    border-left: 5px solid #dc2626 !important;
+}
+.withdrawal-history-list .withdrawal-item.rejected .withdrawal-amount {
+    color: #dc2626 !important;
+    font-weight: 800 !important;
+    text-decoration: line-through !important;
+}
+.withdrawal-history-list .withdrawal-item.rejected .withdrawal-status-icon {
+    background: #dc2626 !important;
+    color: white !important;
+}
+.withdrawal-history-list .withdrawal-item.rejected .withdrawal-reason {
+    display: block !important;
+    background: rgba(220, 38, 38, 0.1) !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #b91c1c !important;
+    margin-top: 8px !important;
+}
+
+/* Pending */
+.withdrawal-history-list .withdrawal-item.pending {
+    background: #fef3c7 !important;
+    border-left: 5px solid #d97706 !important;
+}
+.withdrawal-history-list .withdrawal-item.pending .withdrawal-amount {
+    color: #d97706 !important;
+    font-weight: 800 !important;
+}
+.withdrawal-history-list .withdrawal-item.pending .withdrawal-status-icon {
+    background: #d97706 !important;
+    color: white !important;
+}
+
+/* الأيقونة */
+.withdrawal-history-list .withdrawal-status-icon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    flex-shrink: 0 !important;
+}
+
+/* المعلومات */
+.withdrawal-history-list .withdrawal-info {
+    flex: 1 !important;
+}
+
+/* المبلغ */
+.withdrawal-history-list .withdrawal-amount {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+}
+
+/* التفاصيل */
+.withdrawal-history-list .withdrawal-details {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+    color: #64748b !important;
+}
+
+.withdrawal-history-list .withdrawal-method {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    background: rgba(0,0,0,0.04) !important;
+    padding: 3px 8px !important;
+    border-radius: 20px !important;
+}
+
+.withdrawal-history-list .withdrawal-date {
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+}
+
+/* RTL */
+body.rtl .withdrawal-history-list .withdrawal-item.approved,
+body.rtl .withdrawal-history-list .withdrawal-item.rejected,
+body.rtl .withdrawal-history-list .withdrawal-item.pending {
+    border-left: none !important;
+    border-right: 5px solid !important;
+}
+body.rtl .withdrawal-history-list .withdrawal-item.approved { border-right-color: #059669 !important; }
+body.rtl .withdrawal-history-list .withdrawal-item.rejected { border-right-color: #dc2626 !important; }
+body.rtl .withdrawal-history-list .withdrawal-item.pending { border-right-color: #d97706 !important; }
+body.rtl .withdrawal-history-list .withdrawal-reason {
+    padding-left: 0 !important;
+    padding-right: 42px !important;
+}
+
+/* ----- نهاية إصلاح بطاقات السحوبات ----- */
+
+/* ----- بداية: إصلاح بطاقات الإشعارات ----- */
+.notifications-list .notification-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(212, 175, 55, 0.12) !important;
+    margin-bottom: 10px !important;
+}
+
+.notifications-list .notification-item.unread {
+    background: linear-gradient(135deg, #fffef5, #fff9e6) !important;
+    border-left: 3px solid #d4af37 !important;
+}
+
+.notifications-list .notification-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    font-size: 20px !important;
+}
+
+.notifications-list .notification-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.notifications-list .notification-title {
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    color: #1a202c !important;
+    margin-bottom: 6px !important;
+}
+
+.notifications-list .notification-message {
+    font-size: 12px !important;
+    color: #4a5568 !important;
+    line-height: 1.5 !important;
+    margin-bottom: 8px !important;
+    word-break: break-word !important;
+}
+
+.notifications-list .notification-time {
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+body.rtl .notifications-list .notification-item.unread {
+    border-left: none !important;
+    border-right: 3px solid #d4af37 !important;
+}
+/* ----- نهاية إصلاح بطاقات الإشعارات ----- */
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
