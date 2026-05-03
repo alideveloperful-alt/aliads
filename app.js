@@ -1,14 +1,15 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v12.0 (النسخة المستقرة الكاملة)
+// ADNOVA NETWORK - FRONTEND v12.0 (النسخة النهائية الكاملة مع جميع التحديثات)
 // ============================================================================
 // منصة احترافية لمشاهدة الإعلانات وكسب المال الحقيقي
 // جميع الميزات: إحالات، مهام متجددة، 14 طريقة سحب، لوحة مشرف، 10 لغات، TON Connect
-// 
-// التحديثات الجديدة (بدون الإخلال بأي ميزة موجودة):
+// التحديثات الجديدة:
 // - كرت تاريخ السحوبات في صفحة Ads
+// - نافذة التحقق من البوتات (30 إحالة أو 0.01 TON) - تصميم فاتح/ذهبي
 // - ترتيب الإشعارات (الأحدث أولاً)
 // - أيقونات إيموجي لطرق الدفع (فقط للطرق التي لا تدعم FontAwesome)
-// - إصلاح لوحة المشرف
+// - تنسيق احترافي للمهام والإشعارات
+// - إصلاح معاملات TON Connect مع عنوان المحفظة من الخادم
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -47,6 +48,9 @@ let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0, totalE
 let pendingWithdrawals = [];
 let allUsers = [];
 
+// متغير لتخزين بيانات السحب أثناء التحقق
+let pendingWithdrawalData = null;
+
 // عنوان محفظة TON الخاصة بالمنصة (يتم تعبئته من الخادم)
 let PLATFORM_TON_WALLET = null;
 
@@ -56,7 +60,8 @@ let APP_CONFIG = {
     adReward: 0.01,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
-    requiredReferrals: 10,
+    requiredReferrals: 1,
+    requiredReferralsForVerify: 30,
     botUsername: "AdNovaNetworkBot",
     adminId: null,
     platformTonWallet: null
@@ -934,7 +939,10 @@ async function loadUserData() {
             }],
             tonWallet: null,
             withdrawBlocked: false,
-            completedTasks: []
+            completedTasks: [],
+            isVerified: false,
+            verificationMethod: null,
+            verificationDate: null
         };
         userCompletedTasks = [];
         saveUserData();
@@ -1254,7 +1262,7 @@ async function verifyTask(taskId, type, identifier, reward) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. 💸 WITHDRAW SYSTEM (مع تعديل عرض الأيقونات)
+// 10. 💸 WITHDRAW SYSTEM (مع تعديل عرض الأيقونات ونظام التحقق)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawMethods() {
@@ -1300,26 +1308,8 @@ function validateDestination() {
     return true;
 }
 
-async function submitWithdraw() {
-    const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
-    const destination = document.getElementById("wdDestInput")?.value.trim();
-    
-    if (!amount || amount < APP_CONFIG.minWithdraw) {
-        showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
-        return;
-    }
-    if (amount > currentUser.balance) {
-        showToast(t("insufficientBalance"), "warning");
-        return;
-    }
-    if (!destination) {
-        showToast("Please enter destination", "warning");
-        return;
-    }
-    if (!validateDestination()) return;
-    
-    if (!confirm(`Submit withdrawal of $${amount.toFixed(2)} via ${selectedWithdrawMethod.toUpperCase()}?`)) return;
-    
+// دالة معالجة السحب الفعلية (منفصلة عن التحقق)
+async function processWithdrawal(amount, destination) {
     const btn = document.getElementById("submitWithdrawBtn");
     if (btn) {
         btn.disabled = true;
@@ -1338,7 +1328,9 @@ async function submitWithdraw() {
                 destination: destination
             })
         });
+        
         const data = await res.json();
+        
         if (data.success) {
             currentUser.balance = data.newBalance;
             currentUser.withdrawals.unshift({
@@ -1354,21 +1346,64 @@ async function submitWithdraw() {
             showToast("Withdrawal request submitted!", "success");
             document.getElementById("wdAmountInput").value = "";
             document.getElementById("wdDestInput").value = "";
-            renderWithdrawalHistory(); // تحديث كرت تاريخ السحوبات
+            renderWithdrawalHistory();
+        } else if (data.needVerification) {
+            showVerificationModal(data.currentInvites, data.requiredInvites, amount, destination);
         } else {
             showToast(data.error || t("error"), "error");
         }
     } catch(e) {
         showToast(t("error"), "error");
     }
+    
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> ' + t("submitWithdrawal");
     }
 }
 
+// دالة طلب السحب الرئيسية (مع التحقق من حالة المستخدم)
+async function submitWithdraw() {
+    const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
+    const destination = document.getElementById("wdDestInput")?.value.trim();
+    
+    if (!amount || amount < APP_CONFIG.minWithdraw) {
+        showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
+        return;
+    }
+    if (amount > currentUser.balance) {
+        showToast(t("insufficientBalance"), "warning");
+        return;
+    }
+    if (!destination) {
+        showToast("Please enter destination", "warning");
+        return;
+    }
+    if (!validateDestination()) return;
+    
+    // التحقق من حالة التحقق
+    if (currentUser.isVerified) {
+        await processWithdrawal(amount, destination);
+        return;
+    }
+    
+    // لم يتم التحقق بعد - نعرض نافذة التحقق
+    showToast("Verification required", "info");
+    
+    // جلب أحدث بيانات المستخدم من الخادم
+    try {
+        const userRes = await fetch(`/api/users/${currentUserId}`);
+        const userData = await userRes.json();
+        const currentInvites = userData.data?.inviteCount || currentUser.inviteCount || 0;
+        showVerificationModal(currentInvites, APP_CONFIG.requiredReferralsForVerify, amount, destination);
+    } catch(e) {
+        console.error("Error fetching user data:", e);
+        showVerificationModal(currentUser.inviteCount || 0, APP_CONFIG.requiredReferralsForVerify, amount, destination);
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
-// 11. 📜 WITHDRAWAL HISTORY (كرت تاريخ السحوبات الجديد)
+// 10.5. 📜 WITHDRAWAL HISTORY (كرت تاريخ السحوبات الجديد)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawalHistory() {
@@ -1561,7 +1596,192 @@ function getMethodIcon(methodId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 12. 👑 ADMIN PANEL
+// 10.6. 🔒 VERIFICATION MODAL (نافذة التحقق من البوتات - تصميم فاتح/ذهبي)
+// ══════════════════════════════════════════════════════════════════════════
+
+function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
+    pendingWithdrawalData = { amount, destination };
+    
+    const remainingInvites = requiredInvites - currentInvites;
+    const progressPercent = (currentInvites / requiredInvites) * 100;
+    
+    const modalHtml = `
+        <div id="verificationModal" class="modal show">
+            <div class="modal-content verify-modal">
+                <button class="close-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="verify-modal-icon">🔒</div>
+                <h3>Verification Required</h3>
+                <p>To withdraw funds, you must verify your account. Choose one method below:</p>
+                
+                <div class="verify-option" onclick="showReferralInvite()">
+                    <div class="verify-option-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="verify-option-content">
+                        <div class="verify-option-title">Invite Friends Method</div>
+                        <div class="verify-option-desc">Invite ${requiredInvites} friends to the platform</div>
+                        <div class="verify-progress-bar-container">
+                            <div class="verify-progress-bar" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="verify-stats">${currentInvites} / ${requiredInvites} invites</div>
+                        ${remainingInvites > 0 ? 
+                            `<div class="verify-warning"><i class="fas fa-exclamation-triangle"></i> You need ${remainingInvites} more invites</div>` : 
+                            `<div class="verify-success"><i class="fas fa-check-circle"></i> You qualify! Click to verify</div>`
+                        }
+                    </div>
+                </div>
+                
+                <div class="verify-option" onclick="startTonVerification()">
+                    <div class="verify-option-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="verify-option-content">
+                        <div class="verify-option-title">TON Wallet Method</div>
+                        <div class="verify-option-desc">Pay 0.01 TON (~$0.02 USD) to verify instantly</div>
+                        <div class="verify-benefits">
+                            <span><i class="fas fa-check-circle"></i> One-time payment only</span>
+                            <span><i class="fas fa-rotate-right"></i> Will be returned on first withdrawal</span>
+                        </div>
+                        <div class="verify-ton-btn">
+                            <i class="fab fa-telegram"></i> Verify with TON
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="verify-later-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-clock"></i> Remind Me Later
+                </button>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById("verificationModal");
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function verifyByReferrals() {
+    showToast("Verifying your account...", "info");
+    
+    try {
+        const response = await fetch("/api/verify-by-referrals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUserId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.verificationMethod = 'referrals';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Account verified! Processing your withdrawal...", "success");
+            closeModal('verificationModal');
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            }
+        } else {
+            showToast(data.error, "warning");
+        }
+    } catch(e) {
+        console.error("Verification error:", e);
+        showToast("Error verifying account", "error");
+    }
+}
+
+function showReferralInvite() {
+    if (currentUser.inviteCount >= APP_CONFIG.requiredReferralsForVerify) {
+        verifyByReferrals();
+    } else {
+        closeModal('verificationModal');
+        switchTab('invite');
+        showToast(`You need ${APP_CONFIG.requiredReferralsForVerify - currentUser.inviteCount} more invites to verify!`, "info");
+    }
+}
+
+async function startTonVerification() {
+    if (!window.tonConnectUI) {
+        showToast("TON Connect not ready", "error");
+        return;
+    }
+    
+    // التحقق من وجود عنوان محفظة المنصة
+    if (!PLATFORM_TON_WALLET) {
+        showToast("Platform wallet not configured. Please contact support.", "error");
+        console.error("PLATFORM_TON_WALLET is not set");
+        return;
+    }
+    
+    // التحقق من وجود محفظة متصلة
+    if (!tonConnected || !tonWalletAddress) {
+        showToast("Please connect your TON wallet first", "info");
+        await connectTONWallet();
+        // بعد محاولة الاتصال، نتحقق مرة أخرى
+        if (!tonConnected || !tonWalletAddress) {
+            showToast("Please connect your TON wallet to continue", "warning");
+            return;
+        }
+    }
+    
+    showToast("Please confirm transaction in TON Wallet...", "info");
+    
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [{
+            address: PLATFORM_TON_WALLET,
+            amount: "10000000" // 0.01 TON = 10,000,000 nanoTON
+        }]
+    };
+    
+    try {
+        const result = await window.tonConnectUI.sendTransaction(transaction);
+        
+        const response = await fetch("/api/ton/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                txHash: result.boc,
+                amount: "0.01"
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.tonWalletVerified = true;
+            currentUser.verificationMethod = 'ton';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
+            closeModal('verificationModal');
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            } else {
+                updateUI();
+            }
+        } else {
+            showToast("Verification failed: " + (data.error || "Unknown error"), "error");
+        }
+    } catch(e) {
+        console.error("Transaction error:", e);
+        showToast("Transaction cancelled or failed", "warning");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. 👑 ADMIN PANEL
 // ═══════════════════════════════════════════════════════════════════════════
 
 function checkAdminAndShowCrown() {
@@ -2199,7 +2419,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 13. 🔔 NOTIFICATIONS SYSTEM (مع ترتيب الإشعارات - الأحدث أولاً)
+// 14. 🔔 NOTIFICATIONS SYSTEM (مع ترتيب الإشعارات - الأحدث أولاً)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -2208,6 +2428,15 @@ function updateNotificationBadge() {
         const unread = currentUser.notifications?.filter(n => !n.read).length || 0;
         badge.textContent = unread;
         badge.style.display = unread > 0 ? "flex" : "none";
+        
+        const bellIcon = document.querySelector("#notificationBtn i");
+        if (bellIcon) {
+            if (unread > 0) {
+                bellIcon.style.color = "#d4af37";
+            } else {
+                bellIcon.style.color = "";
+            }
+        }
     }
 }
 
@@ -2216,7 +2445,7 @@ function renderNotifications() {
     if (!container || !currentUser) return;
     const notifs = currentUser.notifications || [];
     
-    // ✅ عكس الترتيب: الأحدث أولاً
+    // عكس الترتيب: الأحدث أولاً
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
@@ -2227,15 +2456,22 @@ function renderNotifications() {
     let html = "";
     for (const n of sortedNotifs) {
         const date = new Date(n.timestamp);
+        let iconClass = "info";
+        if (n.type === "success") iconClass = "success";
+        else if (n.type === "error") iconClass = "error";
+        else if (n.type === "warning") iconClass = "warning";
+        else if (n.type === "withdraw") iconClass = "withdraw";
+        else if (n.type === "referral") iconClass = "referral";
+        
         html += `
             <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
-                <div class="notification-icon ${n.type || 'info'}">
-                    <i class="fas fa-bell"></i>
+                <div class="notification-icon ${iconClass}">
+                    <i class="fas ${n.type === 'success' ? 'fa-check-circle' : n.type === 'error' ? 'fa-times-circle' : n.type === 'warning' ? 'fa-exclamation-triangle' : n.type === 'withdraw' ? 'fa-money-bill-wave' : n.type === 'referral' ? 'fa-user-plus' : 'fa-bell'}"></i>
                 </div>
                 <div class="notification-content">
                     <div class="notification-title">${escapeHtml(n.title)}</div>
                     <div class="notification-message">${escapeHtml(n.message)}</div>
-                    <div class="notification-time">${date.toLocaleString()}</div>
+                    <div class="notification-time"><i class="far fa-clock"></i> ${date.toLocaleString()}</div>
                 </div>
             </div>
         `;
@@ -2280,7 +2516,7 @@ function closeNotificationsModal() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 💎 TON CONNECT
+// 15. 💎 TON CONNECT
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function initTONConnect() {
@@ -2358,7 +2594,7 @@ function updateTONUI() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 15. 🎨 UI UPDATES (مع إضافة كرت تاريخ السحوبات وتحسين صورة المستخدم)
+// 16. 🎨 UI UPDATES (مع إضافة كرت تاريخ السحوبات وتحسين صورة المستخدم)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateUI() {
@@ -2400,6 +2636,7 @@ function updateUI() {
     const userChatId = document.getElementById("userChatId");
     if (userChatId) userChatId.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
     
+    // تحسين عرض صورة المستخدم
     const avatarSpan = document.getElementById("userAvatarText");
     const avatarImg = document.getElementById("userAvatarImg");
     if (currentUser.userPhoto && avatarImg) {
@@ -2419,7 +2656,7 @@ function updateUI() {
     updateNotificationBadge();
     updateTONUI();
     
-    // ✅ عرض كرت تاريخ السحوبات
+    // عرض كرت تاريخ السحوبات
     renderWithdrawalHistory();
 }
 
@@ -2456,7 +2693,7 @@ function switchTab(page) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 16. 🍞 TOAST MESSAGES & MODALS
+// 17. 🍞 TOAST MESSAGES & MODALS
 // ═══════════════════════════════════════════════════════════════════════════
 
 function showToast(message, type = "success") {
@@ -2488,7 +2725,7 @@ function closeConfirmModal() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 17. 🚀 INITIALIZATION
+// 18. 🚀 INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function hideSplash() {
@@ -2530,7 +2767,7 @@ if (document.readyState === "loading") {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 18. 🌐 GLOBAL EXPORTS
+// 19. 🌐 GLOBAL EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.switchTab = switchTab;
@@ -2571,11 +2808,14 @@ window.closeConfirmModal = closeConfirmModal;
 
 // تصدير الدوال الجديدة
 window.showAllWithdrawals = showAllWithdrawals;
+window.verifyByReferrals = verifyByReferrals;
+window.showReferralInvite = showReferralInvite;
+window.startTonVerification = startTonVerification;
 
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] New Features: Withdrawal History | Notification Sort | Method Emojis");
+console.log("[AdNova] New Features: Withdrawal History | Bot Verification | Notification Sort | Method Emojis | Fixed TON Verification");
 
 // ============================================================================
 // نهاية الملف 🎯
