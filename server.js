@@ -1,15 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v13.0 (النسخة النهائية الكاملة مع جميع التحديثات)
+// ADNOVA NETWORK - SERVER v14.0 (نسخة نظيفة ومحسنة)
 // ============================================================================
-// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت،
-// التحقق الحقيقي من انضمام القنوات، لوحة مشرف متطورة
-// أنواع المهام: channel, bot, youtube, tiktok, twitter
-// 
-// الميزات الجديدة:
-// - عرض وموافقة/رفض طلبات السحب عبر البوت مع أسباب الرفض وإرجاع الرصيد
-// - نظام التحقق من المستخدمين (30 إحالة أو دفع 0.01 TON) لمكافحة الحسابات الوهمية
-// - دعم TON Connect مع عنوان محفظة المنصة من Render Secrets
-// - API للتحقق عبر الإحالات وTON
+// خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت
+// جميع إدارة المشرف تتم عبر البوت فقط (بدون لوحة مشرف في التطبيق)
+// الميزات: إحالات، مهام، سحوبات، تحقق، TON Connect، بث جماعي
 // ============================================================================
 
 const express = require('express');
@@ -23,9 +17,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 1. 🔐 قراءة Secret Files من Render
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 let serviceAccount = null;
 let firebaseWebConfig = {};
@@ -72,9 +66,7 @@ try {
     console.error('❌ TON API key error:', error.message);
 }
 
-// ========== قراءة عنوان محفظة TON من Environment Variable ==========
 PLATFORM_TON_WALLET = process.env.OWNER_WALLET || null;
-
 if (PLATFORM_TON_WALLET) {
     console.log('✅ TON Platform Wallet loaded from OWNER_WALLET:', PLATFORM_TON_WALLET);
 } else {
@@ -84,9 +76,9 @@ if (PLATFORM_TON_WALLET) {
 BOT_TOKEN = process.env.BOT_TOKEN;
 APP_URL = process.env.APP_URL;
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 2. ⚙️ إعدادات التطبيق
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 const APP_CONFIG = {
     welcomeBonus: 0.10,
@@ -99,9 +91,9 @@ const APP_CONFIG = {
     botUsername: "AdNovaNetworkBot"
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 3. 🔥 Firebase Admin SDK
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 const admin = require('firebase-admin');
 let db = null;
@@ -118,21 +110,22 @@ if (serviceAccount) {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 4. 🤖 Telegram Bot مع إدارة المهام عبر البوت
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
+// 4. 🤖 Telegram Bot - جلسات المشرف والمهام
+// ============================================================================
 
 const bot = new Telegraf(BOT_TOKEN);
 const botAdminSessions = new Map();
 const taskCreationSessions = new Map();
 const taskEditSessions = new Map();
 
-// متغيرات جديدة لإدارة طلبات السحب عبر البوت
 let withdrawalsCurrentPage = 1;
 let withdrawalsTotalPages = 1;
 let withdrawalsCache = [];
 
-// ========== دوال مساعدة عامة ==========
+// ============================================================================
+// 4.1 دوال مساعدة عامة
+// ============================================================================
 
 async function addNotification(targetUserId, notification) {
     if (!db) return false;
@@ -189,7 +182,6 @@ async function broadcastToAllUsers(message) {
             }
         }
         if (batchCount > 0) await batch.commit();
-        
         let botSentCount = 0;
         for (const doc of usersSnapshot.docs) {
             try {
@@ -199,7 +191,6 @@ async function broadcastToAllUsers(message) {
                 else await new Promise(r => setTimeout(r, 50));
             } catch(e) {}
         }
-        
         console.log(`📢 Broadcast sent to ${notifiedCount} users (${botSentCount} bot messages)`);
         return { success: true, notifiedCount, botSentCount };
     } catch (error) {
@@ -344,7 +335,9 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
     await ctx.reply(welcomeText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 
-// ========== دوال جديدة لإدارة طلبات السحب عبر البوت ==========
+// ============================================================================
+// 4.2 دوال إدارة طلبات السحب عبر البوت
+// ============================================================================
 
 async function getUserStatsForWithdrawal(userId) {
     if (!db) return { inviteCount: 0, adsWatched: 0, userName: 'Unknown' };
@@ -370,22 +363,17 @@ async function showPendingWithdrawals(ctx, page = 1) {
         await ctx.reply('⚠️ Database not connected. Please try again later.');
         return;
     }
-
     try {
-        // Get all pending withdrawals
         const withdrawalsSnapshot = await db.collection('withdrawals')
             .where('status', '==', 'pending')
             .orderBy('createdAt', 'desc')
             .get();
-        
         const allWithdrawals = [];
         for (const doc of withdrawalsSnapshot.docs) {
             allWithdrawals.push({ id: doc.id, ...doc.data() });
         }
-        
         withdrawalsCache = allWithdrawals;
         withdrawalsTotalPages = Math.ceil(allWithdrawals.length / 10);
-        
         if (allWithdrawals.length === 0) {
             await ctx.reply(
                 '✅ *No Pending Withdrawals*\n━━━━━━━━━━━━━━━━━━━━━━\n\nAll withdrawal requests have been processed.',
@@ -393,18 +381,14 @@ async function showPendingWithdrawals(ctx, page = 1) {
             );
             return;
         }
-        
         const start = (page - 1) * 10;
         const end = start + 10;
         const pageWithdrawals = allWithdrawals.slice(start, end);
-        
         let message = `💸 *PENDING WITHDRAWALS* (Page ${page}/${withdrawalsTotalPages})\n━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-        
         for (let i = 0; i < pageWithdrawals.length; i++) {
             const wd = pageWithdrawals[i];
             const userStats = await getUserStatsForWithdrawal(wd.userId);
             const date = wd.createdAt?.toDate ? wd.createdAt.toDate() : new Date(wd.createdAt);
-            
             message += `*${start + i + 1}.* 👤 *${userStats.userName}*\n`;
             message += `┣ 🆔 ID: \`${wd.userId}\`\n`;
             message += `┣ 💰 Amount: *$${wd.amount?.toFixed(2)}*\n`;
@@ -415,12 +399,7 @@ async function showPendingWithdrawals(ctx, page = 1) {
             message += `┗ 📅 Date: ${date.toLocaleString()}\n`;
             message += `\n`;
         }
-        
-        const keyboard = {
-            inline_keyboard: []
-        };
-        
-        // Add action buttons for each withdrawal
+        const keyboard = { inline_keyboard: [] };
         for (let i = 0; i < pageWithdrawals.length; i++) {
             const wd = pageWithdrawals[i];
             keyboard.inline_keyboard.push([
@@ -428,27 +407,17 @@ async function showPendingWithdrawals(ctx, page = 1) {
                 { text: `❌ Reject #${start + i + 1}`, callback_data: `reject_wd_${wd.id}` }
             ]);
         }
-        
-        // Add navigation buttons
         const navButtons = [];
-        if (page > 1) {
-            navButtons.push({ text: "◀ Previous", callback_data: `wd_prev` });
-        }
+        if (page > 1) navButtons.push({ text: "◀ Previous", callback_data: `wd_prev` });
         navButtons.push({ text: `📄 ${page}/${withdrawalsTotalPages}`, callback_data: `wd_page_info` });
-        if (page < withdrawalsTotalPages) {
-            navButtons.push({ text: "Next ▶", callback_data: `wd_next` });
-        }
+        if (page < withdrawalsTotalPages) navButtons.push({ text: "Next ▶", callback_data: `wd_next` });
         keyboard.inline_keyboard.push(navButtons);
-        
-        // Add refresh and close buttons
         keyboard.inline_keyboard.push([
             { text: "🔄 Refresh", callback_data: `wd_refresh` },
             { text: "❌ Close", callback_data: `wd_close` }
         ]);
-        
         await ctx.reply(message, { parse_mode: 'Markdown', reply_markup: keyboard });
         withdrawalsCurrentPage = page;
-        
     } catch (error) {
         console.error('Error showing pending withdrawals:', error);
         await ctx.reply('❌ Error loading pending withdrawals. Please try again.');
@@ -457,35 +426,26 @@ async function showPendingWithdrawals(ctx, page = 1) {
 
 async function approveWithdrawalFromBot(withdrawalId, adminUserId) {
     if (!db) return { success: false, error: 'Database not connected' };
-    
     try {
         const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
         const withdrawalDoc = await withdrawalRef.get();
-        
         if (!withdrawalDoc.exists) {
             return { success: false, error: 'Withdrawal request not found' };
         }
-        
         const withdrawal = withdrawalDoc.data();
-        
         if (withdrawal.status !== 'pending') {
             return { success: false, error: `This request has already been ${withdrawal.status}` };
         }
-        
         await withdrawalRef.update({
             status: 'approved',
             approvedAt: admin.firestore.FieldValue.serverTimestamp(),
             approvedBy: adminUserId
         });
-        
-        // Send notification to user
         await addNotification(withdrawal.userId, {
             type: 'withdraw',
             title: '✅ Withdrawal Approved',
             message: `Your withdrawal request of $${withdrawal.amount?.toFixed(2)} has been approved and will be processed within 24 hours.`
         });
-        
-        // Send private message to user via bot
         try {
             await bot.telegram.sendMessage(withdrawal.userId,
                 `✅ *WITHDRAWAL APPROVED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -497,10 +457,8 @@ async function approveWithdrawalFromBot(withdrawalId, adminUserId) {
                 { parse_mode: 'Markdown' }
             );
         } catch(e) { console.error('Failed to send bot message:', e.message); }
-        
         console.log(`✅ Withdrawal ${withdrawalId} approved by admin ${adminUserId}`);
         return { success: true };
-        
     } catch (error) {
         console.error('Error approving withdrawal:', error);
         return { success: false, error: error.message };
@@ -509,46 +467,34 @@ async function approveWithdrawalFromBot(withdrawalId, adminUserId) {
 
 async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
     if (!db) return { success: false, error: 'Database not connected' };
-    
     try {
         const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
         const withdrawalDoc = await withdrawalRef.get();
-        
         if (!withdrawalDoc.exists) {
             return { success: false, error: 'Withdrawal request not found' };
         }
-        
         const withdrawal = withdrawalDoc.data();
-        
         if (withdrawal.status !== 'pending') {
             return { success: false, error: `This request has already been ${withdrawal.status}` };
         }
-        
-        // Return the amount to user's balance
         const userRef = db.collection('users').doc(withdrawal.userId);
         const userDoc = await userRef.get();
-        
         if (userDoc.exists) {
             await userRef.update({
                 balance: admin.firestore.FieldValue.increment(withdrawal.amount || 0)
             });
         }
-        
         await withdrawalRef.update({
             status: 'rejected',
             rejectReason: reason,
             rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
             rejectedBy: adminUserId
         });
-        
-        // Send notification to user
         await addNotification(withdrawal.userId, {
             type: 'withdraw',
             title: '❌ Withdrawal Rejected',
             message: `Your withdrawal request of $${withdrawal.amount?.toFixed(2)} was rejected. Reason: ${reason}. The amount has been returned to your balance.`
         });
-        
-        // Send private message to user via bot
         try {
             await bot.telegram.sendMessage(withdrawal.userId,
                 `❌ *WITHDRAWAL REJECTED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -560,51 +506,42 @@ async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
                 { parse_mode: 'Markdown' }
             );
         } catch(e) { console.error('Failed to send bot message:', e.message); }
-        
         console.log(`❌ Withdrawal ${withdrawalId} rejected by admin ${adminUserId}. Reason: ${reason}`);
         return { success: true };
-        
     } catch (error) {
         console.error('Error rejecting withdrawal:', error);
         return { success: false, error: error.message };
     }
 }
 
-// ========== دوال جديدة للتحقق من المستخدمين (30 إحالة أو TON) ==========
+// ============================================================================
+// 4.3 دوال التحقق من المستخدمين (30 إحالة أو TON)
+// ============================================================================
 
 async function verifyUserByReferrals(userId) {
     if (!db) return { success: false, error: 'Database not connected' };
-    
     try {
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
-        
         if (!userDoc.exists) {
             return { success: false, error: 'User not found' };
         }
-        
         const userData = userDoc.data();
-        
         if (userData.isVerified) {
             return { success: false, error: 'User already verified', alreadyVerified: true };
         }
-        
         const currentInvites = userData.inviteCount || 0;
-        
         if (currentInvites >= APP_CONFIG.requiredReferralsForVerify) {
             await userRef.update({
                 isVerified: true,
                 verificationMethod: 'referrals',
                 verificationDate: new Date().toISOString()
             });
-            
             await addNotification(userId, {
                 type: 'success',
                 title: '✅ Account Verified!',
                 message: `Your account has been verified through referrals. You can now withdraw funds.`
             });
-            
-            // Send private message
             try {
                 await bot.telegram.sendMessage(userId,
                     `✅ *ACCOUNT VERIFIED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -614,7 +551,6 @@ async function verifyUserByReferrals(userId) {
                     { parse_mode: 'Markdown' }
                 );
             } catch(e) { console.error('Failed to send bot message:', e.message); }
-            
             console.log(`✅ User ${userId} verified via referrals (${currentInvites} invites)`);
             return { success: true, method: 'referrals' };
         } else {
@@ -633,28 +569,16 @@ async function verifyUserByReferrals(userId) {
 
 async function verifyUserByTon(userId, txHash, amount) {
     if (!db) return { success: false, error: 'Database not connected' };
-    
     try {
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
-        
         if (!userDoc.exists) {
             return { success: false, error: 'User not found' };
         }
-        
         const userData = userDoc.data();
-        
         if (userData.isVerified) {
             return { success: false, error: 'User already verified', alreadyVerified: true };
         }
-        
-        // Note: In production, you should verify the transaction with TON API
-        // For now, we accept it as valid since the user completed the payment
-        // The actual verification should check:
-        // 1. The transaction exists on the blockchain
-        // 2. The amount is correct (0.01 TON)
-        // 3. The recipient is the platform wallet
-        
         await userRef.update({
             isVerified: true,
             verificationMethod: 'ton',
@@ -662,14 +586,11 @@ async function verifyUserByTon(userId, txHash, amount) {
             tonWalletVerified: true,
             tonVerificationTxId: txHash
         });
-        
         await addNotification(userId, {
             type: 'success',
             title: '✅ Account Verified!',
             message: `Your account has been verified through TON payment. You can now withdraw funds.`
         });
-        
-        // Send private message
         try {
             await bot.telegram.sendMessage(userId,
                 `✅ *ACCOUNT VERIFIED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -679,27 +600,25 @@ async function verifyUserByTon(userId, txHash, amount) {
                 { parse_mode: 'Markdown' }
             );
         } catch(e) { console.error('Failed to send bot message:', e.message); }
-        
         console.log(`✅ User ${userId} verified via TON payment (tx: ${txHash})`);
         return { success: true, method: 'ton' };
-        
     } catch (error) {
         console.error('Error verifying user by TON:', error);
         return { success: false, error: error.message };
     }
 }
 
-// ========== أوامر البوت العامة ==========
+// ============================================================================
+// 4.4 أوامر البوت العامة
+// ============================================================================
 
 bot.start(async (ctx) => {
     const refCode = ctx.startPayload;
     const userId = ctx.from.id.toString();
     const userName = ctx.from.first_name || 'AdNova User';
     const userUsername = ctx.from.username || '';
-    
     console.log(`🚀 /start from ${userId}, ref: ${refCode || 'none'}`);
     let isNewUser = false;
-    
     if (db) {
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
@@ -774,140 +693,10 @@ bot.command('tasks', async (ctx) => {
     await ctx.reply(taskList, { parse_mode: 'Markdown' });
 });
 
-// ========== أوامر المشرف الجديدة لإدارة السحب ==========
+// ============================================================================
+// 4.5 أوامر المشرف المتقدمة (البحث، إضافة/خصم رصيد، تحقق يدوي)
+// ============================================================================
 
-bot.command('pending', async (ctx) => {
-    const userId = ctx.from.id.toString();
-    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
-    const session = botAdminSessions.get(userId);
-    if (!session || session.step !== 'authenticated') {
-        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
-    }
-    
-    await showPendingWithdrawals(ctx, 1);
-});
-
-bot.command('withdrawals', async (ctx) => {
-    const userId = ctx.from.id.toString();
-    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
-    const session = botAdminSessions.get(userId);
-    if (!session || session.step !== 'authenticated') {
-        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
-    }
-    
-    await showPendingWithdrawals(ctx, 1);
-});
-
-// أوامر المشرف للتحقق من المستخدمين
-bot.command('checkuser', async (ctx) => {
-    const userId = ctx.from.id.toString();
-    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
-    const session = botAdminSessions.get(userId);
-    if (!session || session.step !== 'authenticated') {
-        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
-    }
-    
-    const targetUserId = ctx.message.text.split(' ')[1];
-    if (!targetUserId) {
-        return ctx.reply('📝 *Usage:* /checkuser <user_id>\n\nExample: /checkuser 123456789', { parse_mode: 'Markdown' });
-    }
-    
-    if (!db) return ctx.reply('⚠️ Database not connected');
-    
-    try {
-        const userDoc = await db.collection('users').doc(targetUserId).get();
-        if (!userDoc.exists) {
-            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
-        }
-        
-        const data = userDoc.data();
-        await ctx.reply(
-            `👤 *USER INFO*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `🆔 *ID:* ${data.userId}\n` +
-            `👤 *Name:* ${data.userName}\n` +
-            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
-            `👥 *Invites:* ${data.inviteCount || 0}\n` +
-            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
-            `📝 *Verification Method:* ${data.verificationMethod || 'None'}\n` +
-            `📅 *Verification Date:* ${data.verificationDate ? new Date(data.verificationDate).toLocaleString() : 'N/A'}\n` +
-            `━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
-            `🚫 *Blocked:* ${data.withdrawBlocked ? 'Yes' : 'No'}`,
-            { parse_mode: 'Markdown' }
-        );
-    } catch (error) {
-        console.error('Error checking user:', error);
-        ctx.reply('❌ Error fetching user data.');
-    }
-});
-
-bot.command('verifyuser', async (ctx) => {
-    const userId = ctx.from.id.toString();
-    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
-    const session = botAdminSessions.get(userId);
-    if (!session || session.step !== 'authenticated') {
-        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
-    }
-    
-    const targetUserId = ctx.message.text.split(' ')[1];
-    if (!targetUserId) {
-        return ctx.reply('📝 *Usage:* /verifyuser <user_id>\n\nExample: /verifyuser 123456789', { parse_mode: 'Markdown' });
-    }
-    
-    if (!db) return ctx.reply('⚠️ Database not connected');
-    
-    try {
-        const userRef = db.collection('users').doc(targetUserId);
-        const userDoc = await userRef.get();
-        
-        if (!userDoc.exists) {
-            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
-        }
-        
-        const userData = userDoc.data();
-        
-        if (userData.isVerified) {
-            return ctx.reply(`✅ User *${targetUserId}* is already verified.`, { parse_mode: 'Markdown' });
-        }
-        
-        await userRef.update({
-            isVerified: true,
-            verificationMethod: 'admin',
-            verificationDate: new Date().toISOString()
-        });
-        
-        await addNotification(targetUserId, {
-            type: 'success',
-            title: '✅ Account Verified by Admin',
-            message: `Your account has been manually verified by admin. You can now withdraw funds.`
-        });
-        
-        ctx.reply(`✅ User *${targetUserId}* has been verified successfully!`, { parse_mode: 'Markdown' });
-        
-        // Send private message to user
-        try {
-            await bot.telegram.sendMessage(targetUserId,
-                `✅ *ACCOUNT VERIFIED BY ADMIN*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `Your account has been manually verified.\n` +
-                `You can now withdraw funds from the app.\n\n` +
-                `💰 *Minimum withdrawal:* $${APP_CONFIG.minWithdraw}`,
-                { parse_mode: 'Markdown' }
-            );
-        } catch(e) { console.error('Failed to send bot message:', e.message); }
-        
-    } catch (error) {
-        console.error('Error verifying user:', error);
-        ctx.reply('❌ Error verifying user.');
-    }
-});
-
-// ========== أوامر المشرف الحالية ==========
-
-// أمر /alimenfi - دخول المشرف
 bot.command('alimenfi', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) {
@@ -918,36 +707,267 @@ bot.command('alimenfi', async (ctx) => {
     botAdminSessions.set(userId, { step: 'awaiting_password' });
 });
 
-// أمر /addtask - إضافة مهمة جديدة
-bot.command('addtask', async (ctx) => {
+bot.command('searchuser', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
         return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
     }
-    
+    const args = ctx.message.text.split(' ');
+    args.shift();
+    const targetUserId = args.join(' ').trim();
+    if (!targetUserId) {
+        return ctx.reply('📝 *Usage:* `/searchuser [user_id]`\nExample: `/searchuser 123456789`', { parse_mode: 'Markdown' });
+    }
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    try {
+        const userDoc = await db.collection('users').doc(targetUserId).get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        const data = userDoc.data();
+        await ctx.reply(
+            `👤 *USER INFO*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🆔 *ID:* ${data.userId}\n` +
+            `👤 *Name:* ${data.userName}\n` +
+            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
+            `👥 *Invites:* ${data.inviteCount || 0}\n` +
+            `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
+            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
+            `📝 *Verification Method:* ${data.verificationMethod || 'None'}\n` +
+            `🚫 *Blocked:* ${data.withdrawBlocked ? 'Yes' : 'No'}`,
+            { parse_mode: 'Markdown' }
+        );
+    } catch (error) {
+        console.error('Error searching user:', error);
+        ctx.reply('❌ Error fetching user data.');
+    }
+});
+
+bot.command('addbalance', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    const args = ctx.message.text.split(' ');
+    if (args.length < 3) {
+        return ctx.reply('📝 *Usage:* `/addbalance [user_id] [amount]`\nExample: `/addbalance 123456789 5.00`', { parse_mode: 'Markdown' });
+    }
+    const targetUserId = args[1];
+    const amount = parseFloat(args[2]);
+    if (isNaN(amount) || amount <= 0) {
+        return ctx.reply('❌ Invalid amount. Please enter a positive number.', { parse_mode: 'Markdown' });
+    }
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    try {
+        const userRef = db.collection('users').doc(targetUserId);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        await userRef.update({
+            balance: admin.firestore.FieldValue.increment(amount),
+            totalEarned: admin.firestore.FieldValue.increment(amount)
+        });
+        await addNotification(targetUserId, {
+            type: 'admin',
+            title: '💰 Balance Added',
+            message: `Admin added $${amount.toFixed(2)} to your account.`
+        });
+        ctx.reply(`✅ Added $${amount.toFixed(2)} to user *${targetUserId}*`, { parse_mode: 'Markdown' });
+    } catch (error) {
+        console.error('Error adding balance:', error);
+        ctx.reply('❌ Error adding balance.');
+    }
+});
+
+bot.command('removebalance', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    const args = ctx.message.text.split(' ');
+    if (args.length < 3) {
+        return ctx.reply('📝 *Usage:* `/removebalance [user_id] [amount]`\nExample: `/removebalance 123456789 5.00`', { parse_mode: 'Markdown' });
+    }
+    const targetUserId = args[1];
+    const amount = parseFloat(args[2]);
+    if (isNaN(amount) || amount <= 0) {
+        return ctx.reply('❌ Invalid amount. Please enter a positive number.', { parse_mode: 'Markdown' });
+    }
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    try {
+        const userRef = db.collection('users').doc(targetUserId);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        const userData = userDoc.data();
+        const currentBalance = userData.balance || 0;
+        if (amount > currentBalance) {
+            return ctx.reply(`❌ Cannot remove $${amount.toFixed(2)}. User balance is only $${currentBalance.toFixed(2)}.`, { parse_mode: 'Markdown' });
+        }
+        await userRef.update({
+            balance: admin.firestore.FieldValue.increment(-amount)
+        });
+        await addNotification(targetUserId, {
+            type: 'admin',
+            title: '💰 Balance Adjusted',
+            message: `Admin removed $${amount.toFixed(2)} from your account.`
+        });
+        ctx.reply(`✅ Removed $${amount.toFixed(2)} from user *${targetUserId}*`, { parse_mode: 'Markdown' });
+    } catch (error) {
+        console.error('Error removing balance:', error);
+        ctx.reply('❌ Error removing balance.');
+    }
+});
+
+bot.command('userstats', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    const args = ctx.message.text.split(' ');
+    args.shift();
+    const targetUserId = args.join(' ').trim();
+    if (!targetUserId) {
+        return ctx.reply('📝 *Usage:* `/userstats [user_id]`\nExample: `/userstats 123456789`', { parse_mode: 'Markdown' });
+    }
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    try {
+        const userDoc = await db.collection('users').doc(targetUserId).get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        const data = userDoc.data();
+        const withdrawals = data.withdrawals || [];
+        const approvedWithdrawals = withdrawals.filter(w => w.status === 'approved');
+        const rejectedWithdrawals = withdrawals.filter(w => w.status === 'rejected');
+        const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
+        await ctx.reply(
+            `📊 *DETAILED USER STATS*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🆔 *ID:* ${data.userId}\n` +
+            `👤 *Name:* ${data.userName}\n` +
+            `💰 *Balance:* $${data.balance?.toFixed(2) || '0.00'}\n` +
+            `📈 *Total Earned:* $${data.totalEarned?.toFixed(2) || '0.00'}\n` +
+            `👥 *Invites:* ${data.inviteCount || 0}\n` +
+            `📺 *Ads Watched:* ${data.adsWatched || 0}\n` +
+            `🔐 *Verified:* ${data.isVerified ? '✅ Yes' : '❌ No'}\n` +
+            `📝 *Verification Method:* ${data.verificationMethod || 'None'}\n` +
+            `🚫 *Blocked:* ${data.withdrawBlocked ? 'Yes' : 'No'}\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💸 *Withdrawals:*\n` +
+            `   ✅ Approved: ${approvedWithdrawals.length}\n` +
+            `   ⏳ Pending: ${pendingWithdrawals.length}\n` +
+            `   ❌ Rejected: ${rejectedWithdrawals.length}`,
+            { parse_mode: 'Markdown' }
+        );
+    } catch (error) {
+        console.error('Error getting user stats:', error);
+        ctx.reply('❌ Error fetching user data.');
+    }
+});
+
+bot.command('pending', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    await showPendingWithdrawals(ctx, 1);
+});
+
+bot.command('withdrawals', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    await showPendingWithdrawals(ctx, 1);
+});
+
+bot.command('verifyuser', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
+    const args = ctx.message.text.split(' ');
+    args.shift();
+    const targetUserId = args.join(' ').trim();
+    if (!targetUserId) {
+        return ctx.reply('📝 *Usage:* `/verifyuser [user_id]`\nExample: `/verifyuser 123456789`', { parse_mode: 'Markdown' });
+    }
+    if (!db) return ctx.reply('⚠️ Database not connected');
+    try {
+        const userRef = db.collection('users').doc(targetUserId);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return ctx.reply(`❌ User *${targetUserId}* not found.`, { parse_mode: 'Markdown' });
+        }
+        const userData = userDoc.data();
+        if (userData.isVerified) {
+            return ctx.reply(`✅ User *${targetUserId}* is already verified.`, { parse_mode: 'Markdown' });
+        }
+        await userRef.update({
+            isVerified: true,
+            verificationMethod: 'admin',
+            verificationDate: new Date().toISOString()
+        });
+        await addNotification(targetUserId, {
+            type: 'success',
+            title: '✅ Account Verified by Admin',
+            message: `Your account has been manually verified by admin. You can now withdraw funds.`
+        });
+        ctx.reply(`✅ User *${targetUserId}* has been verified successfully!`, { parse_mode: 'Markdown' });
+        try {
+            await bot.telegram.sendMessage(targetUserId,
+                `✅ *ACCOUNT VERIFIED BY ADMIN*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Your account has been manually verified.\n` +
+                `You can now withdraw funds from the app.\n\n` +
+                `💰 *Minimum withdrawal:* $${APP_CONFIG.minWithdraw}`,
+                { parse_mode: 'Markdown' }
+            );
+        } catch(e) { console.error('Failed to send bot message:', e.message); }
+    } catch (error) {
+        console.error('Error verifying user:', error);
+        ctx.reply('❌ Error verifying user.');
+    }
+});
+
+bot.command('addtask', async (ctx) => {
+    const userId = ctx.from.id.toString();
+    if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
+    const session = botAdminSessions.get(userId);
+    if (!session || session.step !== 'authenticated') {
+        return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
+    }
     taskCreationSessions.set(userId, { step: 'name' });
     ctx.reply('📝 *Add New Task*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📌 *Step 1:* Enter task name:\n(e.g., "Join AdNova Channel")', { parse_mode: 'Markdown' });
 });
 
-// أمر /edittask - تعديل مهمة
 bot.command('edittask', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
         return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
     }
-    
     if (!db) return ctx.reply('⚠️ Database not connected');
     const tasksSnapshot = await db.collection('tasks').get();
     if (tasksSnapshot.empty) {
         return ctx.reply('📋 *No tasks available to edit.*\nUse /addtask to create one.', { parse_mode: 'Markdown' });
     }
-    
     let taskList = '✏️ *Select task to edit:*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
     let index = 1;
     const tasks = [];
@@ -962,22 +982,18 @@ bot.command('edittask', async (ctx) => {
     taskEditSessions.set(userId, { step: 'select', tasks: tasks });
 });
 
-// أمر /deletetask - حذف مهمة
 bot.command('deletetask', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
         return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
     }
-    
     if (!db) return ctx.reply('⚠️ Database not connected');
     const tasksSnapshot = await db.collection('tasks').get();
     if (tasksSnapshot.empty) {
         return ctx.reply('📋 *No tasks available to delete.*', { parse_mode: 'Markdown' });
     }
-    
     let taskList = '🗑️ *Select task to delete:*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
     let index = 1;
     const tasks = [];
@@ -992,22 +1008,18 @@ bot.command('deletetask', async (ctx) => {
     taskEditSessions.set(userId, { step: 'delete_select', tasks: tasks });
 });
 
-// أمر /listtasks - عرض جميع المهام (للمشرف)
 bot.command('listtasks', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
         return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
     }
-    
     if (!db) return ctx.reply('⚠️ Database not connected');
     const tasksSnapshot = await db.collection('tasks').get();
     if (tasksSnapshot.empty) {
         return ctx.reply('📋 *No tasks available.*\nUse /addtask to create one.', { parse_mode: 'Markdown' });
     }
-    
     let taskList = '📋 *ALL TASKS*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
     let index = 1;
     for (const doc of tasksSnapshot.docs) {
@@ -1030,11 +1042,9 @@ bot.command('listtasks', async (ctx) => {
     await ctx.reply(taskList, { parse_mode: 'Markdown' });
 });
 
-// أمر /broadcast - بث رسالة
 bot.command('broadcast', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
-    
     const session = botAdminSessions.get(userId);
     if (!session || session.step !== 'authenticated') {
         return ctx.reply('⚠️ *Please authenticate first*\nUse /alimenfi to login.', { parse_mode: 'Markdown' });
@@ -1043,7 +1053,6 @@ bot.command('broadcast', async (ctx) => {
     botAdminSessions.set(userId, { step: 'awaiting_broadcast' });
 });
 
-// أمر /botstats - إحصائيات البوت
 bot.command('botstats', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -1052,7 +1061,6 @@ bot.command('botstats', async (ctx) => {
     const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
     const tasksSnapshot = await db.collection('tasks').get();
     const verifiedUsers = usersSnapshot.docs.filter(doc => doc.data().isVerified === true).length;
-    
     await ctx.reply(
         `📊 *BOT STATISTICS*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
         `👥 *Total Users:* ${usersSnapshot.size}\n` +
@@ -1066,7 +1074,6 @@ bot.command('botstats', async (ctx) => {
     );
 });
 
-// أمر /users - عدد المستخدمين
 bot.command('users', async (ctx) => {
     const userId = ctx.from.id.toString();
     if (userId !== ADMIN_ID) return ctx.reply('⛔ *Access denied!*', { parse_mode: 'Markdown' });
@@ -1075,13 +1082,13 @@ bot.command('users', async (ctx) => {
     await ctx.reply(`👥 *Total Registered Users:* ${usersSnapshot.size}`, { parse_mode: 'Markdown' });
 });
 
-// ========== معالجة الرسائل النصية للمشرف ==========
+// ============================================================================
+// 4.6 معالجة الرسائل النصية للمشرف (المصادقة، البث، رفض السحب، إضافة/تعديل المهام)
+// ============================================================================
 
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id.toString();
     const message = ctx.message.text;
-    
-    // معالجة المصادقة
     const authSession = botAdminSessions.get(userId);
     if (authSession && authSession.step === 'awaiting_password') {
         if (message === ADMIN_PASSWORD) {
@@ -1089,16 +1096,19 @@ bot.on('text', async (ctx) => {
             ctx.reply(
                 `✅ *Authentication Successful!*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
                 `📋 *Admin Commands:*\n` +
+                `• /searchuser [user_id] - Search user details\n` +
+                `• /addbalance [user_id] [amount] - Add balance\n` +
+                `• /removebalance [user_id] [amount] - Remove balance\n` +
+                `• /userstats [user_id] - Detailed user statistics\n` +
+                `• /verifyuser [user_id] - Manually verify a user\n` +
+                `• /pending or /withdrawals - Manage withdrawal requests\n` +
                 `• /addtask - Add new task\n` +
                 `• /edittask - Edit task\n` +
                 `• /deletetask - Delete task\n` +
                 `• /listtasks - List all tasks\n` +
                 `• /broadcast - Send message to all users\n` +
                 `• /botstats - View bot statistics\n` +
-                `• /users - View total users count\n` +
-                `• /pending or /withdrawals - Manage withdrawal requests\n` +
-                `• /checkuser <id> - Check user details\n` +
-                `• /verifyuser <id> - Manually verify a user\n\n` +
+                `• /users - View total users count\n\n` +
                 `💡 You can now use these commands anytime.`,
                 { parse_mode: 'Markdown' }
             );
@@ -1108,8 +1118,6 @@ bot.on('text', async (ctx) => {
         }
         return;
     }
-    
-    // معالجة البث
     if (authSession && authSession.step === 'awaiting_broadcast') {
         ctx.reply('📢 *Broadcasting to all users...*', { parse_mode: 'Markdown' });
         const result = await broadcastToAllUsers(message);
@@ -1126,16 +1134,11 @@ bot.on('text', async (ctx) => {
         botAdminSessions.delete(userId);
         return;
     }
-    
-    // معالجة سبب الرفض لطلبات السحب
     if (authSession && authSession.step === 'awaiting_reject_reason') {
         const withdrawalId = authSession.withdrawalId;
         const reason = message;
-        
         ctx.reply(`⏳ Processing rejection for withdrawal #${withdrawalId}...`);
-        
         const result = await rejectWithdrawalFromBot(withdrawalId, userId, reason);
-        
         if (result.success) {
             ctx.reply(
                 `✅ *Withdrawal Rejected Successfully*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -1144,17 +1147,13 @@ bot.on('text', async (ctx) => {
                 `The user has been notified and the amount has been returned to their balance.`,
                 { parse_mode: 'Markdown' }
             );
-            // Show updated list
             await showPendingWithdrawals(ctx, withdrawalsCurrentPage);
         } else {
             ctx.reply(`❌ *Error rejecting withdrawal:* ${result.error}`, { parse_mode: 'Markdown' });
         }
-        
         botAdminSessions.delete(userId);
         return;
     }
-    
-    // معالجة إضافة مهمة جديدة
     const taskSession = taskCreationSessions.get(userId);
     if (taskSession) {
         if (taskSession.step === 'name') {
@@ -1226,7 +1225,6 @@ bot.on('text', async (ctx) => {
                 return ctx.reply('❌ *Invalid period!* Please choose: daily, weekly, or once', { parse_mode: 'Markdown' });
             }
             taskSession.resetPeriod = message.toLowerCase();
-            
             const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
             const newTask = {
                 id: taskId,
@@ -1241,7 +1239,6 @@ bot.on('text', async (ctx) => {
                 createdAt: new Date().toISOString(),
                 createdBy: ADMIN_ID
             };
-            
             try {
                 await db.collection('tasks').doc(taskId).set(newTask);
                 ctx.reply(
@@ -1260,13 +1257,10 @@ bot.on('text', async (ctx) => {
                 console.error('Error creating task:', error);
                 ctx.reply('❌ *Error creating task!* Please try again.', { parse_mode: 'Markdown' });
             }
-            
             taskCreationSessions.delete(userId);
         }
         return;
     }
-    
-    // معالجة تعديل/حذف المهام
     const editSession = taskEditSessions.get(userId);
     if (editSession) {
         if (editSession.step === 'select') {
@@ -1288,7 +1282,6 @@ bot.on('text', async (ctx) => {
             if (isNaN(reward) || reward <= 0) {
                 return ctx.reply('❌ *Invalid reward!* Please enter a valid number (e.g., 0.10)', { parse_mode: 'Markdown' });
             }
-            
             try {
                 await db.collection('tasks').doc(editSession.selectedTask.id).update({
                     reward: reward,
@@ -1347,7 +1340,9 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// ========== معالجة أزرار الـ Callback Query ==========
+// ============================================================================
+// 4.7 معالجة أزرار الـ Callback Query
+// ============================================================================
 
 bot.action('my_stats', async (ctx) => {
     const userId = ctx.from.id.toString();
@@ -1393,26 +1388,20 @@ bot.action('quick_withdraw', async (ctx) => {
     await ctx.answerCbQuery();
 });
 
-// معالجة أزرار الموافقة على السحب
 bot.action(/approve_wd_(.+)/, async (ctx) => {
     const adminUserId = ctx.from.id.toString();
     const withdrawalId = ctx.match[1];
-    
     if (adminUserId !== ADMIN_ID) {
         await ctx.answerCbQuery('⛔ Access denied!', { show_alert: true });
         return;
     }
-    
     const session = botAdminSessions.get(adminUserId);
     if (!session || session.step !== 'authenticated') {
         await ctx.answerCbQuery('⚠️ Please authenticate first using /alimenfi', { show_alert: true });
         return;
     }
-    
     await ctx.answerCbQuery('Processing approval...');
-    
     const result = await approveWithdrawalFromBot(withdrawalId, adminUserId);
-    
     if (result.success) {
         await ctx.editMessageText(
             `✅ *WITHDRAWAL APPROVED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -1427,30 +1416,20 @@ bot.action(/approve_wd_(.+)/, async (ctx) => {
     }
 });
 
-// معالجة أزرار الرفض على السحب
 bot.action(/reject_wd_(.+)/, async (ctx) => {
     const adminUserId = ctx.from.id.toString();
     const withdrawalId = ctx.match[1];
-    
     if (adminUserId !== ADMIN_ID) {
         await ctx.answerCbQuery('⛔ Access denied!', { show_alert: true });
         return;
     }
-    
     const session = botAdminSessions.get(adminUserId);
     if (!session || session.step !== 'authenticated') {
         await ctx.answerCbQuery('⚠️ Please authenticate first using /alimenfi', { show_alert: true });
         return;
     }
-    
     await ctx.answerCbQuery();
-    
-    // Store that we're waiting for a reason
-    botAdminSessions.set(adminUserId, { 
-        step: 'awaiting_reject_reason', 
-        withdrawalId: withdrawalId 
-    });
-    
+    botAdminSessions.set(adminUserId, { step: 'awaiting_reject_reason', withdrawalId: withdrawalId });
     await ctx.reply(
         `✏️ *REJECTION REASON REQUIRED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
         `Please send the reason for rejecting withdrawal #${withdrawalId}.\n\n` +
@@ -1459,7 +1438,6 @@ bot.action(/reject_wd_(.+)/, async (ctx) => {
     );
 });
 
-// معالجة أزرار التنقل في طلبات السحب
 bot.action('wd_prev', async (ctx) => {
     const adminUserId = ctx.from.id.toString();
     if (adminUserId !== ADMIN_ID) {
@@ -1505,7 +1483,6 @@ bot.action('wd_page_info', async (ctx) => {
     await ctx.answerCbQuery(`Page ${withdrawalsCurrentPage} of ${withdrawalsTotalPages}`, { show_alert: false });
 });
 
-// تشغيل البوت
 bot.launch({ dropPendingUpdates: true })
     .then(() => console.log('🤖 Telegram Bot started successfully'))
     .catch(err => console.error('❌ Bot error:', err));
@@ -1513,9 +1490,9 @@ bot.launch({ dropPendingUpdates: true })
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 5. 🌐 Middleware
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.use(cors());
 app.use(express.json());
@@ -1527,9 +1504,9 @@ function isAdmin(req) {
     return authHeader === `Bearer ${ADMIN_PASSWORD}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 6. 🌍 APIs العامة
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'online', firebase: db ? 'connected' : 'disconnected', timestamp: Date.now() });
@@ -1556,29 +1533,24 @@ app.get('/api/ping', (req, res) => {
     res.json({ alive: true, timestamp: Date.now() });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 7. 👤 APIs المستخدمين
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.post('/api/init-user', async (req, res) => {
     try {
         const { initData } = req.body;
         if (!initData) return res.json({ success: false, error: 'No initData' });
-        
         const params = new URLSearchParams(initData);
         const userJson = params.get('user');
         if (!userJson) return res.json({ success: false, error: 'No user data' });
-        
         const user = JSON.parse(decodeURIComponent(userJson));
         const userId = user.id.toString();
         const userName = user.first_name || 'AdNova User';
         const userUsername = user.username || '';
-        
         if (!db) return res.json({ success: false, error: 'Database not connected' });
-        
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
-        
         let userData;
         if (userDoc.exists) {
             userData = userDoc.data();
@@ -1588,7 +1560,6 @@ app.post('/api/init-user', async (req, res) => {
             await userRef.set(userData);
             console.log('✅ New user created:', userId);
         }
-        
         res.json({ success: true, userId: userId, userData: userData });
     } catch (error) {
         console.error('Init user error:', error);
@@ -1623,9 +1594,9 @@ app.post('/api/users/:userId', async (req, res) => {
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 8. 🔗 API الإحالة
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.post('/api/referral', async (req, res) => {
     if (!db) return res.json({ success: false, error: 'Database not connected' });
@@ -1634,10 +1605,8 @@ app.post('/api/referral', async (req, res) => {
         if (!referrerId || !newUserId || referrerId === newUserId) {
             return res.json({ success: false, error: 'Invalid data' });
         }
-        
         const referrerRef = db.collection('users').doc(referrerId);
         const referrerDoc = await referrerRef.get();
-        
         if (referrerDoc.exists) {
             const referrerData = referrerDoc.data();
             if (!referrerData.referrals?.includes(newUserId)) {
@@ -1647,7 +1616,6 @@ app.post('/api/referral', async (req, res) => {
                     balance: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus),
                     totalEarned: admin.firestore.FieldValue.increment(APP_CONFIG.referralBonus)
                 });
-                
                 await addNotification(referrerId, {
                     type: 'referral',
                     title: '🎉 New Referral!',
@@ -1661,9 +1629,9 @@ app.post('/api/referral', async (req, res) => {
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 9. 🎬 API مكافأة الإعلان
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.post('/api/reward', async (req, res) => {
     if (!db) return res.json({ success: false, error: 'Database not connected' });
@@ -1672,34 +1640,26 @@ app.post('/api/reward', async (req, res) => {
         const params = new URLSearchParams(initData);
         const userJson = params.get('user');
         if (!userJson) return res.json({ success: false, error: 'No user data' });
-        
         const user = JSON.parse(decodeURIComponent(userJson));
         const userId = user.id.toString();
-        
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
-        
         if (!userDoc.exists) {
             return res.json({ success: false, error: 'User not found' });
         }
-        
         const userData = userDoc.data();
         const today = new Date().toISOString().split('T')[0];
-        
         if (userData.lastAdDate !== today) {
             await userRef.update({ adsToday: 0 });
             userData.adsToday = 0;
         }
-        
         if (userData.adsToday >= APP_CONFIG.dailyAdLimit) {
             return res.json({ success: false, error: 'Daily limit reached', limitReached: true });
         }
-        
         const newBalance = (userData.balance || 0) + APP_CONFIG.adReward;
         const newTotalEarned = (userData.totalEarned || 0) + APP_CONFIG.adReward;
         const newAdsWatched = (userData.adsWatched || 0) + 1;
         const newAdsToday = (userData.adsToday || 0) + 1;
-        
         await userRef.update({
             balance: newBalance,
             totalEarned: newTotalEarned,
@@ -1707,51 +1667,41 @@ app.post('/api/reward', async (req, res) => {
             adsToday: newAdsToday,
             lastAdDate: today
         });
-        
         res.json({ success: true, balance: newBalance, totalEarned: newTotalEarned, adsWatched: newAdsWatched, adsToday: newAdsToday });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 10. ✅ API التحقق من انضمام القنوات (فقط لـ channel)
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
+// 10. ✅ API التحقق من انضمام القنوات
+// ============================================================================
 
 app.post('/api/verify-channel', async (req, res) => {
     try {
         const { userId, channelUsername, taskId, reward, taskType } = req.body;
-        
         if (!userId || !channelUsername || !taskId) {
             return res.json({ success: false, error: 'Missing required fields' });
         }
-        
         console.log(`🔍 Verifying ${userId} for task ${taskId} (type: ${taskType})`);
-        
         let isVerified = false;
-        
         if (taskType === 'channel') {
             const isMember = await verifyChannelMembership(userId, channelUsername);
             isVerified = isMember;
             console.log(`📢 Channel verification: ${isVerified}`);
-        } 
-        else {
+        } else {
             isVerified = true;
             console.log(`✅ Auto-verified for type: ${taskType}`);
         }
-        
         if (!isVerified) {
             return res.json({ success: false, error: '❌ You are not a member of this channel/group. Please join first and try again.' });
         }
-        
         if (db && reward) {
             const userRef = db.collection('users').doc(userId);
             const userDoc = await userRef.get();
-            
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 const completedTasks = userData.completedTasks || [];
-                
                 if (!completedTasks.includes(taskId)) {
                     await userRef.update({
                         balance: admin.firestore.FieldValue.increment(reward),
@@ -1759,13 +1709,11 @@ app.post('/api/verify-channel', async (req, res) => {
                         completedTasks: admin.firestore.FieldValue.arrayUnion(taskId),
                         [`taskLastCompletions.${taskId}`]: new Date().toISOString()
                     });
-                    
                     await addNotification(userId, {
                         type: 'success',
                         title: '✅ Task Completed!',
                         message: `+$${reward.toFixed(2)} added from ${channelUsername}`
                     });
-                    
                     console.log(`✅ Task ${taskId} completed by ${userId}, +$${reward}`);
                     return res.json({ success: true, message: 'Task completed successfully!' });
                 } else {
@@ -1775,54 +1723,42 @@ app.post('/api/verify-channel', async (req, res) => {
                 return res.json({ success: false, error: 'User not found' });
             }
         }
-        
         res.json({ success: true, message: 'Verification successful' });
-        
     } catch (error) {
         console.error('Verify channel error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 11. 💸 API طلبات السحب (مع إضافة التحقق من isVerified)
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
+// 11. 💸 API طلبات السحب (مع التحقق من isVerified)
+// ============================================================================
 
 app.post('/api/withdraw/request', async (req, res) => {
     if (!db) return res.json({ success: false, error: 'Database not connected' });
     try {
         const { userId, userName, amount, method, destination } = req.body;
-        
         if (!userId || !amount || !method || !destination) {
             return res.json({ success: false, error: 'Missing fields' });
         }
-        
         const userRef = db.collection('users').doc(userId);
         const userDoc = await userRef.get();
-        
         if (!userDoc.exists) {
             return res.json({ success: false, error: 'User not found' });
         }
-        
         const userData = userDoc.data();
-        
         if (userData.withdrawBlocked) {
             return res.json({ success: false, error: 'Account blocked from withdrawals' });
         }
-        
         if (amount < APP_CONFIG.minWithdraw) {
             return res.json({ success: false, error: `Minimum withdrawal is $${APP_CONFIG.minWithdraw}` });
         }
-        
         if (amount > (userData.balance || 0)) {
             return res.json({ success: false, error: 'Insufficient balance' });
         }
-        
         if ((userData.inviteCount || 0) < APP_CONFIG.requiredReferrals) {
             return res.json({ success: false, error: `You need ${APP_CONFIG.requiredReferrals} referral to withdraw (security measure)` });
         }
-        
-        // ✅ التحقق الجديد: هل قام المستخدم بالتحقق من حسابه؟
         if (!userData.isVerified) {
             return res.json({ 
                 success: false, 
@@ -1832,9 +1768,7 @@ app.post('/api/withdraw/request', async (req, res) => {
                 message: `Verification required. Invite ${APP_CONFIG.requiredReferralsForVerify} friends or pay 0.01 TON.`
             });
         }
-        
         const newBalance = (userData.balance || 0) - amount;
-        
         const withdrawRequest = {
             userId, userName, amount, method, destination,
             status: 'pending',
@@ -1842,71 +1776,55 @@ app.post('/api/withdraw/request', async (req, res) => {
             userInvites: userData.inviteCount || 0,
             userAds: userData.adsWatched || 0
         };
-        
         const docRef = await db.collection('withdrawals').add(withdrawRequest);
-        
         await userRef.update({ balance: newBalance });
-        
         await addNotification(userId, {
             type: 'withdraw',
             title: '💸 Withdrawal Requested',
             message: `Your withdrawal of $${amount.toFixed(2)} via ${method} is being processed.`
         });
-        
         if (ADMIN_ID) {
             bot.telegram.sendMessage(ADMIN_ID, 
                 `💸 *NEW WITHDRAWAL REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *User:* ${userName} (${userId})\n💰 *Amount:* $${amount.toFixed(2)}\n💳 *Method:* ${method}\n📮 *Destination:* ${destination}\n👥 *Referrals:* ${userData.inviteCount || 0}\n📺 *Ads:* ${userData.adsWatched || 0}\n🔐 *Verified:* ${userData.isVerified ? 'Yes' : 'No'}`,
                 { parse_mode: 'Markdown' }
             ).catch(() => {});
         }
-        
         res.json({ success: true, requestId: docRef.id, newBalance });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 11.5. 🔐 API التحقق من المستخدمين (جديد)
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
+// 11.5. 🔐 API التحقق من المستخدمين
+// ============================================================================
 
-// API للتحقق عبر الإحالات
 app.post('/api/verify-by-referrals', async (req, res) => {
     const { userId } = req.body;
-    
     if (!userId) {
         return res.json({ success: false, error: 'User ID required' });
     }
-    
     const result = await verifyUserByReferrals(userId);
     res.json(result);
 });
 
-// API للتحقق عبر TON
 app.post('/api/ton/verify', async (req, res) => {
     const { userId, txHash, amount } = req.body;
-    
     if (!userId || !txHash) {
         return res.json({ success: false, error: 'Missing required fields' });
     }
-    
     const result = await verifyUserByTon(userId, txHash, amount || "0.01");
     res.json(result);
 });
 
-// API للتحقق من حالة المستخدم (للواجهة الأمامية)
 app.get('/api/user/verification-status/:userId', async (req, res) => {
     if (!db) return res.json({ success: false, error: 'Database not connected' });
-    
     try {
         const userDoc = await db.collection('users').doc(req.params.userId).get();
-        
         if (!userDoc.exists) {
             return res.json({ success: false, error: 'User not found' });
         }
-        
         const userData = userDoc.data();
-        
         res.json({
             success: true,
             isVerified: userData.isVerified || false,
@@ -1920,224 +1838,9 @@ app.get('/api/user/verification-status/:userId', async (req, res) => {
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 12. 👑 لوحة المشرف (Admin APIs) - تابع
-// ═══════════════════════════════════════════════════════════════════════════
-
-app.get('/api/admin/stats', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const usersSnapshot = await db.collection('users').get();
-        const pendingWithdrawals = await db.collection('withdrawals').where('status', '==', 'pending').get();
-        let totalBalance = 0;
-        let totalEarned = 0;
-        usersSnapshot.forEach(doc => {
-            const data = doc.data();
-            totalBalance += data.balance || 0;
-            totalEarned += data.totalEarned || 0;
-        });
-        res.json({ success: true, stats: { totalUsers: usersSnapshot.size, pendingWithdrawals: pendingWithdrawals.size, totalBalance, totalEarned } });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/admin/users', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false, users: [] });
-    try {
-        const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
-        const users = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            users.push({
-                userId: data.userId, userName: data.userName, balance: data.balance,
-                inviteCount: data.inviteCount, adsWatched: data.adsWatched,
-                totalEarned: data.totalEarned, withdrawBlocked: data.withdrawBlocked || false,
-                isVerified: data.isVerified || false
-            });
-        });
-        res.json({ success: true, users });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/admin/pending-withdrawals', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false, withdrawals: [] });
-    try {
-        const snapshot = await db.collection('withdrawals').where('status', '==', 'pending').orderBy('createdAt', 'desc').get();
-        const withdrawals = [];
-        for (const doc of snapshot.docs) {
-            const data = doc.data();
-            withdrawals.push({ id: doc.id, ...data });
-        }
-        res.json({ success: true, withdrawals });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/approve-withdrawal', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { withdrawalId } = req.body;
-        const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-        const withdrawalDoc = await withdrawalRef.get();
-        if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
-        const data = withdrawalDoc.data();
-        await withdrawalRef.update({ status: 'approved', approvedAt: admin.firestore.FieldValue.serverTimestamp() });
-        await addNotification(data.userId, {
-            type: 'withdraw', title: '✅ Withdrawal Approved!',
-            message: `Your withdrawal of $${data.amount.toFixed(2)} has been approved.`
-        });
-        console.log(`✅ Withdrawal approved: ${withdrawalId}`);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/reject-withdrawal', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { withdrawalId, reason } = req.body;
-        const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-        const withdrawalDoc = await withdrawalRef.get();
-        if (!withdrawalDoc.exists) return res.json({ success: false, error: 'Not found' });
-        const data = withdrawalDoc.data();
-        const userRef = db.collection('users').doc(data.userId);
-        await userRef.update({ balance: admin.firestore.FieldValue.increment(data.amount) });
-        await withdrawalRef.update({ status: 'rejected', rejectedAt: admin.firestore.FieldValue.serverTimestamp(), rejectReason: reason });
-        await addNotification(data.userId, {
-            type: 'withdraw', title: '❌ Withdrawal Rejected',
-            message: `Your withdrawal of $${data.amount.toFixed(2)} was rejected. Reason: ${reason || 'Not specified'}\nThe amount has been returned.`
-        });
-        console.log(`❌ Withdrawal rejected: ${withdrawalId}`);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/add-balance', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { userId, amount } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            balance: admin.firestore.FieldValue.increment(amount), 
-            totalEarned: admin.firestore.FieldValue.increment(amount) 
-        });
-        await addNotification(userId, { 
-            type: 'admin', 
-            title: '💰 Balance Added', 
-            message: `Admin added $${amount.toFixed(2)} to your account.` 
-        });
-        console.log(`💰 Added $${amount} to user ${userId}`);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/remove-balance', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { userId, amount } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            balance: admin.firestore.FieldValue.increment(-amount) 
-        });
-        await addNotification(userId, { 
-            type: 'admin', 
-            title: '💰 Balance Adjusted', 
-            message: `Admin removed $${amount.toFixed(2)} from your account.` 
-        });
-        console.log(`💰 Removed $${amount} from user ${userId}`);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/block-user', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false });
-    try {
-        const { userId } = req.body;
-        await db.collection('users').doc(userId).update({ 
-            withdrawBlocked: true, 
-            withdrawBlockedAt: admin.firestore.FieldValue.serverTimestamp() 
-        });
-        await addNotification(userId, { 
-            type: 'blocked', 
-            title: '🚫 Account Restricted', 
-            message: 'Your withdrawal access has been permanently blocked.' 
-        });
-        console.log(`🚫 User ${userId} permanently blocked from withdrawals`);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/broadcast', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    const { message } = req.body;
-    if (!message) return res.json({ success: false, error: 'No message' });
-    const result = await broadcastToAllUsers(message);
-    res.json(result);
-});
-
-// Admin Tasks Management APIs
-app.post('/api/admin/tasks', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false, error: 'Database not connected' });
-    try {
-        const taskData = req.body;
-        const taskId = taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-        const newTask = {
-            ...taskData,
-            id: taskId,
-            createdAt: new Date().toISOString()
-        };
-        await db.collection('tasks').doc(taskId).set(newTask);
-        res.json({ success: true, taskId });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.put('/api/admin/tasks/:taskId', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false, error: 'Database not connected' });
-    try {
-        const { taskId } = req.params;
-        const updates = req.body;
-        updates.updatedAt = new Date().toISOString();
-        await db.collection('tasks').doc(taskId).update(updates);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/admin/tasks/:taskId', async (req, res) => {
-    if (!isAdmin(req)) return res.status(403).json({ error: 'Unauthorized' });
-    if (!db) return res.json({ success: false, error: 'Database not connected' });
-    try {
-        const { taskId } = req.params;
-        await db.collection('tasks').doc(taskId).delete();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+// ============================================================================
+// 12. 📋 API جلب المهام
+// ============================================================================
 
 app.get('/api/tasks', async (req, res) => {
     if (!db) return res.json({ success: true, tasks: [] });
@@ -2155,39 +1858,32 @@ app.get('/api/tasks', async (req, res) => {
     }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 13. 🕐 مهمة مجدولة لإعادة تعيين المهام اليومية (Cron Job)
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 cron.schedule('0 0 * * *', async () => {
     console.log('🔄 Running daily task reset...');
     if (!db) return;
-    
     try {
         const tasksSnapshot = await db.collection('tasks').where('resetPeriod', 'in', ['daily', 'weekly']).get();
         const usersSnapshot = await db.collection('users').get();
-        
         let resetCount = 0;
         const today = new Date().toISOString().split('T')[0];
-        
         for (const taskDoc of tasksSnapshot.docs) {
             const task = taskDoc.data();
-            
             for (const userDoc of usersSnapshot.docs) {
                 const user = userDoc.data();
                 const lastCompletion = user.taskLastCompletions?.[task.id];
-                
                 if (lastCompletion) {
                     const lastDate = lastCompletion.split('T')[0];
                     let shouldReset = false;
-                    
                     if (task.resetPeriod === 'daily') {
                         shouldReset = lastDate !== today;
                     } else if (task.resetPeriod === 'weekly') {
                         const daysDiff = (new Date() - new Date(lastCompletion)) / (1000 * 60 * 60 * 24);
                         shouldReset = daysDiff >= 7;
                     }
-                    
                     if (shouldReset && user.completedTasks?.includes(task.id)) {
                         await db.collection('users').doc(userDoc.id).update({
                             completedTasks: admin.firestore.FieldValue.arrayRemove(task.id)
@@ -2197,16 +1893,15 @@ cron.schedule('0 0 * * *', async () => {
                 }
             }
         }
-        
         console.log(`✅ Reset ${resetCount} task completions`);
     } catch (error) {
         console.error('Cron job error:', error);
     }
 }, { timezone: "UTC" });
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // 14. 🚀 تشغيل الخادم
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -2223,7 +1918,7 @@ app.get('/tonconnect-manifest.json', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌟 ADNOVA NETWORK SERVER v13.0`);
+    console.log(`\n🌟 ADNOVA NETWORK SERVER v14.0`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📍 Port: ${PORT}`);
     console.log(`🔥 Firebase: ${db ? '✅ Connected' : '❌ Disconnected'}`);
@@ -2247,13 +1942,12 @@ app.listen(PORT, () => {
     console.log(`   • Requires reason for rejection`);
     console.log(`   • Automatic balance return on rejection`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`🔐 User Verification System: ✅ NEW!`);
-    console.log(`   • /checkuser <id> - Check user details`);
-    console.log(`   • /verifyuser <id> - Manually verify a user`);
-    console.log(`   • Method 1: Invite ${APP_CONFIG.requiredReferralsForVerify} friends (Free)`);
-    console.log(`   • Method 2: Pay 0.01 TON (Fast)`);
-    console.log(`   • API: /api/verify-by-referrals`);
-    console.log(`   • API: /api/ton/verify`);
+    console.log(`🔐 User Management via Bot: ✅ NEW!`);
+    console.log(`   • /searchuser [id] - Search user details`);
+    console.log(`   • /addbalance [id] [amount] - Add balance`);
+    console.log(`   • /removebalance [id] [amount] - Remove balance`);
+    console.log(`   • /userstats [id] - Detailed user statistics`);
+    console.log(`   • /verifyuser [id] - Manually verify a user`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`✅ Server ready for production!`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
