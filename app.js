@@ -1,14 +1,15 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v11.0 (النسخة النهائية الكاملة مع جميع التحديثات)
+// ADNOVA NETWORK - FRONTEND v12.0 (النسخة النهائية الكاملة مع جميع التحديثات)
 // ============================================================================
 // منصة احترافية لمشاهدة الإعلانات وكسب المال الحقيقي
 // جميع الميزات: إحالات، مهام متجددة، 14 طريقة سحب، لوحة مشرف، 10 لغات، TON Connect
 // التحديثات الجديدة:
 // - كرت تاريخ السحوبات في صفحة Ads
-// - نافذة التحقق من البوتات (30 إحالة أو 0.01 TON)
+// - نافذة التحقق من البوتات (30 إحالة أو 0.01 TON) - تصميم فاتح/ذهبي
 // - ترتيب الإشعارات (الأحدث أولاً)
-// - أيقونات إيموجي لطرق الدفع
+// - أيقونات إيموجي لطرق الدفع (فقط للطرق التي لا تدعم FontAwesome)
 // - تنسيق احترافي للمهام والإشعارات
+// - إصلاح معاملات TON Connect مع عنوان المحفظة من الخادم
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -50,6 +51,9 @@ let allUsers = [];
 // متغير لتخزين بيانات السحب أثناء التحقق
 let pendingWithdrawalData = null;
 
+// عنوان محفظة TON الخاصة بالمنصة (يتم تعبئته من الخادم)
+let PLATFORM_TON_WALLET = null;
+
 let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
@@ -59,11 +63,12 @@ let APP_CONFIG = {
     requiredReferrals: 1,
     requiredReferralsForVerify: 30,
     botUsername: "AdNovaNetworkBot",
-    adminId: null
+    adminId: null,
+    platformTonWallet: null
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 3. 💳 WITHDRAWAL METHODS (مع إضافة الإيموجي)
+// 3. 💳 WITHDRAWAL METHODS (مع إضافة الإيموجي للطرق التي لا تدعمها FontAwesome)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const WITHDRAWAL_METHODS = [
@@ -167,11 +172,11 @@ const translations = {
         clearRead: "Clear Read",
         clearAll: "Clear All",
         loadingAd: "Loading ad...",
-        adRewardAdded: "+$${amount} added!",
+        adRewardAdded: "+${amount} added!",
         dailyLimitReached: "Daily limit reached! Come back tomorrow",
         adError: "Error loading ad",
         linkCopied: "Link copied!",
-        taskCompleted: "+$${amount} added!",
+        taskCompleted: "+${amount} added!",
         insufficientBalance: "Insufficient balance",
         chooseLanguage: "Choose your language",
         success: "Success!",
@@ -233,11 +238,11 @@ const translations = {
         clearRead: "حذف المقروء",
         clearAll: "حذف الكل",
         loadingAd: "جاري تحميل الإعلان...",
-        adRewardAdded: "+$${amount} أضيفت!",
+        adRewardAdded: "+${amount} أضيفت!",
         dailyLimitReached: "تم الوصول للحد اليومي! عد غداً",
         adError: "خطأ في تحميل الإعلان",
         linkCopied: "تم نسخ الرابط!",
-        taskCompleted: "+$${amount} أضيفت!",
+        taskCompleted: "+${amount} أضيفت!",
         insufficientBalance: "رصيد غير كافٍ",
         chooseLanguage: "اختر لغتك",
         success: "تم بنجاح!",
@@ -299,11 +304,11 @@ const translations = {
         clearRead: "Borrar Leídos",
         clearAll: "Borrar Todo",
         loadingAd: "Cargando anuncio...",
-        adRewardAdded: "+$${amount} añadido!",
+        adRewardAdded: "+${amount} añadido!",
         dailyLimitReached: "¡Límite diario alcanzado! Vuelve mañana",
         adError: "Error al cargar el anuncio",
         linkCopied: "¡Enlace copiado!",
-        taskCompleted: "+$${amount} añadido!",
+        taskCompleted: "+${amount} añadido!",
         insufficientBalance: "Saldo insuficiente",
         chooseLanguage: "Elige tu idioma",
         success: "¡Éxito!",
@@ -365,11 +370,11 @@ const translations = {
         clearRead: "Effacer les lus",
         clearAll: "Tout effacer",
         loadingAd: "Chargement de la pub...",
-        adRewardAdded: "+$${amount} ajouté!",
+        adRewardAdded: "+${amount} ajouté!",
         dailyLimitReached: "Limite quotidienne atteinte! Revenez demain",
         adError: "Erreur de chargement",
         linkCopied: "Lien copié!",
-        taskCompleted: "+$${amount} ajouté!",
+        taskCompleted: "+${amount} ajouté!",
         insufficientBalance: "Solde insuffisant",
         chooseLanguage: "Choisissez votre langue",
         success: "Succès!",
@@ -431,11 +436,11 @@ const translations = {
         clearRead: "Очистить прочитанные",
         clearAll: "Очистить все",
         loadingAd: "Загрузка рекламы...",
-        adRewardAdded: "+$${amount} добавлено!",
+        adRewardAdded: "+${amount} добавлено!",
         dailyLimitReached: "Дневной лимит достигнут! Возвращайтесь завтра",
         adError: "Ошибка загрузки рекламы",
         linkCopied: "Ссылка скопирована!",
-        taskCompleted: "+$${amount} добавлено!",
+        taskCompleted: "+${amount} добавлено!",
         insufficientBalance: "Недостаточно средств",
         chooseLanguage: "Выберите язык",
         success: "Успех!",
@@ -497,11 +502,11 @@ const translations = {
         clearRead: "Limpar Lidos",
         clearAll: "Limpar Tudo",
         loadingAd: "Carregando anúncio...",
-        adRewardAdded: "+$${amount} adicionado!",
+        adRewardAdded: "+${amount} adicionado!",
         dailyLimitReached: "Limite diário atingido! Volte amanhã",
         adError: "Erro ao carregar anúncio",
         linkCopied: "Link copiado!",
-        taskCompleted: "+$${amount} adicionado!",
+        taskCompleted: "+${amount} adicionado!",
         insufficientBalance: "Saldo insuficiente",
         chooseLanguage: "Escolha seu idioma",
         success: "Sucesso!",
@@ -563,11 +568,11 @@ const translations = {
         clearRead: "पढ़े हुए हटाएं",
         clearAll: "सभी हटाएं",
         loadingAd: "विज्ञापन लोड हो रहा...",
-        adRewardAdded: "+$${amount} जोड़ा गया!",
+        adRewardAdded: "+${amount} जोड़ा गया!",
         dailyLimitReached: "दैनिक सीमा समाप्त! कल वापस आएं",
         adError: "विज्ञापन लोड करने में त्रुटि",
         linkCopied: "लिंक कॉपी किया गया!",
-        taskCompleted: "+$${amount} जोड़ा गया!",
+        taskCompleted: "+${amount} जोड़ा गया!",
         insufficientBalance: "अपर्याप्त शेष",
         chooseLanguage: "अपनी भाषा चुनें",
         success: "सफलता!",
@@ -629,11 +634,11 @@ const translations = {
         clearRead: "Hapus yang Dibaca",
         clearAll: "Hapus Semua",
         loadingAd: "Memuat iklan...",
-        adRewardAdded: "+$${amount} ditambahkan!",
+        adRewardAdded: "+${amount} ditambahkan!",
         dailyLimitReached: "Batas harian tercapai! Kembali besok",
         adError: "Gagal memuat iklan",
         linkCopied: "Tautan disalin!",
-        taskCompleted: "+$${amount} ditambahkan!",
+        taskCompleted: "+${amount} ditambahkan!",
         insufficientBalance: "Saldo tidak mencukupi",
         chooseLanguage: "Pilih bahasa Anda",
         success: "Berhasil!",
@@ -695,11 +700,11 @@ const translations = {
         clearRead: "Okunanları Temizle",
         clearAll: "Hepsini Temizle",
         loadingAd: "Reklam yükleniyor...",
-        adRewardAdded: "+$${amount} eklendi!",
+        adRewardAdded: "+${amount} eklendi!",
         dailyLimitReached: "Günlük limit doldu! Yarın gelin",
         adError: "Reklam yüklenemedi",
         linkCopied: "Bağlantı kopyalandı!",
-        taskCompleted: "+$${amount} eklendi!",
+        taskCompleted: "+${amount} eklendi!",
         insufficientBalance: "Yetersiz bakiye",
         chooseLanguage: "Dil seçin",
         success: "Başarılı!",
@@ -761,11 +766,11 @@ const translations = {
         clearRead: "پاک کردن خوانده‌شده‌ها",
         clearAll: "پاک کردن همه",
         loadingAd: "در حال بارگذاری تبلیغ...",
-        adRewardAdded: "+$${amount} اضافه شد!",
+        adRewardAdded: "+${amount} اضافه شد!",
         dailyLimitReached: "سقف روزانه تکمیل شد! فردا برگردید",
         adError: "خطا در بارگذاری تبلیغ",
         linkCopied: "لینک کپی شد!",
-        taskCompleted: "+$${amount} اضافه شد!",
+        taskCompleted: "+${amount} اضافه شد!",
         insufficientBalance: "موجودی ناکافی",
         chooseLanguage: "زبان خود را انتخاب کنید",
         success: "موفق!",
@@ -886,7 +891,11 @@ async function loadAppConfig() {
         const data = await res.json();
         if (data) {
             APP_CONFIG = { ...APP_CONFIG, ...data };
+            PLATFORM_TON_WALLET = data.platformTonWallet || null;
             console.log("[AdNova] Config loaded");
+            if (PLATFORM_TON_WALLET) {
+                console.log("[AdNova] TON Platform Wallet:", PLATFORM_TON_WALLET);
+            }
         }
     } catch(e) {
         console.error("Config error:", e);
@@ -1587,8 +1596,8 @@ function getMethodIcon(methodId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.6. 🔒 VERIFICATION MODAL (نافذة التحقق من البوتات)
-// ═══════════════════════════════════════════════════════════════════════════
+// 10.6. 🔒 VERIFICATION MODAL (نافذة التحقق من البوتات - تصميم فاتح/ذهبي)
+// ══════════════════════════════════════════════════════════════════════════
 
 function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
     pendingWithdrawalData = { amount, destination };
@@ -1607,7 +1616,9 @@ function showVerificationModal(currentInvites, requiredInvites, amount, destinat
                 <p>To withdraw funds, you must verify your account. Choose one method below:</p>
                 
                 <div class="verify-option" onclick="showReferralInvite()">
-                    <div class="verify-option-icon">👥</div>
+                    <div class="verify-option-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <div class="verify-option-content">
                         <div class="verify-option-title">Invite Friends Method</div>
                         <div class="verify-option-desc">Invite ${requiredInvites} friends to the platform</div>
@@ -1616,20 +1627,22 @@ function showVerificationModal(currentInvites, requiredInvites, amount, destinat
                         </div>
                         <div class="verify-stats">${currentInvites} / ${requiredInvites} invites</div>
                         ${remainingInvites > 0 ? 
-                            `<div class="verify-warning">⚠️ You need ${remainingInvites} more invites</div>` : 
-                            `<div class="verify-success">✅ You qualify! Click to verify</div>`
+                            `<div class="verify-warning"><i class="fas fa-exclamation-triangle"></i> You need ${remainingInvites} more invites</div>` : 
+                            `<div class="verify-success"><i class="fas fa-check-circle"></i> You qualify! Click to verify</div>`
                         }
                     </div>
                 </div>
                 
                 <div class="verify-option" onclick="startTonVerification()">
-                    <div class="verify-option-icon">💰</div>
+                    <div class="verify-option-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
                     <div class="verify-option-content">
                         <div class="verify-option-title">TON Wallet Method</div>
                         <div class="verify-option-desc">Pay 0.01 TON (~$0.02 USD) to verify instantly</div>
                         <div class="verify-benefits">
-                            <span>✅ One-time payment only</span>
-                            <span>🔄 Will be returned on first withdrawal</span>
+                            <span><i class="fas fa-check-circle"></i> One-time payment only</span>
+                            <span><i class="fas fa-rotate-right"></i> Will be returned on first withdrawal</span>
                         </div>
                         <div class="verify-ton-btn">
                             <i class="fab fa-telegram"></i> Verify with TON
@@ -1638,7 +1651,7 @@ function showVerificationModal(currentInvites, requiredInvites, amount, destinat
                 </div>
                 
                 <button class="verify-later-btn" onclick="closeModal('verificationModal')">
-                    ⏰ Remind Me Later
+                    <i class="fas fa-clock"></i> Remind Me Later
                 </button>
             </div>
         </div>
@@ -1699,10 +1712,25 @@ async function startTonVerification() {
         return;
     }
     
-    showToast("Please confirm transaction in TON Wallet...", "info");
+    // التحقق من وجود عنوان محفظة المنصة
+    if (!PLATFORM_TON_WALLET) {
+        showToast("Platform wallet not configured. Please contact support.", "error");
+        console.error("PLATFORM_TON_WALLET is not set");
+        return;
+    }
     
-    // عنوان محفظة المنصة - يجب تحديثه بقيمة صحيحة
-    const PLATFORM_TON_WALLET = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABnQ"; // استبدل هذا بالعنوان الحقيقي
+    // التحقق من وجود محفظة متصلة
+    if (!tonConnected || !tonWalletAddress) {
+        showToast("Please connect your TON wallet first", "info");
+        await connectTONWallet();
+        // بعد محاولة الاتصال، نتحقق مرة أخرى
+        if (!tonConnected || !tonWalletAddress) {
+            showToast("Please connect your TON wallet to continue", "warning");
+            return;
+        }
+    }
+    
+    showToast("Please confirm transaction in TON Wallet...", "info");
     
     const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600,
@@ -2787,7 +2815,7 @@ window.startTonVerification = startTonVerification;
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] New Features: Withdrawal History | Bot Verification | Notification Sort | Method Emojis");
+console.log("[AdNova] New Features: Withdrawal History | Bot Verification | Notification Sort | Method Emojis | Fixed TON Verification");
 
 // ============================================================================
 // نهاية الملف 🎯
