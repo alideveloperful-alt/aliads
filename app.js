@@ -1,10 +1,11 @@
 // ============================================================================
 // ADNOVA NETWORK - FRONTEND v14.0 (النسخة النهائية المحسنة بالكامل)
 // ============================================================================
+// جميع الميزات الأصلية محفوظة بنسبة 100%
 // التحسينات الجديدة:
 // - تحسين عرض الإشعارات بشكل احترافي (عنوان، محتوى، تاريخ)
-// - إصلاح مشكلة حالة السحب: تحديث فوري من الإشعار دون قراءة Firebase
-// - الحفاظ على جميع الميزات والوظائف الحالية بنسبة 100%
+// - إصلاح مشكلة حالة السحب: تحديث فوري من الإشعار مع دمج البيانات
+// - الحفاظ على جميع الميزات والوظائف الحالية
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -117,7 +118,7 @@ async function showAdSequence() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 5. 🌍 TRANSLATION SYSTEM
+// 5. 🌍 TRANSLATION SYSTEM (كامل)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const LANGUAGES = [
@@ -132,10 +133,6 @@ const LANGUAGES = [
     { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", dir: "ltr" },
     { code: "fa", name: "Persian", nativeName: "فارسی", flag: "🇮🇷", dir: "rtl" }
 ];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 5. 🌍 TRANSLATION SYSTEM - COMPLETE
-// ═══════════════════════════════════════════════════════════════════════════
 
 const translations = {
     en: {
@@ -1441,7 +1438,7 @@ async function submitWithdraw() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.5. 📜 WITHDRAWAL HISTORY (محسنة)
+// 10.5. 📜 WITHDRAWAL HISTORY (محسنة بالكامل)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawalHistory() {
@@ -1451,6 +1448,7 @@ function renderWithdrawalHistory() {
     if (!container || !currentUser) return;
 
     const withdrawals = currentUser.withdrawals || [];
+    const notifications = currentUser.notifications || [];
 
     if (withdrawals.length === 0) {
         container.innerHTML = `
@@ -1467,24 +1465,52 @@ function renderWithdrawalHistory() {
     let html = "";
 
     for (const wd of recentWithdrawals) {
+        // البحث عن إشعار مرتبط بهذا السحب
+        const relatedNotif = notifications.find(n =>
+            n.type === "withdraw" &&
+            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
+            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
+        );
+
+        // تحديد الحالة من الإشعار إذا وجد
         let status = wd.status || "pending";
         let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
         let statusClass = "";
 
-        if (status === "approved") {
-            statusText = "✅ Approved";
-            statusIcon = "✅";
-            statusClass = "approved";
-        } else if (status === "rejected") {
-            statusText = "❌ Rejected";
-            statusIcon = "❌";
-            statusClass = "rejected";
+        if (relatedNotif) {
+            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
+                status = "approved";
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
+                status = "rejected";
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
+                if (reasonMatch) rejectReason = reasonMatch[1];
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         } else {
-            statusText = "⏳ Pending";
-            statusIcon = "⏳";
-            statusClass = "pending";
+            if (status === "approved") {
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (status === "rejected") {
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         }
 
         const date = new Date(wd.date);
@@ -1571,6 +1597,7 @@ function updateWithdrawalStatusFromNotification(notification) {
 
 function showAllWithdrawals() {
     const withdrawals = currentUser?.withdrawals || [];
+    const notifications = currentUser?.notifications || [];
 
     if (withdrawals.length === 0) {
         showToast("📭 No withdrawal history", "info");
@@ -1591,24 +1618,50 @@ function showAllWithdrawals() {
     `;
 
     for (const wd of withdrawals) {
+        const relatedNotif = notifications.find(n =>
+            n.type === "withdraw" &&
+            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
+            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
+        );
+
         let status = wd.status || "pending";
         let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
         let statusClass = "";
 
-        if (status === "approved") {
-            statusText = "✅ Approved";
-            statusIcon = "✅";
-            statusClass = "approved";
-        } else if (status === "rejected") {
-            statusText = "❌ Rejected";
-            statusIcon = "❌";
-            statusClass = "rejected";
+        if (relatedNotif) {
+            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
+                status = "approved";
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
+                status = "rejected";
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
+                if (reasonMatch) rejectReason = reasonMatch[1];
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         } else {
-            statusText = "⏳ Pending";
-            statusIcon = "⏳";
-            statusClass = "pending";
+            if (status === "approved") {
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (status === "rejected") {
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         }
 
         const date = new Date(wd.date);
