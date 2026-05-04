@@ -3052,5 +3052,41 @@ body.rtl .support-btn {
 }
 
 /* ============================================================================
+   30. TASKS CARD - ترتيب المكافأة فوق زر الانضمام
+   ============================================================================ */
+
+/* جعل المكافأة تظهر فوق زر الانضمام */
+.task-card .task-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+/* تنسيق المكافأة */
+.task-card .task-reward {
+    font-size: 14px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #d4af37, #b8920e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding: 4px 8px;
+}
+
+/* تنسيق زر الانضمام */
+.task-card .task-btn {
+    width: 100%;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Responsive للشاشات الصغيرة */
+@media (max-width: 480px) {
+    .task-card .task-right {
+        align-items: center;
+    }
+}
+/* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
