@@ -3627,6 +3627,30 @@ body.rtl .withdrawal-reason-box {
     }
 }
 
+.refresh-btn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #d4af37;
+}
+
+.refresh-btn:active {
+    transform: rotate(180deg);
+    background: rgba(212, 175, 55, 0.2);
+}
+
+.refresh-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
 /* ============================================================================
    END OF NEW IMPROVED STYLES
    ============================================================================ */
