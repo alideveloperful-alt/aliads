@@ -1,15 +1,12 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v12.0 (النسخة النهائية الكاملة مع جميع التحديثات)
+// ADNOVA NETWORK - FRONTEND v13.0 (النسخة المحسنة بالكامل)
 // ============================================================================
-// منصة احترافية لمشاهدة الإعلانات وكسب المال الحقيقي
-// جميع الميزات: إحالات، مهام متجددة، 14 طريقة سحب، لوحة مشرف، 10 لغات، TON Connect
-// التحديثات الجديدة:
-// - كرت تاريخ السحوبات في صفحة Ads
-// - نافذة التحقق من البوتات (30 إحالة أو 0.01 TON) - تصميم فاتح/ذهبي
-// - ترتيب الإشعارات (الأحدث أولاً)
-// - أيقونات إيموجي لطرق الدفع (فقط للطرق التي لا تدعم FontAwesome)
-// - تنسيق احترافي للمهام والإشعارات
-// - إصلاح معاملات TON Connect مع عنوان المحفظة من الخادم
+// جميع الميزات الأصلية محفوظة بنسبة 100%
+// التحسينات الجديدة فقط في:
+// - renderNotifications() - إعادة هيكلة الإشعارات بشكل احترافي
+// - renderWithdrawalHistory() - إضافة ألوان الحالة ونص الحالة ووقت كامل
+// - showAllWithdrawals() - نفس التحسينات
+// - openSupportChat() - دالة جديدة للدعم (سيتم إضافة الزر في HTML)
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -203,7 +200,11 @@ const translations = {
         resetPeriod: "Reset Period",
         daily: "Daily",
         weekly: "Weekly",
-        once: "Once"
+        once: "Once",
+        statusApproved: "Approved",
+        statusRejected: "Rejected",
+        statusPending: "Pending",
+        reason: "Reason"
     },
     ar: {
         appName: "أد نوفا نتورك",
@@ -269,7 +270,11 @@ const translations = {
         resetPeriod: "فترة التجديد",
         daily: "يومي",
         weekly: "أسبوعي",
-        once: "مرة واحدة"
+        once: "مرة واحدة",
+        statusApproved: "تمت الموافقة",
+        statusRejected: "مرفوض",
+        statusPending: "قيد المراجعة",
+        reason: "السبب"
     },
     es: {
         appName: "AdNova Network",
@@ -335,7 +340,11 @@ const translations = {
         resetPeriod: "Período de Reinicio",
         daily: "Diario",
         weekly: "Semanal",
-        once: "Una vez"
+        once: "Una vez",
+        statusApproved: "Aprobado",
+        statusRejected: "Rechazado",
+        statusPending: "Pendiente",
+        reason: "Razón"
     },
     fr: {
         appName: "AdNova Network",
@@ -401,7 +410,11 @@ const translations = {
         resetPeriod: "Période de réinitialisation",
         daily: "Quotidien",
         weekly: "Hebdomadaire",
-        once: "Une fois"
+        once: "Une fois",
+        statusApproved: "Approuvé",
+        statusRejected: "Rejeté",
+        statusPending: "En attente",
+        reason: "Raison"
     },
     ru: {
         appName: "AdNova Network",
@@ -467,7 +480,11 @@ const translations = {
         resetPeriod: "Период сброса",
         daily: "Ежедневно",
         weekly: "Еженедельно",
-        once: "Один раз"
+        once: "Один раз",
+        statusApproved: "Одобрен",
+        statusRejected: "Отклонен",
+        statusPending: "В обработке",
+        reason: "Причина"
     },
     pt: {
         appName: "AdNova Network",
@@ -533,7 +550,11 @@ const translations = {
         resetPeriod: "Período de Reinício",
         daily: "Diário",
         weekly: "Semanal",
-        once: "Uma vez"
+        once: "Uma vez",
+        statusApproved: "Aprovado",
+        statusRejected: "Rejeitado",
+        statusPending: "Pendente",
+        reason: "Motivo"
     },
     hi: {
         appName: "AdNova Network",
@@ -599,7 +620,11 @@ const translations = {
         resetPeriod: "रीसेट अवधि",
         daily: "दैनिक",
         weekly: "साप्ताहिक",
-        once: "एक बार"
+        once: "एक बार",
+        statusApproved: "स्वीकृत",
+        statusRejected: "अस्वीकृत",
+        statusPending: "लंबित",
+        reason: "कारण"
     },
     id: {
         appName: "AdNova Network",
@@ -665,7 +690,11 @@ const translations = {
         resetPeriod: "Periode Reset",
         daily: "Harian",
         weekly: "Mingguan",
-        once: "Sekali"
+        once: "Sekali",
+        statusApproved: "Disetujui",
+        statusRejected: "Ditolak",
+        statusPending: "Menunggu",
+        reason: "Alasan"
     },
     tr: {
         appName: "AdNova Network",
@@ -731,7 +760,11 @@ const translations = {
         resetPeriod: "Sıfırlama Süresi",
         daily: "Günlük",
         weekly: "Haftalık",
-        once: "Bir kere"
+        once: "Bir kere",
+        statusApproved: "Onaylandı",
+        statusRejected: "Reddedildi",
+        statusPending: "Beklemede",
+        reason: "Neden"
     },
     fa: {
         appName: "شبکه ادنوا",
@@ -797,15 +830,13 @@ const translations = {
         resetPeriod: "دوره بازنشانی",
         daily: "روزانه",
         weekly: "هفتگی",
-        once: "یک بار"
+        once: "یک بار",
+        statusApproved: "تأیید شده",
+        statusRejected: "رد شده",
+        statusPending: "در انتظار",
+        reason: "دلیل"
     }
 };
-
-for (let lang of ["es", "fr", "ru", "pt", "hi", "id", "tr", "fa"]) {
-    if (!translations[lang]) {
-        translations[lang] = { ...translations.en };
-    }
-}
 
 function t(key, params = {}) {
     let text = translations[currentLanguage]?.[key] || translations.en[key] || key;
@@ -1403,7 +1434,7 @@ async function submitWithdraw() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.5. 📜 WITHDRAWAL HISTORY (كرت تاريخ السحوبات الجديد)
+// 10.5. 📜 WITHDRAWAL HISTORY (نسخة محسنة بالكامل)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawalHistory() {
@@ -1431,25 +1462,31 @@ function renderWithdrawalHistory() {
     
     for (const wd of recentWithdrawals) {
         const status = wd.status || "pending";
-        let statusIcon = "";
         let statusClass = "";
+        let statusText = "";
+        let statusIcon = "";
         
         if (status === "approved") {
-            statusIcon = "✅";
             statusClass = "approved";
+            statusText = t("statusApproved");
+            statusIcon = "✅";
         } else if (status === "rejected") {
-            statusIcon = "❌";
             statusClass = "rejected";
+            statusText = t("statusRejected");
+            statusIcon = "❌";
         } else {
-            statusIcon = "⏳";
             statusClass = "pending";
+            statusText = t("statusPending");
+            statusIcon = "⏳";
         }
         
         const date = new Date(wd.date);
-        const formattedDate = date.toLocaleDateString(undefined, { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        const formattedDateTime = date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
         
         const methodName = getMethodName(wd.method);
@@ -1461,13 +1498,22 @@ function renderWithdrawalHistory() {
                     <div class="withdrawal-status-icon">${statusIcon}</div>
                     <div class="withdrawal-info">
                         <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
+                        <div class="withdrawal-status-text">${statusText}</div>
                         <div class="withdrawal-details">
                             <span class="withdrawal-method">
                                 <i class="${methodIcon}"></i> ${methodName}
                             </span>
-                            <span class="withdrawal-date">• ${formattedDate}</span>
+                            <span class="withdrawal-date">
+                                <i class="far fa-clock"></i> ${formattedDateTime}
+                            </span>
                         </div>
-                        ${wd.rejectReason ? `<div class="withdrawal-reason">❌ ${escapeHtml(wd.rejectReason)}</div>` : ''}
+                        ${wd.rejectReason ? `
+                            <div class="withdrawal-reason-box">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="withdrawal-reason-label">${t("reason")}:</span>
+                                <span class="withdrawal-reason-text">${escapeHtml(wd.rejectReason)}</span>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -1504,24 +1550,28 @@ function showAllWithdrawals() {
     
     for (const wd of withdrawals) {
         const status = wd.status || "pending";
-        let statusIcon = "";
         let statusClass = "";
+        let statusText = "";
+        let statusIcon = "";
         
         if (status === "approved") {
-            statusIcon = "✅";
             statusClass = "approved";
+            statusText = t("statusApproved");
+            statusIcon = "✅";
         } else if (status === "rejected") {
-            statusIcon = "❌";
             statusClass = "rejected";
+            statusText = t("statusRejected");
+            statusIcon = "❌";
         } else {
-            statusIcon = "⏳";
             statusClass = "pending";
+            statusText = t("statusPending");
+            statusIcon = "⏳";
         }
         
         const date = new Date(wd.date);
-        const formattedDate = date.toLocaleDateString(undefined, { 
-            year: 'numeric', 
-            month: 'short', 
+        const formattedDateTime = date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -1536,13 +1586,22 @@ function showAllWithdrawals() {
                     <div class="withdrawal-status-icon">${statusIcon}</div>
                     <div class="withdrawal-info">
                         <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
+                        <div class="withdrawal-status-text">${statusText}</div>
                         <div class="withdrawal-details">
                             <span class="withdrawal-method">
                                 <i class="${methodIcon}"></i> ${methodName}
                             </span>
-                            <span class="withdrawal-date">• ${formattedDate}</span>
+                            <span class="withdrawal-date">
+                                <i class="far fa-clock"></i> ${formattedDateTime}
+                            </span>
                         </div>
-                        ${wd.rejectReason ? `<div class="withdrawal-reason">❌ ${escapeHtml(wd.rejectReason)}</div>` : ''}
+                        ${wd.rejectReason ? `
+                            <div class="withdrawal-reason-box">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="withdrawal-reason-label">${t("reason")}:</span>
+                                <span class="withdrawal-reason-text">${escapeHtml(wd.rejectReason)}</span>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -2419,7 +2478,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM (مع ترتيب الإشعارات - الأحدث أولاً)
+// 14. 🔔 NOTIFICATIONS SYSTEM (نسخة محسنة بالكامل)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -2449,29 +2508,57 @@ function renderNotifications() {
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
-        container.innerHTML = '<div class="empty-state">No notifications</div>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications</p><span>You are all caught up!</span></div>';
         return;
     }
     
     let html = "";
     for (const n of sortedNotifs) {
         const date = new Date(n.timestamp);
+        const formattedDateTime = date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
         let iconClass = "info";
-        if (n.type === "success") iconClass = "success";
-        else if (n.type === "error") iconClass = "error";
-        else if (n.type === "warning") iconClass = "warning";
-        else if (n.type === "withdraw") iconClass = "withdraw";
-        else if (n.type === "referral") iconClass = "referral";
+        let iconName = "fa-bell";
+        if (n.type === "success") {
+            iconClass = "success";
+            iconName = "fa-check-circle";
+        } else if (n.type === "error") {
+            iconClass = "error";
+            iconName = "fa-times-circle";
+        } else if (n.type === "warning") {
+            iconClass = "warning";
+            iconName = "fa-exclamation-triangle";
+        } else if (n.type === "withdraw") {
+            iconClass = "withdraw";
+            iconName = "fa-money-bill-wave";
+        } else if (n.type === "referral") {
+            iconClass = "referral";
+            iconName = "fa-user-plus";
+        } else if (n.type === "welcome") {
+            iconClass = "success";
+            iconName = "fa-gift";
+        } else if (n.type === "admin") {
+            iconClass = "info";
+            iconName = "fa-crown";
+        }
         
         html += `
             <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
                 <div class="notification-icon ${iconClass}">
-                    <i class="fas ${n.type === 'success' ? 'fa-check-circle' : n.type === 'error' ? 'fa-times-circle' : n.type === 'warning' ? 'fa-exclamation-triangle' : n.type === 'withdraw' ? 'fa-money-bill-wave' : n.type === 'referral' ? 'fa-user-plus' : 'fa-bell'}"></i>
+                    <i class="fas ${iconName}"></i>
                 </div>
                 <div class="notification-content">
                     <div class="notification-title">${escapeHtml(n.title)}</div>
                     <div class="notification-message">${escapeHtml(n.message)}</div>
-                    <div class="notification-time"><i class="far fa-clock"></i> ${date.toLocaleString()}</div>
+                    <div class="notification-time">
+                        <i class="far fa-clock"></i> ${formattedDateTime}
+                    </div>
                 </div>
             </div>
         `;
@@ -2725,7 +2812,22 @@ function closeConfirmModal() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 18. 🚀 INITIALIZATION
+// 18. 💬 SUPPORT SYSTEM (دالة جديدة للدعم)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function openSupportChat() {
+    const supportUsername = "AdNovaSupport";
+    const url = `https://t.me/${supportUsername}`;
+    
+    if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(url);
+    } else {
+        window.open(url, "_blank");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 19. 🚀 INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function hideSplash() {
@@ -2767,7 +2869,7 @@ if (document.readyState === "loading") {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 19. 🌐 GLOBAL EXPORTS
+// 20. 🌐 GLOBAL EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.switchTab = switchTab;
@@ -2812,10 +2914,13 @@ window.verifyByReferrals = verifyByReferrals;
 window.showReferralInvite = showReferralInvite;
 window.startTonVerification = startTonVerification;
 
+// تصدير دالة الدعم الجديدة
+window.openSupportChat = openSupportChat;
+
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
-console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect");
+console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] New Features: Withdrawal History | Bot Verification | Notification Sort | Method Emojis | Fixed TON Verification");
+console.log("[AdNova] Improved Features: Notifications Layout | Withdrawal History Colors | Status Text | Full DateTime");
 
 // ============================================================================
 // نهاية الملف 🎯
