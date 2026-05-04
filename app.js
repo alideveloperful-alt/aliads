@@ -1210,14 +1210,19 @@ function renderTasks() {
             actionText = "Follow";
         }
         
+        // ✅ الاحتفاظ بالمعرف الأصلي للتحقق (مخفي عن المستخدم)
         const identifier = task.username || task.link || task.identifier || "";
+        
+        // ✅ نص ثابت قصير للمستخدم بدلاً من الرابط
+        const taskHint = "⚡ Instantly reward";
+        
         html += `
             <div class="task-card ${isCompleted ? 'completed' : ''}">
                 <div class="task-left">
                     <div class="task-icon"><i class="${icon}"></i></div>
                     <div class="task-info">
                         <h4>${escapeHtml(task.name)}</h4>
-                        <p>${escapeHtml(identifier)}</p>
+                        <p class="task-hint">${taskHint}</p>
                     </div>
                 </div>
                 <div class="task-right">
