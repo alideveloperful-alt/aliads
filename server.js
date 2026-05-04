@@ -1,15 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - SERVER v14.0 (نسخة نظيفة ومحسنة مع API جديد للسحوبات)
+// ADNOVA NETWORK - SERVER v14.0 (نسخة نظيفة ومحسنة)
 // ============================================================================
 // خادم متكامل مع Firebase، بوت تليجرام، APIs آمنة، إدارة مهام كاملة عبر البوت
 // جميع إدارة المشرف تتم عبر البوت فقط (بدون لوحة مشرف في التطبيق)
 // الميزات: إحالات، مهام، سحوبات، تحقق، TON Connect، بث جماعي
-// ============================================================================
-// التحسينات الجديدة في v14.0:
-// - ✅ إضافة API /api/user/withdrawals/:userId لجلب طلبات السحب من withdrawals collection
-// - ✅ تحسين رسالة الترحيب في /start لتكون أكثر احترافية
-// - ✅ عرض جميع طرق السحب في رسالة الترحيب
-// - ✅ إصلاح مشكلة عرض طلبات السحب في التطبيق
 // ============================================================================
 
 const express = require('express');
@@ -287,10 +281,6 @@ async function verifyChannelMembership(userId, channelUsername) {
     }
 }
 
-// ============================================================================
-// 4.2 رسالة الترحيب المحسنة (مع جميع طرق السحب)
-// ============================================================================
-
 async function sendWelcomeMessage(ctx, userId, userName, isNewUser = false) {
     const welcomeText = 
 `🌟 *WELCOME TO ADNOVA NETWORK* 🌟
@@ -326,17 +316,10 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 
 💳 *WITHDRAWAL METHODS*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• 💳 *PayPal* - Email address
-• 💳 *Skrill* - Email address
-• 🏦 *Payoneer* - Email address
-• ₿ *USDT (BEP20)* - BSC wallet address
-• ₿ *USDT (TRC20)* - TRC20 address
-• 📱 *TON* - TON wallet address
-• 🛡️ *Binance Pay* - Binance ID
-• 📞 *SBP (Russia)* - Phone number (+7)
-• 📱 *Mobile Recharge* - Phone number
-• 🎮 *PUBG UC* - Player ID
-• 💎 *Free Fire* - Player ID
+• 💳 PayPal / Skrill / Payoneer
+• ₿ USDT (BEP20 & TRC20)
+• 📱 TON / SBP (Russia)
+• 🎮 PUBG UC / Free Fire
 
 🚀 *READY TO START?*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -353,7 +336,7 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 }
 
 // ============================================================================
-// 4.3 دوال إدارة طلبات السحب عبر البوت
+// 4.2 دوال إدارة طلبات السحب عبر البوت
 // ============================================================================
 
 async function getUserStatsForWithdrawal(userId) {
@@ -532,7 +515,7 @@ async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
 }
 
 // ============================================================================
-// 4.4 دوال التحقق من المستخدمين (30 إحالة أو TON)
+// 4.3 دوال التحقق من المستخدمين (30 إحالة أو TON)
 // ============================================================================
 
 async function verifyUserByReferrals(userId) {
@@ -626,7 +609,7 @@ async function verifyUserByTon(userId, txHash, amount) {
 }
 
 // ============================================================================
-// 4.5 أوامر البوت العامة
+// 4.4 أوامر البوت العامة
 // ============================================================================
 
 bot.start(async (ctx) => {
@@ -678,7 +661,7 @@ bot.command('help', async (ctx) => {
     await ctx.reply(
         `📚 *HELP CENTER*\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
         `📺 *How to earn?*\n• Watch ads (${APP_CONFIG.dailyAdLimit}/day)\n• Complete tasks\n• Invite friends\n\n` +
-        `💳 *Withdrawal methods:*\n• PayPal / Skrill / Payoneer\n• USDT (BEP20 & TRC20)\n• TON / SBP\n• Mobile recharge\n• PUBG UC / Free Fire\n\n` +
+        `💳 *Withdrawal methods:*\n• PayPal / Skrill / Payoneer\n• USDT (BEP20 & TRC20)\n• TON / SBP\n• Mobile recharge\n\n` +
         `🔐 *Verification:*\n• To withdraw, you need to verify your account\n• Option 1: Invite ${APP_CONFIG.requiredReferralsForVerify} friends (Free)\n• Option 2: Pay 0.01 TON (~$0.02 USD) (Fast)\n\n` +
         `❓ *Need help?* Contact @AdNovaSupport`,
         { parse_mode: 'Markdown' }
@@ -711,7 +694,7 @@ bot.command('tasks', async (ctx) => {
 });
 
 // ============================================================================
-// 4.6 أوامر المشرف المتقدمة (البحث، إضافة/خصم رصيد، تحقق يدوي)
+// 4.5 أوامر المشرف المتقدمة (البحث، إضافة/خصم رصيد، تحقق يدوي)
 // ============================================================================
 
 bot.command('alimenfi', async (ctx) => {
@@ -1100,7 +1083,7 @@ bot.command('users', async (ctx) => {
 });
 
 // ============================================================================
-// 4.7 معالجة الرسائل النصية للمشرف (المصادقة، البث، رفض السحب، إضافة/تعديل المهام)
+// 4.6 معالجة الرسائل النصية للمشرف (المصادقة، البث، رفض السحب، إضافة/تعديل المهام)
 // ============================================================================
 
 bot.on('text', async (ctx) => {
@@ -1358,7 +1341,7 @@ bot.on('text', async (ctx) => {
 });
 
 // ============================================================================
-// 4.8 معالجة أزرار الـ Callback Query
+// 4.7 معالجة أزرار الـ Callback Query
 // ============================================================================
 
 bot.action('my_stats', async (ctx) => {
@@ -1856,47 +1839,6 @@ app.get('/api/user/verification-status/:userId', async (req, res) => {
 });
 
 // ============================================================================
-// 11.6. 🆕 API جلب طلبات السحب للمستخدم من withdrawals collection (مهم جداً!)
-// ============================================================================
-
-app.get('/api/user/withdrawals/:userId', async (req, res) => {
-    if (!db) {
-        return res.json({ success: false, withdrawals: [], error: 'Database not connected' });
-    }
-    
-    try {
-        const userId = req.params.userId;
-        console.log(`📋 Fetching withdrawals for user: ${userId}`);
-        
-        // جلب جميع طلبات السحب الخاصة بهذا المستخدم من collection: withdrawals
-        const withdrawalsSnapshot = await db.collection('withdrawals')
-            .where('userId', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .get();
-        
-        const withdrawals = [];
-        withdrawalsSnapshot.forEach(doc => {
-            const data = doc.data();
-            withdrawals.push({ 
-                id: doc.id, 
-                ...data,
-                // تحويل الـ Timestamp إلى String لتجنب مشاكل JSON
-                createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-                approvedAt: data.approvedAt?.toDate?.()?.toISOString() || data.approvedAt,
-                rejectedAt: data.rejectedAt?.toDate?.()?.toISOString() || data.rejectedAt
-            });
-        });
-        
-        console.log(`✅ Found ${withdrawals.length} withdrawals for user ${userId}`);
-        res.json({ success: true, withdrawals });
-        
-    } catch (error) {
-        console.error('❌ Error fetching withdrawals:', error);
-        res.status(500).json({ success: false, error: error.message, withdrawals: [] });
-    }
-});
-
-// ============================================================================
 // 12. 📋 API جلب المهام
 // ============================================================================
 
@@ -1991,10 +1933,6 @@ app.listen(PORT, () => {
     console.log(`👥 Required Referrals (basic): ${APP_CONFIG.requiredReferrals}`);
     console.log(`🔐 Required Referrals (verification): ${APP_CONFIG.requiredReferralsForVerify}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`🆕 NEW API: /api/user/withdrawals/:userId`);
-    console.log(`   • Fetches withdrawals directly from withdrawals collection`);
-    console.log(`   • Used by frontend to display withdrawal history`);
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`📋 Task Types: channel, bot, youtube, tiktok, twitter`);
     console.log(`📋 Task Management via Bot: ✅ Ready`);
     console.log(`📋 Withdrawal Management via Bot: ✅ Ready`);
@@ -2004,7 +1942,7 @@ app.listen(PORT, () => {
     console.log(`   • Requires reason for rejection`);
     console.log(`   • Automatic balance return on rejection`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`🔐 User Management via Bot: ✅ Complete!`);
+    console.log(`🔐 User Management via Bot: ✅ NEW!`);
     console.log(`   • /searchuser [id] - Search user details`);
     console.log(`   • /addbalance [id] [amount] - Add balance`);
     console.log(`   • /removebalance [id] [amount] - Remove balance`);
@@ -2016,5 +1954,5 @@ app.listen(PORT, () => {
 });
 
 // ============================================================================
-// نهاية الملف 🎯 AdNova Network v14.0
+// نهاية الملف 🎯
 // ============================================================================
