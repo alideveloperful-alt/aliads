@@ -1,12 +1,12 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v13.0 (النسخة المحسنة بالكامل)
+// ADNOVA NETWORK - FRONTEND v13.0 (النسخة النهائية المحسنة)
 // ============================================================================
 // جميع الميزات الأصلية محفوظة بنسبة 100%
-// التحسينات الجديدة فقط في:
-// - renderNotifications() - إعادة هيكلة الإشعارات بشكل احترافي
-// - renderWithdrawalHistory() - إضافة ألوان الحالة ونص الحالة ووقت كامل
-// - showAllWithdrawals() - نفس التحسينات
-// - openSupportChat() - دالة جديدة للدعم (سيتم إضافة الزر في HTML)
+// التحسينات الجديدة:
+// - إضافة دالة openSupportChat() لفتح دردشة الدعم
+// - تحسين عرض Withdrawal History بألوان الحالة ونص الحالة والوقت الكامل
+// - تحسين عرض الإشعارات بهيكل منفصل (عنوان، محتوى، تاريخ)
+// - إصلاح مشكلة تحديث الحالة في تاريخ السحوبات
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -65,7 +65,7 @@ let APP_CONFIG = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 3. 💳 WITHDRAWAL METHODS (مع إضافة الإيموجي للطرق التي لا تدعمها FontAwesome)
+// 3. 💳 WITHDRAWAL METHODS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const WITHDRAWAL_METHODS = [
@@ -1008,6 +1008,7 @@ async function syncWithFirebase() {
             userCompletedTasks = currentUser.completedTasks || [];
             saveUserData();
             updateUI();
+            renderWithdrawalHistory(); // ✅ إضافة هذا السطر لتحديث تاريخ السحوبات
         }
     } catch(e) {
         console.error("Firebase sync error:", e);
@@ -1293,7 +1294,7 @@ async function verifyTask(taskId, type, identifier, reward) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. 💸 WITHDRAW SYSTEM (مع تعديل عرض الأيقونات ونظام التحقق)
+// 10. 💸 WITHDRAW SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawMethods() {
@@ -1339,7 +1340,6 @@ function validateDestination() {
     return true;
 }
 
-// دالة معالجة السحب الفعلية (منفصلة عن التحقق)
 async function processWithdrawal(amount, destination) {
     const btn = document.getElementById("submitWithdrawBtn");
     if (btn) {
@@ -1393,7 +1393,6 @@ async function processWithdrawal(amount, destination) {
     }
 }
 
-// دالة طلب السحب الرئيسية (مع التحقق من حالة المستخدم)
 async function submitWithdraw() {
     const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
     const destination = document.getElementById("wdDestInput")?.value.trim();
@@ -1412,16 +1411,13 @@ async function submitWithdraw() {
     }
     if (!validateDestination()) return;
     
-    // التحقق من حالة التحقق
     if (currentUser.isVerified) {
         await processWithdrawal(amount, destination);
         return;
     }
     
-    // لم يتم التحقق بعد - نعرض نافذة التحقق
     showToast("Verification required", "info");
     
-    // جلب أحدث بيانات المستخدم من الخادم
     try {
         const userRes = await fetch(`/api/users/${currentUserId}`);
         const userData = await userRes.json();
@@ -1445,6 +1441,8 @@ function renderWithdrawalHistory() {
     
     const withdrawals = currentUser.withdrawals || [];
     
+    console.log("📜 Rendering withdrawal history:", withdrawals.length, "requests");
+    
     if (withdrawals.length === 0) {
         container.innerHTML = `
             <div class="empty-history">
@@ -1456,12 +1454,12 @@ function renderWithdrawalHistory() {
         return;
     }
     
-    // عرض آخر 3 سحوبات فقط
     const recentWithdrawals = withdrawals.slice(0, 3);
     let html = "";
     
     for (const wd of recentWithdrawals) {
         const status = wd.status || "pending";
+        
         let statusClass = "";
         let statusText = "";
         let statusIcon = "";
@@ -1550,6 +1548,7 @@ function showAllWithdrawals() {
     
     for (const wd of withdrawals) {
         const status = wd.status || "pending";
+        
         let statusClass = "";
         let statusText = "";
         let statusIcon = "";
@@ -1655,7 +1654,7 @@ function getMethodIcon(methodId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.6. 🔒 VERIFICATION MODAL (نافذة التحقق من البوتات - تصميم فاتح/ذهبي)
+// 10.6. 🔒 VERIFICATION MODAL
 // ══════════════════════════════════════════════════════════════════════════
 
 function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
@@ -1771,18 +1770,15 @@ async function startTonVerification() {
         return;
     }
     
-    // التحقق من وجود عنوان محفظة المنصة
     if (!PLATFORM_TON_WALLET) {
         showToast("Platform wallet not configured. Please contact support.", "error");
         console.error("PLATFORM_TON_WALLET is not set");
         return;
     }
     
-    // التحقق من وجود محفظة متصلة
     if (!tonConnected || !tonWalletAddress) {
         showToast("Please connect your TON wallet first", "info");
         await connectTONWallet();
-        // بعد محاولة الاتصال، نتحقق مرة أخرى
         if (!tonConnected || !tonWalletAddress) {
             showToast("Please connect your TON wallet to continue", "warning");
             return;
@@ -1795,7 +1791,7 @@ async function startTonVerification() {
         validUntil: Math.floor(Date.now() / 1000) + 600,
         messages: [{
             address: PLATFORM_TON_WALLET,
-            amount: "10000000" // 0.01 TON = 10,000,000 nanoTON
+            amount: "10000000"
         }]
     };
     
@@ -2478,7 +2474,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM (نسخة محسنة بالكامل)
+// 14. 🔔 NOTIFICATIONS SYSTEM (نسخة محسنة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -2504,7 +2500,7 @@ function renderNotifications() {
     if (!container || !currentUser) return;
     const notifs = currentUser.notifications || [];
     
-    // عكس الترتيب: الأحدث أولاً
+    // الأحدث أولاً
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
@@ -2681,7 +2677,7 @@ function updateTONUI() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 16. 🎨 UI UPDATES (مع إضافة كرت تاريخ السحوبات وتحسين صورة المستخدم)
+// 16. 🎨 UI UPDATES
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateUI() {
@@ -2723,7 +2719,6 @@ function updateUI() {
     const userChatId = document.getElementById("userChatId");
     if (userChatId) userChatId.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
     
-    // تحسين عرض صورة المستخدم
     const avatarSpan = document.getElementById("userAvatarText");
     const avatarImg = document.getElementById("userAvatarImg");
     if (currentUser.userPhoto && avatarImg) {
@@ -2742,8 +2737,6 @@ function updateUI() {
     
     updateNotificationBadge();
     updateTONUI();
-    
-    // عرض كرت تاريخ السحوبات
     renderWithdrawalHistory();
 }
 
@@ -2907,20 +2900,16 @@ window.closeNotificationsModal = closeNotificationsModal;
 window.connectTONWallet = connectTONWallet;
 window.closeModal = closeModal;
 window.closeConfirmModal = closeConfirmModal;
-
-// تصدير الدوال الجديدة
 window.showAllWithdrawals = showAllWithdrawals;
 window.verifyByReferrals = verifyByReferrals;
 window.showReferralInvite = showReferralInvite;
 window.startTonVerification = startTonVerification;
-
-// تصدير دالة الدعم الجديدة
 window.openSupportChat = openSupportChat;
 
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] Improved Features: Notifications Layout | Withdrawal History Colors | Status Text | Full DateTime");
+console.log("[AdNova] Improved Features: Withdrawal History Colors | Full DateTime | Status Text | Notification Layout");
 
 // ============================================================================
 // نهاية الملف 🎯
