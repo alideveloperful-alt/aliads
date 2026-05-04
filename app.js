@@ -1430,114 +1430,140 @@ async function submitWithdraw() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.5. 📜 WITHDRAWAL HISTORY (نسخة محسنة بالكامل)
+// 10.5. 📜 WITHDRAWAL HISTORY (Clean & Professional)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawalHistory() {
     const container = document.getElementById("withdrawalHistoryList");
     const viewAllBtn = document.getElementById("viewAllWithdrawalsBtn");
-    
+
     if (!container || !currentUser) return;
-    
+
     const withdrawals = currentUser.withdrawals || [];
-    
-    console.log("📜 Rendering withdrawal history:", withdrawals.length, "requests");
-    
+    const notifications = currentUser.notifications || [];
+
     if (withdrawals.length === 0) {
         container.innerHTML = `
             <div class="empty-history">
                 <i class="fas fa-receipt"></i>
-                <span>No withdrawal requests yet</span>
+                <span>📭 No withdrawal requests yet</span>
             </div>
         `;
         if (viewAllBtn) viewAllBtn.style.display = "none";
         return;
     }
-    
+
     const recentWithdrawals = withdrawals.slice(0, 3);
     let html = "";
-    
+
     for (const wd of recentWithdrawals) {
-        const status = wd.status || "pending";
-        
-        let statusClass = "";
+        // Find related notification
+        const relatedNotif = notifications.find(n =>
+            n.type === "withdraw" &&
+            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
+            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
+        );
+
+        // Determine status
+        let status = wd.status || "pending";
+        let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
-        
-        if (status === "approved") {
-            statusClass = "approved";
-            statusText = t("statusApproved");
-            statusIcon = "✅";
-        } else if (status === "rejected") {
-            statusClass = "rejected";
-            statusText = t("statusRejected");
-            statusIcon = "❌";
+        let statusClass = "";
+
+        if (relatedNotif) {
+            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
+                status = "approved";
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
+                status = "rejected";
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
+                if (reasonMatch) rejectReason = reasonMatch[1];
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         } else {
-            statusClass = "pending";
-            statusText = t("statusPending");
-            statusIcon = "⏳";
+            if (status === "approved") {
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (status === "rejected") {
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         }
-        
+
+        // Format date and time
         const date = new Date(wd.date);
         const formattedDateTime = date.toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         });
-        
+
         const methodName = getMethodName(wd.method);
         const methodIcon = getMethodIcon(wd.method);
-        
-        html += `
-            <div class="withdrawal-item ${statusClass}">
-                <div class="withdrawal-left">
-                    <div class="withdrawal-status-icon">${statusIcon}</div>
-                    <div class="withdrawal-info">
-                        <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
-                        <div class="withdrawal-status-text">${statusText}</div>
-                        <div class="withdrawal-details">
-                            <span class="withdrawal-method">
-                                <i class="${methodIcon}"></i> ${methodName}
-                            </span>
-                            <span class="withdrawal-date">
-                                <i class="far fa-clock"></i> ${formattedDateTime}
-                            </span>
-                        </div>
-                        ${wd.rejectReason ? `
-                            <div class="withdrawal-reason-box">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <span class="withdrawal-reason-label">${t("reason")}:</span>
-                                <span class="withdrawal-reason-text">${escapeHtml(wd.rejectReason)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
+
+        // Build the card HTML
+        html += '<div class="withdrawal-item ' + statusClass + '">';
+        html += '<div class="withdrawal-left">';
+        html += '<div class="withdrawal-status-icon">' + statusIcon + '</div>';
+        html += '<div class="withdrawal-info">';
+        html += '<div class="withdrawal-amount">$' + (wd.amount?.toFixed(2) || '0.00') + '</div>';
+        html += '<div class="withdrawal-status-text">' + statusText + '</div>';
+        html += '<div class="withdrawal-details">';
+        html += '<span class="withdrawal-method"><i class="' + methodIcon + '"></i> ' + methodName + '</span>';
+        html += '<span class="withdrawal-date"><i class="far fa-clock"></i> ' + formattedDateTime + '</span>';
+        html += '</div>';
+
+        // Add reject reason if exists
+        if (rejectReason && String(rejectReason).trim().length > 0) {
+            html += '<div class="withdrawal-reason-box">';
+            html += '<i class="fas fa-exclamation-circle"></i>';
+            html += '<span class="withdrawal-reason-label">📝 Reason:</span>';
+            html += '<span class="withdrawal-reason-text">' + escapeHtml(String(rejectReason)) + '</span>';
+            html += '</div>';
+        }
+
+        html += '</div></div></div>';
     }
-    
+
     container.innerHTML = html;
-    
+
     if (viewAllBtn) {
         viewAllBtn.style.display = withdrawals.length > 3 ? "flex" : "none";
     }
 }
 
+// Show all withdrawals in modal
 function showAllWithdrawals() {
     const withdrawals = currentUser?.withdrawals || [];
-    
+    const notifications = currentUser?.notifications || [];
+
     if (withdrawals.length === 0) {
-        showToast("No withdrawal history", "info");
+        showToast("📭 No withdrawal history", "info");
         return;
     }
-    
+
     let modalHtml = `
         <div id="allWithdrawalsModal" class="modal show">
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-history"></i> All Withdrawals</h3>
+                    <h3><i class="fas fa-history"></i> 📜 All Withdrawals</h3>
                     <button class="close-btn" onclick="closeModal('allWithdrawalsModal')">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1545,80 +1571,101 @@ function showAllWithdrawals() {
                 <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
                     <div class="withdrawal-history-list">
     `;
-    
+
     for (const wd of withdrawals) {
-        const status = wd.status || "pending";
-        
-        let statusClass = "";
+        const relatedNotif = notifications.find(n =>
+            n.type === "withdraw" &&
+            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
+            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
+        );
+
+        let status = wd.status || "pending";
+        let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
-        
-        if (status === "approved") {
-            statusClass = "approved";
-            statusText = t("statusApproved");
-            statusIcon = "✅";
-        } else if (status === "rejected") {
-            statusClass = "rejected";
-            statusText = t("statusRejected");
-            statusIcon = "❌";
+        let statusClass = "";
+
+        if (relatedNotif) {
+            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
+                status = "approved";
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
+                status = "rejected";
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
+                if (reasonMatch) rejectReason = reasonMatch[1];
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         } else {
-            statusClass = "pending";
-            statusText = t("statusPending");
-            statusIcon = "⏳";
+            if (status === "approved") {
+                statusText = "✅ Approved";
+                statusIcon = "✅";
+                statusClass = "approved";
+            } else if (status === "rejected") {
+                statusText = "❌ Rejected";
+                statusIcon = "❌";
+                statusClass = "rejected";
+            } else {
+                statusText = "⏳ Pending";
+                statusIcon = "⏳";
+                statusClass = "pending";
+            }
         }
-        
+
         const date = new Date(wd.date);
         const formattedDateTime = date.toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         });
-        
+
         const methodName = getMethodName(wd.method);
         const methodIcon = getMethodIcon(wd.method);
-        
-        modalHtml += `
-            <div class="withdrawal-item ${statusClass}">
-                <div class="withdrawal-left">
-                    <div class="withdrawal-status-icon">${statusIcon}</div>
-                    <div class="withdrawal-info">
-                        <div class="withdrawal-amount">$${wd.amount?.toFixed(2)}</div>
-                        <div class="withdrawal-status-text">${statusText}</div>
-                        <div class="withdrawal-details">
-                            <span class="withdrawal-method">
-                                <i class="${methodIcon}"></i> ${methodName}
-                            </span>
-                            <span class="withdrawal-date">
-                                <i class="far fa-clock"></i> ${formattedDateTime}
-                            </span>
-                        </div>
-                        ${wd.rejectReason ? `
-                            <div class="withdrawal-reason-box">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <span class="withdrawal-reason-label">${t("reason")}:</span>
-                                <span class="withdrawal-reason-text">${escapeHtml(wd.rejectReason)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
+
+        modalHtml += '<div class="withdrawal-item ' + statusClass + '">';
+        modalHtml += '<div class="withdrawal-left">';
+        modalHtml += '<div class="withdrawal-status-icon">' + statusIcon + '</div>';
+        modalHtml += '<div class="withdrawal-info">';
+        modalHtml += '<div class="withdrawal-amount">$' + (wd.amount?.toFixed(2) || '0.00') + '</div>';
+        modalHtml += '<div class="withdrawal-status-text">' + statusText + '</div>';
+        modalHtml += '<div class="withdrawal-details">';
+        modalHtml += '<span class="withdrawal-method"><i class="' + methodIcon + '"></i> ' + methodName + '</span>';
+        modalHtml += '<span class="withdrawal-date"><i class="far fa-clock"></i> ' + formattedDateTime + '</span>';
+        modalHtml += '</div>';
+
+        if (rejectReason && String(rejectReason).trim().length > 0) {
+            modalHtml += '<div class="withdrawal-reason-box">';
+            modalHtml += '<i class="fas fa-exclamation-circle"></i>';
+            modalHtml += '<span class="withdrawal-reason-label">📝 Reason:</span>';
+            modalHtml += '<span class="withdrawal-reason-text">' + escapeHtml(String(rejectReason)) + '</span>';
+            modalHtml += '</div>';
+        }
+
+        modalHtml += '</div></div></div>';
     }
-    
+
     modalHtml += `
                     </div>
                 </div>
             </div>
         </div>
     `;
-    
+
     const oldModal = document.getElementById("allWithdrawalsModal");
     if (oldModal) oldModal.remove();
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Helper functions
 function getMethodName(methodId) {
     const methods = {
         'paypal': 'PayPal',
@@ -1654,8 +1701,8 @@ function getMethodIcon(methodId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.6. 🔒 VERIFICATION MODAL
-// ══════════════════════════════════════════════════════════════════════════
+// 10.6. 🔒 VERIFICATION MODAL (Light/Gold Design)
+// ═══════════════════════════════════════════════════════════════════════════
 
 function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
     pendingWithdrawalData = { amount, destination };
