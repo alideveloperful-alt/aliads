@@ -86,7 +86,7 @@ const APP_CONFIG = {
     adReward: 0.01,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
-    requiredReferrals: 1,
+    requiredReferrals: 0,
     requiredReferralsForVerify: 30,
     botUsername: "AdNovaNetworkBot"
 };
