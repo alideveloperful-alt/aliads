@@ -1,12 +1,11 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v13.0 (النسخة النهائية المحسنة)
+// ADNOVA NETWORK - FRONTEND v14.0 (مع نظام Withdrawals المحسن)
 // ============================================================================
-// جميع الميزات الأصلية محفوظة بنسبة 100%
 // التحسينات الجديدة:
-// - إضافة دالة openSupportChat() لفتح دردشة الدعم
-// - تحسين عرض Withdrawal History بألوان الحالة ونص الحالة والوقت الكامل
-// - تحسين عرض الإشعارات بهيكل منفصل (عنوان، محتوى، تاريخ)
-// - إصلاح مشكلة تحديث الحالة في تاريخ السحوبات
+// - إضافة زر Refresh يدوي لطلبات السحب
+// - قراءة withdrawals مباشرة من API مخصص
+// - تخزين مؤقت في localStorage (صلاحية 5 دقائق)
+// - عرض الحالة مباشرة من wd.status (بدون اعتماد على الإشعارات)
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -48,8 +47,13 @@ let allUsers = [];
 // متغير لتخزين بيانات السحب أثناء التحقق
 let pendingWithdrawalData = null;
 
-// عنوان محفظة TON الخاصة بالمنصة (يتم تعبئته من الخادم)
+// عنوان محفظة TON الخاصة بالمنصة
 let PLATFORM_TON_WALLET = null;
+
+// متغير لتخزين withdrawals من API
+let userWithdrawalsCache = null;
+let withdrawalsLastUpdated = null;
+const WITHDRAWALS_CACHE_DURATION = 5 * 60 * 1000; // 5 دقائق
 
 let APP_CONFIG = {
     welcomeBonus: 0.10,
@@ -119,7 +123,7 @@ async function showAdSequence() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 5. 🌍 TRANSLATION SYSTEM
+// 5. 🌍 TRANSLATION SYSTEM (10 لغات كاملة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const LANGUAGES = [
@@ -204,7 +208,10 @@ const translations = {
         statusApproved: "Approved",
         statusRejected: "Rejected",
         statusPending: "Pending",
-        reason: "Reason"
+        reason: "Reason",
+        refresh: "Refresh",
+        withdrawalHistory: "Withdrawal History",
+        recentRequests: "Your recent withdrawal requests"
     },
     ar: {
         appName: "أد نوفا نتورك",
@@ -274,7 +281,10 @@ const translations = {
         statusApproved: "تمت الموافقة",
         statusRejected: "مرفوض",
         statusPending: "قيد المراجعة",
-        reason: "السبب"
+        reason: "السبب",
+        refresh: "تحديث",
+        withdrawalHistory: "تاريخ السحوبات",
+        recentRequests: "طلبات السحب الأخيرة الخاصة بك"
     },
     es: {
         appName: "AdNova Network",
@@ -344,7 +354,10 @@ const translations = {
         statusApproved: "Aprobado",
         statusRejected: "Rechazado",
         statusPending: "Pendiente",
-        reason: "Razón"
+        reason: "Razón",
+        refresh: "Actualizar",
+        withdrawalHistory: "Historial de Retiros",
+        recentRequests: "Tus solicitudes de retiro recientes"
     },
     fr: {
         appName: "AdNova Network",
@@ -414,7 +427,10 @@ const translations = {
         statusApproved: "Approuvé",
         statusRejected: "Rejeté",
         statusPending: "En attente",
-        reason: "Raison"
+        reason: "Raison",
+        refresh: "Actualiser",
+        withdrawalHistory: "Historique des retraits",
+        recentRequests: "Vos demandes de retrait récentes"
     },
     ru: {
         appName: "AdNova Network",
@@ -445,7 +461,7 @@ const translations = {
         navTasks: "Задания",
         navInvite: "Пригласить",
         navWithdraw: "Вывод",
-        warningsTitle: "Уведомления",
+        notificationsTitle: "Уведомления",
         clearRead: "Очистить прочитанные",
         clearAll: "Очистить все",
         loadingAd: "Загрузка рекламы...",
@@ -484,7 +500,10 @@ const translations = {
         statusApproved: "Одобрен",
         statusRejected: "Отклонен",
         statusPending: "В обработке",
-        reason: "Причина"
+        reason: "Причина",
+        refresh: "Обновить",
+        withdrawalHistory: "История выводов",
+        recentRequests: "Ваши недавние запросы на вывод"
     },
     pt: {
         appName: "AdNova Network",
@@ -554,7 +573,10 @@ const translations = {
         statusApproved: "Aprovado",
         statusRejected: "Rejeitado",
         statusPending: "Pendente",
-        reason: "Motivo"
+        reason: "Motivo",
+        refresh: "Atualizar",
+        withdrawalHistory: "Histórico de Saques",
+        recentRequests: "Seus pedidos de saque recentes"
     },
     hi: {
         appName: "AdNova Network",
@@ -624,7 +646,10 @@ const translations = {
         statusApproved: "स्वीकृत",
         statusRejected: "अस्वीकृत",
         statusPending: "लंबित",
-        reason: "कारण"
+        reason: "कारण",
+        refresh: "ताज़ा करें",
+        withdrawalHistory: "निकासी इतिहास",
+        recentRequests: "आपके हालिया निकासी अनुरोध"
     },
     id: {
         appName: "AdNova Network",
@@ -694,7 +719,10 @@ const translations = {
         statusApproved: "Disetujui",
         statusRejected: "Ditolak",
         statusPending: "Menunggu",
-        reason: "Alasan"
+        reason: "Alasan",
+        refresh: "Segarkan",
+        withdrawalHistory: "Riwayat Penarikan",
+        recentRequests: "Permintaan penarikan terbaru Anda"
     },
     tr: {
         appName: "AdNova Network",
@@ -764,7 +792,10 @@ const translations = {
         statusApproved: "Onaylandı",
         statusRejected: "Reddedildi",
         statusPending: "Beklemede",
-        reason: "Neden"
+        reason: "Neden",
+        refresh: "Yenile",
+        withdrawalHistory: "Çekim Geçmişi",
+        recentRequests: "Son çekim talepleriniz"
     },
     fa: {
         appName: "شبکه ادنوا",
@@ -834,7 +865,10 @@ const translations = {
         statusApproved: "تأیید شده",
         statusRejected: "رد شده",
         statusPending: "در انتظار",
-        reason: "دلیل"
+        reason: "دلیل",
+        refresh: "بازخوانی",
+        withdrawalHistory: "تاریخچه برداشت‌ها",
+        recentRequests: "درخواست‌های برداشت اخیر شما"
     }
 };
 
@@ -924,9 +958,6 @@ async function loadAppConfig() {
             APP_CONFIG = { ...APP_CONFIG, ...data };
             PLATFORM_TON_WALLET = data.platformTonWallet || null;
             console.log("[AdNova] Config loaded");
-            if (PLATFORM_TON_WALLET) {
-                console.log("[AdNova] TON Platform Wallet:", PLATFORM_TON_WALLET);
-            }
         }
     } catch(e) {
         console.error("Config error:", e);
@@ -990,6 +1021,10 @@ async function loadUserData() {
     updateUI();
     await loadTasksFromFirebase();
     checkAdminAndShowCrown();
+    
+    // تحميل طلبات السحب من الـ API الجديد
+    await refreshWithdrawals();
+    
     return currentUser;
 }
 
@@ -1008,7 +1043,6 @@ async function syncWithFirebase() {
             userCompletedTasks = currentUser.completedTasks || [];
             saveUserData();
             updateUI();
-            renderWithdrawalHistory(); // ✅ إضافة هذا السطر لتحديث تاريخ السحوبات
         }
     } catch(e) {
         console.error("Firebase sync error:", e);
@@ -1364,20 +1398,13 @@ async function processWithdrawal(amount, destination) {
         
         if (data.success) {
             currentUser.balance = data.newBalance;
-            currentUser.withdrawals.unshift({
-                id: Date.now(),
-                amount: amount,
-                method: selectedWithdrawMethod,
-                destination: destination,
-                status: "pending",
-                date: new Date().toISOString()
-            });
+            // ✅ تحديث الكاش المحلي بعد إنشاء طلب جديد
+            await refreshWithdrawals();
             saveUserData();
             updateUI();
             showToast("Withdrawal request submitted!", "success");
             document.getElementById("wdAmountInput").value = "";
             document.getElementById("wdDestInput").value = "";
-            renderWithdrawalHistory();
         } else if (data.needVerification) {
             showVerificationModal(data.currentInvites, data.requiredInvites, amount, destination);
         } else {
@@ -1430,17 +1457,70 @@ async function submitWithdraw() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.5. 📜 WITHDRAWAL HISTORY (Clean & Professional)
+// 10.5. 📜 WITHDRAWALS SYSTEM (NEW - قراءة مباشرة من Firebase)
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * جلب طلبات السحب من Firebase عبر API جديد
+ */
+async function refreshWithdrawals() {
+    const refreshBtn = document.getElementById("refreshWithdrawalsBtn");
+    
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    try {
+        console.log("🔄 Fetching withdrawals from API...");
+        const res = await fetch(`/api/user/withdrawals/${currentUserId}`);
+        const data = await res.json();
+        
+        if (data.success && data.withdrawals) {
+            const cacheData = {
+                data: data.withdrawals,
+                lastUpdated: Date.now(),
+                userId: currentUserId
+            };
+            localStorage.setItem(`withdrawals_cache_${currentUserId}`, JSON.stringify(cacheData));
+            userWithdrawalsCache = data.withdrawals;
+            withdrawalsLastUpdated = Date.now();
+            console.log(`✅ Loaded ${data.withdrawals.length} withdrawals from API`);
+            renderWithdrawalHistory();
+        } else {
+            console.warn("⚠️ No withdrawals data from API");
+        }
+    } catch(e) {
+        console.error("❌ Error refreshing withdrawals:", e);
+    } finally {
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        }
+    }
+}
+
+/**
+ * عرض تاريخ السحوبات من الكاش
+ */
 function renderWithdrawalHistory() {
     const container = document.getElementById("withdrawalHistoryList");
     const viewAllBtn = document.getElementById("viewAllWithdrawalsBtn");
 
-    if (!container || !currentUser) return;
-
-    const withdrawals = currentUser.withdrawals || [];
-    const notifications = currentUser.notifications || [];
+    if (!container) return;
+    
+    let withdrawals = userWithdrawalsCache || [];
+    
+    // محاولة القراءة من localStorage إذا لم يكن هناك كاش
+    if (withdrawals.length === 0 && currentUserId) {
+        const cached = localStorage.getItem(`withdrawals_cache_${currentUserId}`);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                withdrawals = parsed.data || [];
+            } catch(e) {}
+        }
+    }
 
     if (withdrawals.length === 0) {
         container.innerHTML = `
@@ -1457,89 +1537,68 @@ function renderWithdrawalHistory() {
     let html = "";
 
     for (const wd of recentWithdrawals) {
-        // Find related notification
-        const relatedNotif = notifications.find(n =>
-            n.type === "withdraw" &&
-            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
-            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
-        );
-
-        // Determine status
-        let status = wd.status || "pending";
+        const status = wd.status || "pending";
         let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
         let statusClass = "";
 
-        if (relatedNotif) {
-            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
-                status = "approved";
-                statusText = "✅ Approved";
-                statusIcon = "✅";
-                statusClass = "approved";
-            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
-                status = "rejected";
-                statusText = "❌ Rejected";
-                statusIcon = "❌";
-                statusClass = "rejected";
-                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
-                if (reasonMatch) rejectReason = reasonMatch[1];
-            } else {
-                statusText = "⏳ Pending";
-                statusIcon = "⏳";
-                statusClass = "pending";
-            }
+        if (status === "approved") {
+            statusText = "✅ Approved";
+            statusIcon = "✅";
+            statusClass = "approved";
+        } else if (status === "rejected") {
+            statusText = "❌ Rejected";
+            statusIcon = "❌";
+            statusClass = "rejected";
+            rejectReason = wd.rejectReason || null;
         } else {
-            if (status === "approved") {
-                statusText = "✅ Approved";
-                statusIcon = "✅";
-                statusClass = "approved";
-            } else if (status === "rejected") {
-                statusText = "❌ Rejected";
-                statusIcon = "❌";
-                statusClass = "rejected";
-            } else {
-                statusText = "⏳ Pending";
-                statusIcon = "⏳";
-                statusClass = "pending";
-            }
+            statusText = "⏳ Pending";
+            statusIcon = "⏳";
+            statusClass = "pending";
         }
 
-        // Format date and time
-        const date = new Date(wd.date);
-        const formattedDateTime = date.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        let formattedDateTime = "Just now";
+        if (wd.createdAt) {
+            let date;
+            if (wd.createdAt.toDate) {
+                date = wd.createdAt.toDate();
+            } else if (wd.createdAt._seconds) {
+                date = new Date(wd.createdAt._seconds * 1000);
+            } else {
+                date = new Date(wd.createdAt);
+            }
+            formattedDateTime = date.toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
 
         const methodName = getMethodName(wd.method);
         const methodIcon = getMethodIcon(wd.method);
 
-        // Build the card HTML
-        html += '<div class="withdrawal-item ' + statusClass + '">';
-        html += '<div class="withdrawal-left">';
-        html += '<div class="withdrawal-status-icon">' + statusIcon + '</div>';
-        html += '<div class="withdrawal-info">';
-        html += '<div class="withdrawal-amount">$' + (wd.amount?.toFixed(2) || '0.00') + '</div>';
-        html += '<div class="withdrawal-status-text">' + statusText + '</div>';
-        html += '<div class="withdrawal-details">';
-        html += '<span class="withdrawal-method"><i class="' + methodIcon + '"></i> ' + methodName + '</span>';
-        html += '<span class="withdrawal-date"><i class="far fa-clock"></i> ' + formattedDateTime + '</span>';
-        html += '</div>';
+        html += `<div class="withdrawal-item ${statusClass}">`;
+        html += `<div class="withdrawal-status-icon">${statusIcon}</div>`;
+        html += `<div class="withdrawal-info">`;
+        html += `<div class="withdrawal-amount">$${(wd.amount || 0).toFixed(2)}</div>`;
+        html += `<div class="withdrawal-status-text">${statusText}</div>`;
+        html += `<div class="withdrawal-details">`;
+        html += `<span class="withdrawal-method"><i class="${methodIcon}"></i> ${methodName}</span>`;
+        html += `<span class="withdrawal-date"><i class="far fa-calendar-alt"></i> ${formattedDateTime}</span>`;
+        html += `</div>`;
 
-        // Add reject reason if exists
-        if (rejectReason && String(rejectReason).trim().length > 0) {
-            html += '<div class="withdrawal-reason-box">';
-            html += '<i class="fas fa-exclamation-circle"></i>';
-            html += '<span class="withdrawal-reason-label">📝 Reason:</span>';
-            html += '<span class="withdrawal-reason-text">' + escapeHtml(String(rejectReason)) + '</span>';
-            html += '</div>';
+        if (status === "rejected" && rejectReason && String(rejectReason).trim().length > 0) {
+            html += `<div class="withdrawal-reason-box">`;
+            html += `<i class="fas fa-exclamation-circle"></i>`;
+            html += `<span class="withdrawal-reason-label">📝 Reason:</span>`;
+            html += `<span class="withdrawal-reason-text">${escapeHtml(String(rejectReason))}</span>`;
+            html += `</div>`;
         }
 
-        html += '</div></div></div>';
+        html += `</div></div>`;
     }
 
     container.innerHTML = html;
@@ -1550,9 +1609,18 @@ function renderWithdrawalHistory() {
 }
 
 // Show all withdrawals in modal
-function showAllWithdrawals() {
-    const withdrawals = currentUser?.withdrawals || [];
-    const notifications = currentUser?.notifications || [];
+async function showAllWithdrawals() {
+    let withdrawals = userWithdrawalsCache || [];
+    
+    if (withdrawals.length === 0 && currentUserId) {
+        const cached = localStorage.getItem(`withdrawals_cache_${currentUserId}`);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                withdrawals = parsed.data || [];
+            } catch(e) {}
+        }
+    }
 
     if (withdrawals.length === 0) {
         showToast("📭 No withdrawal history", "info");
@@ -1573,84 +1641,68 @@ function showAllWithdrawals() {
     `;
 
     for (const wd of withdrawals) {
-        const relatedNotif = notifications.find(n =>
-            n.type === "withdraw" &&
-            n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
-            Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
-        );
-
-        let status = wd.status || "pending";
+        const status = wd.status || "pending";
         let rejectReason = wd.rejectReason || null;
         let statusText = "";
         let statusIcon = "";
         let statusClass = "";
 
-        if (relatedNotif) {
-            if (relatedNotif.title.includes("Approved") || relatedNotif.message.includes("approved")) {
-                status = "approved";
-                statusText = "✅ Approved";
-                statusIcon = "✅";
-                statusClass = "approved";
-            } else if (relatedNotif.title.includes("Rejected") || relatedNotif.message.includes("rejected")) {
-                status = "rejected";
-                statusText = "❌ Rejected";
-                statusIcon = "❌";
-                statusClass = "rejected";
-                const reasonMatch = relatedNotif.message.match(/Reason: (.*)/i);
-                if (reasonMatch) rejectReason = reasonMatch[1];
-            } else {
-                statusText = "⏳ Pending";
-                statusIcon = "⏳";
-                statusClass = "pending";
-            }
+        if (status === "approved") {
+            statusText = "✅ Approved";
+            statusIcon = "✅";
+            statusClass = "approved";
+        } else if (status === "rejected") {
+            statusText = "❌ Rejected";
+            statusIcon = "❌";
+            statusClass = "rejected";
+            rejectReason = wd.rejectReason || null;
         } else {
-            if (status === "approved") {
-                statusText = "✅ Approved";
-                statusIcon = "✅";
-                statusClass = "approved";
-            } else if (status === "rejected") {
-                statusText = "❌ Rejected";
-                statusIcon = "❌";
-                statusClass = "rejected";
-            } else {
-                statusText = "⏳ Pending";
-                statusIcon = "⏳";
-                statusClass = "pending";
-            }
+            statusText = "⏳ Pending";
+            statusIcon = "⏳";
+            statusClass = "pending";
         }
 
-        const date = new Date(wd.date);
-        const formattedDateTime = date.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        let formattedDateTime = "Just now";
+        if (wd.createdAt) {
+            let date;
+            if (wd.createdAt.toDate) {
+                date = wd.createdAt.toDate();
+            } else if (wd.createdAt._seconds) {
+                date = new Date(wd.createdAt._seconds * 1000);
+            } else {
+                date = new Date(wd.createdAt);
+            }
+            formattedDateTime = date.toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
 
         const methodName = getMethodName(wd.method);
         const methodIcon = getMethodIcon(wd.method);
 
-        modalHtml += '<div class="withdrawal-item ' + statusClass + '">';
-        modalHtml += '<div class="withdrawal-left">';
-        modalHtml += '<div class="withdrawal-status-icon">' + statusIcon + '</div>';
-        modalHtml += '<div class="withdrawal-info">';
-        modalHtml += '<div class="withdrawal-amount">$' + (wd.amount?.toFixed(2) || '0.00') + '</div>';
-        modalHtml += '<div class="withdrawal-status-text">' + statusText + '</div>';
-        modalHtml += '<div class="withdrawal-details">';
-        modalHtml += '<span class="withdrawal-method"><i class="' + methodIcon + '"></i> ' + methodName + '</span>';
-        modalHtml += '<span class="withdrawal-date"><i class="far fa-clock"></i> ' + formattedDateTime + '</span>';
-        modalHtml += '</div>';
+        modalHtml += `<div class="withdrawal-item ${statusClass}">`;
+        modalHtml += `<div class="withdrawal-status-icon">${statusIcon}</div>`;
+        modalHtml += `<div class="withdrawal-info">`;
+        modalHtml += `<div class="withdrawal-amount">$${(wd.amount || 0).toFixed(2)}</div>`;
+        modalHtml += `<div class="withdrawal-status-text">${statusText}</div>`;
+        modalHtml += `<div class="withdrawal-details">`;
+        modalHtml += `<span class="withdrawal-method"><i class="${methodIcon}"></i> ${methodName}</span>`;
+        modalHtml += `<span class="withdrawal-date"><i class="far fa-calendar-alt"></i> ${formattedDateTime}</span>`;
+        modalHtml += `</div>`;
 
-        if (rejectReason && String(rejectReason).trim().length > 0) {
-            modalHtml += '<div class="withdrawal-reason-box">';
-            modalHtml += '<i class="fas fa-exclamation-circle"></i>';
-            modalHtml += '<span class="withdrawal-reason-label">📝 Reason:</span>';
-            modalHtml += '<span class="withdrawal-reason-text">' + escapeHtml(String(rejectReason)) + '</span>';
-            modalHtml += '</div>';
+        if (status === "rejected" && rejectReason && String(rejectReason).trim().length > 0) {
+            modalHtml += `<div class="withdrawal-reason-box">`;
+            modalHtml += `<i class="fas fa-exclamation-circle"></i>`;
+            modalHtml += `<span class="withdrawal-reason-label">📝 Reason:</span>`;
+            modalHtml += `<span class="withdrawal-reason-text">${escapeHtml(String(rejectReason))}</span>`;
+            modalHtml += `</div>`;
         }
 
-        modalHtml += '</div></div></div>';
+        modalHtml += `</div></div>`;
     }
 
     modalHtml += `
@@ -1665,7 +1717,6 @@ function showAllWithdrawals() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Helper functions
 function getMethodName(methodId) {
     const methods = {
         'paypal': 'PayPal',
@@ -1701,7 +1752,7 @@ function getMethodIcon(methodId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.6. 🔒 VERIFICATION MODAL (Light/Gold Design)
+// 10.6. 🔒 VERIFICATION MODAL
 // ═══════════════════════════════════════════════════════════════════════════
 
 function showVerificationModal(currentInvites, requiredInvites, amount, destination) {
@@ -1819,7 +1870,6 @@ async function startTonVerification() {
     
     if (!PLATFORM_TON_WALLET) {
         showToast("Platform wallet not configured. Please contact support.", "error");
-        console.error("PLATFORM_TON_WALLET is not set");
         return;
     }
     
@@ -2521,7 +2571,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM (نسخة محسنة)
+// 14. 🔔 NOTIFICATIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -2547,7 +2597,6 @@ function renderNotifications() {
     if (!container || !currentUser) return;
     const notifs = currentUser.notifications || [];
     
-    // الأحدث أولاً
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
@@ -2852,7 +2901,7 @@ function closeConfirmModal() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 18. 💬 SUPPORT SYSTEM (دالة جديدة للدعم)
+// 18. 💬 SUPPORT SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
 function openSupportChat() {
@@ -2952,12 +3001,11 @@ window.verifyByReferrals = verifyByReferrals;
 window.showReferralInvite = showReferralInvite;
 window.startTonVerification = startTonVerification;
 window.openSupportChat = openSupportChat;
+window.refreshWithdrawals = refreshWithdrawals;
 
-console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
-console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
-console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] Improved Features: Withdrawal History Colors | Full DateTime | Status Text | Notification Layout");
+console.log("[AdNova] Platform ready v14.0");
+console.log("[AdNova] Features: Withdrawal History Cache | Refresh Button | Direct Firebase Reading");
 
 // ============================================================================
-// نهاية الملف 🎯
+// نهاية الملف 🎯 AdNova Network v14.0
 // ============================================================================
