@@ -75,7 +75,7 @@
     <div id="mainContent" style="display: none;">
         
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 3. 🎨 HEADER -->
+        <!-- 3. 🎨 HEADER (مع إضافة أيقونة الدعم) -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         
         <header>
@@ -84,6 +84,11 @@
                     <circle cx="50" cy="50" r="48" fill="#d4af37" stroke="#b8920e" stroke-width="2"/>
                     <text x="50" y="68" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">A</text>
                 </svg>
+                <!-- ✅ أيقونة الدعم الجديدة - بنفس تصميم أزرار اللغة والإشعارات -->
+                <button class="support-btn" id="supportBtn" onclick="openSupportChat()">
+                    <i class="fas fa-headset"></i>
+                    <span class="support-btn-label">Support</span>
+                </button>
             </div>
             <div class="header-right">
                 <button class="lang-btn" id="langBtn" onclick="openLanguageModal()">
