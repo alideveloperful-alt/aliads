@@ -2771,6 +2771,80 @@ function updateTONUI() {
     }
 }
 
+// ✅ دالة التحقق عبر TON (معدلة مع إغلاق نافذة التحقق أولاً)
+async function startTonVerification() {
+    // ✅ إغلاق نافذة التحقق أولاً لتجنب التداخل
+    closeModal('verificationModal');
+    
+    if (!window.tonConnectUI) {
+        showToast("TON Connect not ready", "error");
+        return;
+    }
+    
+    if (!PLATFORM_TON_WALLET) {
+        showToast("Platform wallet not configured. Please contact support.", "error");
+        console.error("PLATFORM_TON_WALLET is not set");
+        return;
+    }
+    
+    if (!tonConnected || !tonWalletAddress) {
+        showToast("Please connect your TON wallet first", "info");
+        await connectTONWallet();
+        if (!tonConnected || !tonWalletAddress) {
+            showToast("Please connect your TON wallet to continue", "warning");
+            return;
+        }
+    }
+    
+    showToast("Please confirm transaction in TON Wallet...", "info");
+    
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [{
+            address: PLATFORM_TON_WALLET,
+            amount: "10000000"
+        }]
+    };
+    
+    try {
+        const result = await window.tonConnectUI.sendTransaction(transaction);
+        
+        const response = await fetch("/api/ton/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                txHash: result.boc,
+                amount: "0.01"
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.tonWalletVerified = true;
+            currentUser.verificationMethod = 'ton';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            } else {
+                updateUI();
+            }
+        } else {
+            showToast("Verification failed: " + (data.error || "Unknown error"), "error");
+        }
+    } catch(e) {
+        console.error("Transaction error:", e);
+        showToast("Transaction cancelled or failed", "warning");
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 16. 🎨 UI UPDATES
 // ═══════════════════════════════════════════════════════════════════════════
