@@ -175,10 +175,11 @@ const AD_PLATFORMS = [
 // حذف AdsGram مؤقتاً
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 🎬 AD DISPLAY FUNCTIONS (مطلوبة لتشغيل الإعلانات)
+// 4.1. 🎬 AD INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-let adPlatformsInitialized = false;
+// ملاحظة: المتغير adPlatformsInitialized معرف مسبقاً في الـ Global State (السطر 213)
+// لا تعرفه مرة أخرى هنا!
 
 function initAdPlatforms() {
     if (adPlatformsInitialized) return;
@@ -198,6 +199,10 @@ function initAdPlatforms() {
     
     adPlatformsInitialized = true;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4.2. 🎬 SINGLE AD DISPLAY
+// ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd() {
     // خلط عشوائي للمنصات (مثل REFI تماماً)
@@ -223,6 +228,10 @@ async function showSingleAd() {
     
     return false;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4.3. 🎬 AD SEQUENCE (2 ADS REQUIRED FOR REWARD)
+// ═══════════════════════════════════════════════════════════════════════════
 
 async function showAdSequence() {
     let successCount = 0;
