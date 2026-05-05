@@ -3245,6 +3245,28 @@ body.rtl #notificationsList .notification-item.unread {
     border-left: none !important;
     border-right: 3px solid #d4af37 !important;
 }
+
+/* تحسين صفحة المهام - سكرول داخلي */
+.task-wrapper-card {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* تخصيص شريط التمرير */
+.task-wrapper-card::-webkit-scrollbar {
+    width: 4px;
+}
+
+.task-wrapper-card::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.task-wrapper-card::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 4px;
+}
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
