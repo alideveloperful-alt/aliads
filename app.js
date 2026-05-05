@@ -69,16 +69,15 @@ let APP_CONFIG = {
 
 const WITHDRAWAL_METHODS = [
     { id: "paypal", name: "PayPal", icon: "fab fa-paypal", emoji: null, placeholder: "example@email.com", label: "PayPal Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    { id: "skrill", name: "Skrill", icon: null, emoji: "💳", placeholder: "example@email.com", label: "Skrill Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    { id: "payoneer", name: "Payoneer", icon: null, emoji: "🏦", placeholder: "example@email.com", label: "Payoneer Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    { id: "payoneer", name: "Payoneer", icon: "fas fa-university", emoji: null, placeholder: "example@email.com", label: "Payoneer Email", regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     { id: "usdt_bep20", name: "USDT (BEP20)", icon: "fab fa-bitcoin", emoji: null, placeholder: "0x...", label: "BSC Wallet Address", regex: /^0x[a-fA-F0-9]{40}$/ },
     { id: "usdt_trc20", name: "USDT (TRC20)", icon: "fab fa-bitcoin", emoji: null, placeholder: "T...", label: "TRC20 Address", regex: /^T[a-zA-Z0-9]{33}$/ },
     { id: "ton", name: "TON", icon: "fab fa-telegram", emoji: null, placeholder: "EQ...", label: "TON Address", regex: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/ },
-    { id: "binance_pay", name: "Binance Pay", icon: null, emoji: "🛡️", placeholder: "Binance ID", label: "Binance ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
+    { id: "binance_pay", name: "Binance Pay", icon: "fas fa-shield-alt", emoji: null, placeholder: "Binance ID", label: "Binance ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
     { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone", emoji: null, placeholder: "+71234567890", label: "Phone +7", regex: /^\+7\d{10}$/ },
     { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", emoji: null, placeholder: "+1234567890", label: "Phone Number", regex: /^\+\d{10,15}$/ },
     { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", emoji: null, placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
-    { id: "freefire", name: "Free Fire", icon: null, emoji: "💎", placeholder: "Player ID", label: "Free Fire ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
+    { id: "freefire", name: "Free Fire", icon: "fas fa-gem", emoji: null, placeholder: "Player ID", label: "Free Fire ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
