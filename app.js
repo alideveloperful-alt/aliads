@@ -174,6 +174,82 @@ const AD_PLATFORMS = [
 
 // حذف AdsGram مؤقتاً
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎬 AD DISPLAY FUNCTIONS (مطلوبة لتشغيل الإعلانات)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let adPlatformsInitialized = false;
+
+function initAdPlatforms() {
+    if (adPlatformsInitialized) return;
+    
+    console.log("🎬 Initializing ad platforms...");
+    
+    AD_PLATFORMS.forEach(platform => {
+        if (platform.init) {
+            try {
+                platform.init();
+                console.log(`✅ ${platform.name} initialized`);
+            } catch(e) {
+                console.log(`❌ ${platform.name} init failed:`, e);
+            }
+        }
+    });
+    
+    adPlatformsInitialized = true;
+}
+
+async function showSingleAd() {
+    // خلط عشوائي للمنصات (مثل REFI تماماً)
+    const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
+    
+    for (const platform of shuffled) {
+        try {
+            console.log(`📢 Trying ad from: ${platform.name}`);
+            
+            // تهيئة المنصة إذا كانت تحتاج
+            if (platform.init) {
+                platform.init();
+            }
+            
+            // عرض الإعلان
+            await platform.show();
+            console.log(`✅ Ad completed from: ${platform.name}`);
+            return true;
+        } catch(error) {
+            console.log(`❌ Ad failed from ${platform.name}:`, error);
+        }
+    }
+    
+    return false;
+}
+
+async function showAdSequence() {
+    let successCount = 0;
+    
+    console.log("🎬 Starting ad sequence (2 ads required)");
+    
+    // عرض إعلانين متتاليين (مثل REFI تماماً)
+    for (let i = 0; i < 2; i++) {
+        const shown = await showSingleAd();
+        if (shown) {
+            successCount++;
+            console.log(`📊 Ad ${i+1}/2 completed`);
+        } else {
+            console.log(`❌ Ad ${i+1}/2 failed, stopping sequence`);
+            break;
+        }
+        // انتظار قصير بين الإعلانين
+        if (i === 0) {
+            await new Promise(r => setTimeout(r, 1000));
+        }
+    }
+    
+    const result = successCount === 2;
+    console.log(`🎬 Ad sequence result: ${result ? "SUCCESS" : "FAILED"} (${successCount}/2 ads)`);
+    return result;
+}
+
 const LANGUAGES = [
     { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", dir: "ltr" },
     { code: "ar", name: "Arabic", nativeName: "العربية", flag: "🇸🇦", dir: "rtl" },
