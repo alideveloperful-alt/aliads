@@ -1195,8 +1195,7 @@ bot.on('text', async (ctx) => {
                 `🔗 *Identifier:* ${taskSession.identifier}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
                 `💰 *Step 4:* Enter reward amount (USD):\n` +
                 `• Example: 0.05, 0.10, 0.25\n\n` +
-                `📝 *Type the reward:*`,
-                { parse_mode: 'Markdown' }
+                `📝 Type the reward:`
             );
         } else if (taskSession.step === 'reward') {
             const reward = parseFloat(message);
@@ -1214,8 +1213,7 @@ bot.on('text', async (ctx) => {
                 `• \`daily\` - Resets every day\n` +
                 `• \`weekly\` - Resets every week\n` +
                 `• \`once\` - One time only\n\n` +
-                `📝 *Type the reset period:*`,
-                { parse_mode: 'Markdown' }
+                `📝 Type the reset period:`
             );
         } else if (taskSession.step === 'resetPeriod') {
             const validPeriods = ['daily', 'weekly', 'once'];
