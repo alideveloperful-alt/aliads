@@ -1534,9 +1534,86 @@ app.get('/api/ping', (req, res) => {
 });
 
 // ============================================================================
-// 7. 👤 APIs المستخدمين
+// 6.1. 🎬 مزامنة بيانات الإعلانات من الكاش (كل 6 ساعات)
 // ============================================================================
 
+app.post('/api/sync-ads', async (req, res) => {
+    try {
+        const { userId, adData } = req.body;
+        
+        if (!userId || !adData) {
+            return res.json({ success: false, error: 'Missing userId or adData' });
+        }
+        
+        if (!db) {
+            return res.json({ success: false, error: 'Database not connected' });
+        }
+        
+        const { balance, totalEarned, adsWatched, adsToday, lastAdDate } = adData;
+        
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            return res.json({ success: false, error: 'User not found' });
+        }
+        
+        const currentData = userDoc.data();
+        
+        // نأخذ القيمة الأكبر لحماية المستخدم من فقدان البيانات
+        const updates = {};
+        
+        if (balance > (currentData.balance || 0)) {
+            updates.balance = balance;
+        }
+        if (totalEarned > (currentData.totalEarned || 0)) {
+            updates.totalEarned = totalEarned;
+        }
+        if (adsWatched > (currentData.adsWatched || 0)) {
+            updates.adsWatched = adsWatched;
+        }
+        if (adsToday !== undefined && adsToday !== (currentData.adsToday || 0)) {
+            updates.adsToday = adsToday;
+            updates.lastAdDate = lastAdDate || new Date().toISOString().split('T')[0];
+        }
+        
+        if (Object.keys(updates).length > 0) {
+            await userRef.update(updates);
+            console.log(`✅ Synced ads data for ${userId}: balance:$${updates.balance || currentData.balance}`);
+        }
+        
+        res.json({ success: true, message: 'Ad data synced successfully' });
+        
+    } catch (error) {
+        console.error('Sync ads error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// تسجيل مشاهدة إعلان (اختياري، للتتبع فقط)
+app.post('/api/ad-watched', async (req, res) => {
+    // نرجح نجاح فوري دون انتظار
+    res.json({ success: true });
+    
+    // تسجيل في الخلفية (اختياري للإحصائيات)
+    (async () => {
+        try {
+            const { initData } = req.body;
+            if (!initData) return;
+            
+            const params = new URLSearchParams(initData);
+            const userJson = params.get('user');
+            if (!userJson) return;
+            
+            const user = JSON.parse(decodeURIComponent(userJson));
+            console.log(`📺 Ad watched by ${user.id}`);
+        } catch(e) {}
+    })();
+});
+
+// ============================================================================
+// 7. 👤 APIs المستخدمين
+// ============================================================================
 app.post('/api/init-user', async (req, res) => {
     try {
         const { initData } = req.body;
