@@ -81,44 +81,98 @@ const WITHDRAWAL_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🎬 AD PLATFORMS
+// 4. 🎬 AD PLATFORMS (محدث حسب SDKs الرسمية)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AD_PLATFORMS = [
-    { name: "Monetag", show: () => typeof show_10950362 === "function" ? show_10950362() : Promise.reject() },
-    { name: "OnClickA", init: () => { if (typeof window.initCdTma === "function") { window.initCdTma({ id: '6118161' }).then(s => window.showOnClickaAd = s); } }, show: () => window.showOnClickaAd ? window.showOnClickaAd() : Promise.reject() },
-    { name: "RichAds", init: () => { if (typeof TelegramAdsController !== "undefined") { window.richadsController = new TelegramAdsController(); window.richadsController.initialize({ pubId: "1009657", appId: "7284", debug: false }); } }, show: () => new Promise((resolve, reject) => { if (!window.richadsController) reject(); let tid = setTimeout(() => reject(), 15000); window.richadsController.triggerInterstitialVideo?.().then(() => { clearTimeout(tid); resolve(); }).catch(reject); }) },
-    { name: "Adexium", init: () => { if (typeof AdexiumWidget !== "undefined") { window.adexiumWidget = new AdexiumWidget({ wid: '074d0b62-98c8-430a-8ad9-183693879f0d', adFormat: 'interstitial' }); } }, show: () => new Promise((resolve, reject) => { if (!window.adexiumWidget) reject(); let tid = setTimeout(() => reject(), 15000); window.adexiumWidget.on("adPlaybackCompleted", () => { clearTimeout(tid); resolve(); }); window.adexiumWidget.requestAd("interstitial"); }) },
-    { name: "AdsGram", init: () => { if (typeof Adsgram !== "undefined") { window.AdsgramController = Adsgram.init({ blockId: "int-28433" }); } }, show: () => new Promise((resolve, reject) => { if (!window.AdsgramController) reject(); let tid = setTimeout(() => reject(), 15000); window.AdsgramController.show().then(() => { clearTimeout(tid); resolve(); }).catch(reject); }) }
+    {
+        name: "Monetag",
+        show: () => {
+            if (typeof show_10950362 === "function") {
+                return show_10950362();
+            }
+            return Promise.reject("Monetag not ready");
+        }
+    },
+    {
+        name: "OnClickA",
+        init: () => {
+            if (typeof window.initCdTma === "function") {
+                window.initCdTma({ id: '6118161' }).then(show => {
+                    window.showOnClickAd = show;
+                    console.log("✅ OnClickA initialized");
+                }).catch(e => console.error("OnClickA init error:", e));
+            }
+        },
+        show: () => {
+            if (window.showOnClickAd && typeof window.showOnClickAd === "function") {
+                return window.showOnClickAd();
+            }
+            return Promise.reject("OnClickA not ready");
+        }
+    },
+    {
+        name: "RichAds",
+        init: () => {
+            if (typeof TelegramAdsController !== "undefined" && !window.richadsController) {
+                try {
+                    window.richadsController = new TelegramAdsController();
+                    window.richadsController.initialize({
+                        pubId: "1009657",
+                        appId: "7284",
+                        debug: false
+                    });
+                    console.log("✅ RichAds initialized");
+                } catch(e) {
+                    console.error("RichAds init error:", e);
+                }
+            }
+        },
+        show: () => {
+            if (window.richadsController && typeof window.richadsController.triggerInterstitialVideo === "function") {
+                return window.richadsController.triggerInterstitialVideo();
+            }
+            return Promise.reject("RichAds not ready");
+        }
+    },
+    {
+        name: "Adexium",
+        init: () => {
+            if (typeof AdexiumWidget !== "undefined" && !window.adexiumWidget) {
+                try {
+                    window.adexiumWidget = new AdexiumWidget({
+                        wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                        adFormat: 'interstitial'
+                    });
+                    console.log("✅ Adexium initialized");
+                } catch(e) {
+                    console.error("Adexium init error:", e);
+                }
+            }
+        },
+        show: () => {
+            return new Promise((resolve, reject) => {
+                if (!window.adexiumWidget) {
+                    reject("Adexium not ready");
+                    return;
+                }
+                
+                const timeout = setTimeout(() => reject("Adexium timeout"), 15000);
+                
+                const onCompleted = () => {
+                    window.adexiumWidget.off("adPlaybackCompleted", onCompleted);
+                    clearTimeout(timeout);
+                    resolve();
+                };
+                
+                window.adexiumWidget.on("adPlaybackCompleted", onCompleted);
+                window.adexiumWidget.requestAd("interstitial");
+            });
+        }
+    }
 ];
 
-function initAdPlatforms() {
-    if (adPlatformsInitialized) return;
-    AD_PLATFORMS.forEach(p => { if (p.init) try { p.init(); } catch(e) {} });
-    adPlatformsInitialized = true;
-}
-
-async function showSingleAd() {
-    const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
-    for (const p of shuffled) {
-        try { await p.show(); return true; } catch(e) {}
-    }
-    return false;
-}
-
-async function showAdSequence() {
-    let successCount = 0;
-    for (let i = 0; i < 2; i++) {
-        const shown = await showSingleAd();
-        if (shown) successCount++;
-        if (!shown) break;
-    }
-    return successCount === 2;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 5. 🌍 TRANSLATION SYSTEM (كامل)
-// ═══════════════════════════════════════════════════════════════════════════
+// حذف AdsGram مؤقتاً
 
 const LANGUAGES = [
     { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", dir: "ltr" },
