@@ -114,7 +114,6 @@ if (serviceAccount) {
 // ============================================================================
 
 const bot = new Telegraf(BOT_TOKEN);
-bot.use(Telegraf.ignoreMarkdown());
 const botAdminSessions = new Map();
 const taskCreationSessions = new Map();
 const taskEditSessions = new Map();
@@ -126,7 +125,6 @@ let withdrawalsCache = [];
 // ============================================================================
 // 4.1 دوال مساعدة عامة
 // ============================================================================
-
 async function addNotification(targetUserId, notification) {
     if (!db) return false;
     try {
