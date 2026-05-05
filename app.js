@@ -275,6 +275,8 @@ const LANGUAGES = [
 const translations = {
     en: {
         appName: "AdNova Network",
+        withdrawalHistory: "Withdrawal History",
+        recentRequests: "Your recent withdrawal requests",
         totalBalance: "Total Balance",
         availableToWithdraw: "Available to withdraw",
         watchAds: "Watch Ads",
