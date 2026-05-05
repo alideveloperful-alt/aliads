@@ -1,10 +1,9 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v14.0 (النسخة النهائية المحسنة بالكامل)
+// ADNOVA NETWORK - FRONTEND v15.0 (مع تحسين أداء الإعلانات)
 // ============================================================================
-// جميع الميزات الأصلية محفوظة بنسبة 100%
 // التحسينات الجديدة:
-// - تحسين عرض الإشعارات بشكل احترافي (عنوان، محتوى، تاريخ)
-// - إصلاح مشكلة حالة السحب: تحديث فوري من الإشعار مع دمج البيانات
+// - تخزين بيانات الإعلانات في localStorage مع تسجيل دوري إلى Firebase كل 6 ساعات
+// - تسريع تجربة مشاهدة الإعلانات بشكل كبير
 // - الحفاظ على جميع الميزات والوظائف الحالية
 // ============================================================================
 
@@ -50,6 +49,18 @@ let pendingWithdrawalData = null;
 // عنوان محفظة TON الخاصة بالمنصة (يتم تعبئته من الخادم)
 let PLATFORM_TON_WALLET = null;
 
+// ========== تحسين الإعلانات: ذاكرة تخزين محلية ==========
+let localAdCache = {
+    balance: 0,
+    totalEarned: 0,
+    adsWatched: 0,
+    adsToday: 0,
+    lastAdDate: null,
+    lastSync: null
+};
+let syncIntervalId = null;
+const SYNC_INTERVAL_HOURS = 6; // مزامنة كل 6 ساعات
+
 let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
@@ -75,7 +86,7 @@ const WITHDRAWAL_METHODS = [
     { id: "ton", name: "TON", icon: "fab fa-telegram", emoji: null, placeholder: "EQ...", label: "TON Address", regex: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/ },
     { id: "binance_pay", name: "Binance Pay", icon: "fas fa-shield-alt", emoji: null, placeholder: "Binance ID", label: "Binance ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
     { id: "sbp", name: "SBP (Russia)", icon: "fas fa-phone", emoji: null, placeholder: "+71234567890", label: "Phone +7", regex: /^\+7\d{10}$/ },
-    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", emoji: null, placeholder: "+1234567890", label: "Phone Number", regex: /^\+\d{10,15}$/ },
+    { id: "mobile", name: "Mobile Recharge", icon: "fas fa-mobile-alt", emoji: null, placeholder: "+1234567890", label: "Mobile Phone", regex: /^\+\d{10,15}$/ },
     { id: "pubg", name: "PUBG UC", icon: "fas fa-gamepad", emoji: null, placeholder: "Player ID", label: "Player ID", regex: /^[a-zA-Z0-9]{5,20}$/ },
     { id: "freefire", name: "Free Fire", icon: "fas fa-gem", emoji: null, placeholder: "Player ID", label: "Free Fire ID", regex: /^[a-zA-Z0-9]{5,20}$/ }
 ];
@@ -172,14 +183,9 @@ const AD_PLATFORMS = [
     }
 ];
 
-// حذف AdsGram مؤقتاً
-
 // ═══════════════════════════════════════════════════════════════════════════
 // 4.1. 🎬 AD INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
-
-// ملاحظة: المتغير adPlatformsInitialized معرف مسبقاً في الـ Global State (السطر 213)
-// لا تعرفه مرة أخرى هنا!
 
 function initAdPlatforms() {
     if (adPlatformsInitialized) return;
@@ -205,19 +211,16 @@ function initAdPlatforms() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd() {
-    // خلط عشوائي للمنصات (مثل REFI تماماً)
     const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
             console.log(`📢 Trying ad from: ${platform.name}`);
             
-            // تهيئة المنصة إذا كانت تحتاج
             if (platform.init) {
                 platform.init();
             }
             
-            // عرض الإعلان
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
             return true;
@@ -238,7 +241,6 @@ async function showAdSequence() {
     
     console.log("🎬 Starting ad sequence (2 ads required)");
     
-    // عرض إعلانين متتاليين (مثل REFI تماماً)
     for (let i = 0; i < 2; i++) {
         const shown = await showSingleAd();
         if (shown) {
@@ -248,7 +250,6 @@ async function showAdSequence() {
             console.log(`❌ Ad ${i+1}/2 failed, stopping sequence`);
             break;
         }
-        // انتظار قصير بين الإعلانين
         if (i === 0) {
             await new Promise(r => setTimeout(r, 1000));
         }
@@ -258,6 +259,10 @@ async function showAdSequence() {
     console.log(`🎬 Ad sequence result: ${result ? "SUCCESS" : "FAILED"} (${successCount}/2 ads)`);
     return result;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. 🌍 LANGUAGE SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
 
 const LANGUAGES = [
     { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", dir: "ltr" },
@@ -347,6 +352,8 @@ const translations = {
     },
     ar: {
         appName: "أد نوفا نتورك",
+        withdrawalHistory: "تاريخ السحوبات",
+        recentRequests: "طلبات السحب الأخيرة",
         totalBalance: "الرصيد الإجمالي",
         availableToWithdraw: "متاح للسحب",
         watchAds: "مشاهدة الإعلانات",
@@ -417,6 +424,8 @@ const translations = {
     },
     es: {
         appName: "AdNova Network",
+        withdrawalHistory: "Historial de Retiros",
+        recentRequests: "Solicitudes recientes",
         totalBalance: "Saldo Total",
         availableToWithdraw: "Disponible para retirar",
         watchAds: "Ver Anuncios",
@@ -487,6 +496,8 @@ const translations = {
     },
     fr: {
         appName: "AdNova Network",
+        withdrawalHistory: "Historique des Retraits",
+        recentRequests: "Demandes récentes",
         totalBalance: "Solde Total",
         availableToWithdraw: "Disponible pour retrait",
         watchAds: "Regarder des Publicités",
@@ -557,6 +568,8 @@ const translations = {
     },
     ru: {
         appName: "AdNova Network",
+        withdrawalHistory: "История выводов",
+        recentRequests: "Недавние запросы",
         totalBalance: "Общий баланс",
         availableToWithdraw: "Доступно для вывода",
         watchAds: "Смотреть рекламу",
@@ -627,6 +640,8 @@ const translations = {
     },
     pt: {
         appName: "AdNova Network",
+        withdrawalHistory: "Histórico de Saques",
+        recentRequests: "Solicitações recentes",
         totalBalance: "Saldo Total",
         availableToWithdraw: "Disponível para saque",
         watchAds: "Assistir Anúncios",
@@ -697,6 +712,8 @@ const translations = {
     },
     hi: {
         appName: "AdNova Network",
+        withdrawalHistory: "निकासी इतिहास",
+        recentRequests: "हाल के अनुरोध",
         totalBalance: "कुल शेष",
         availableToWithdraw: "निकासी के लिए उपलब्ध",
         watchAds: "विज्ञापन देखें",
@@ -767,6 +784,8 @@ const translations = {
     },
     id: {
         appName: "AdNova Network",
+        withdrawalHistory: "Riwayat Penarikan",
+        recentRequests: "Permintaan Terbaru",
         totalBalance: "Total Saldo",
         availableToWithdraw: "Tersedia untuk ditarik",
         watchAds: "Tonton Iklan",
@@ -837,6 +856,8 @@ const translations = {
     },
     tr: {
         appName: "AdNova Network",
+        withdrawalHistory: "Çekim Geçmişi",
+        recentRequests: "Son Talepler",
         totalBalance: "Toplam Bakiye",
         availableToWithdraw: "Çekilebilir bakiye",
         watchAds: "Reklam İzle",
@@ -907,6 +928,8 @@ const translations = {
     },
     fa: {
         appName: "شبکه ادنوا",
+        withdrawalHistory: "تاریخچه برداشت",
+        recentRequests: "درخواست‌های اخیر",
         totalBalance: "موجودی کل",
         availableToWithdraw: "موجودی قابل برداشت",
         watchAds: "مشاهده تبلیغات",
@@ -1076,6 +1099,179 @@ function getReferralLink() {
     return `https://t.me/${APP_CONFIG.botUsername}/app?startapp=${currentUserId}`;
 }
 
+// ========== دوال تحسين الإعلانات (Cache + Sync) ==========
+
+function loadLocalAdCache() {
+    const saved = localStorage.getItem(`adnova_ads_${currentUserId}`);
+    const today = new Date().toISOString().split("T")[0];
+    
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            localAdCache = parsed;
+            
+            // التحقق من تغيير اليوم لإعادة تعيين adsToday
+            if (localAdCache.lastAdDate !== today) {
+                localAdCache.adsToday = 0;
+                localAdCache.lastAdDate = today;
+                saveLocalAdCache();
+            }
+        } catch(e) {
+            console.error("Error loading ad cache:", e);
+            initLocalAdCache(today);
+        }
+    } else {
+        initLocalAdCache(today);
+    }
+    
+    // مزامنة القيم مع currentUser إذا كان موجوداً
+    if (currentUser) {
+        currentUser.balance = localAdCache.balance;
+        currentUser.totalEarned = localAdCache.totalEarned;
+        currentUser.adsWatched = localAdCache.adsWatched;
+        currentUser.adsToday = localAdCache.adsToday;
+        currentUser.lastAdDate = localAdCache.lastAdDate;
+    }
+}
+
+function initLocalAdCache(today) {
+    localAdCache = {
+        balance: 0,
+        totalEarned: 0,
+        adsWatched: 0,
+        adsToday: 0,
+        lastAdDate: today,
+        lastSync: null
+    };
+    saveLocalAdCache();
+}
+
+function saveLocalAdCache() {
+    localStorage.setItem(`adnova_ads_${currentUserId}`, JSON.stringify(localAdCache));
+}
+
+function updateLocalAdCache(adReward) {
+    const today = new Date().toISOString().split("T")[0];
+    
+    // التحقق من اليوم
+    if (localAdCache.lastAdDate !== today) {
+        localAdCache.adsToday = 0;
+        localAdCache.lastAdDate = today;
+    }
+    
+    // تحديث القيم
+    localAdCache.balance += adReward;
+    localAdCache.totalEarned += adReward;
+    localAdCache.adsWatched++;
+    localAdCache.adsToday++;
+    
+    // تحديث currentUser أيضاً
+    if (currentUser) {
+        currentUser.balance = localAdCache.balance;
+        currentUser.totalEarned = localAdCache.totalEarned;
+        currentUser.adsWatched = localAdCache.adsWatched;
+        currentUser.adsToday = localAdCache.adsToday;
+        currentUser.lastAdDate = localAdCache.lastAdDate;
+    }
+    
+    saveLocalAdCache();
+    updateUI();
+}
+
+async function syncLocalAdsToFirebase() {
+    if (!currentUser || !currentUserId) return;
+    
+    console.log("[AdNova] Syncing ad data to Firebase...");
+    
+    try {
+        // إرسال الفروق إلى السيرفر
+        const res = await fetch("/api/sync-ads", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                adData: {
+                    balance: localAdCache.balance,
+                    totalEarned: localAdCache.totalEarned,
+                    adsWatched: localAdCache.adsWatched,
+                    adsToday: localAdCache.adsToday,
+                    lastAdDate: localAdCache.lastAdDate
+                }
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            localAdCache.lastSync = new Date().toISOString();
+            saveLocalAdCache();
+            console.log("[AdNova] Ad data synced successfully");
+        } else {
+            console.error("[AdNova] Sync failed:", data.error);
+        }
+    } catch(e) {
+        console.error("[AdNova] Sync error:", e);
+    }
+}
+
+async function pullAdDataFromFirebase() {
+    if (!currentUser || !currentUserId) return;
+    
+    console.log("[AdNova] Pulling ad data from Firebase...");
+    
+    try {
+        const res = await fetch(`/api/users/${currentUserId}`);
+        const data = await res.json();
+        
+        if (data.success && data.data) {
+            const firebaseBalance = data.data.balance || 0;
+            const firebaseTotalEarned = data.data.totalEarned || 0;
+            const firebaseAdsWatched = data.data.adsWatched || 0;
+            
+            // مقارنة القيم وأخذ الأكبر (لحماية المستخدم من فقدان البيانات)
+            if (firebaseBalance > localAdCache.balance) {
+                localAdCache.balance = firebaseBalance;
+            }
+            if (firebaseTotalEarned > localAdCache.totalEarned) {
+                localAdCache.totalEarned = firebaseTotalEarned;
+            }
+            if (firebaseAdsWatched > localAdCache.adsWatched) {
+                localAdCache.adsWatched = firebaseAdsWatched;
+            }
+            
+            // تحديث currentUser
+            if (currentUser) {
+                currentUser.balance = localAdCache.balance;
+                currentUser.totalEarned = localAdCache.totalEarned;
+                currentUser.adsWatched = localAdCache.adsWatched;
+            }
+            
+            saveLocalAdCache();
+            updateUI();
+            console.log("[AdNova] Ad data pulled from Firebase");
+        }
+    } catch(e) {
+        console.error("[AdNova] Pull error:", e);
+    }
+}
+
+function startSyncInterval() {
+    if (syncIntervalId) clearInterval(syncIntervalId);
+    
+    // مزامنة كل 6 ساعات
+    const intervalMs = SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
+    syncIntervalId = setInterval(() => {
+        syncLocalAdsToFirebase();
+    }, intervalMs);
+    
+    // أيضاً عند إغلاق الصفحة
+    window.addEventListener("beforeunload", () => {
+        syncLocalAdsToFirebase();
+    });
+}
+
+// نهاية دوال تحسين الإعلانات
+
 async function loadUserData() {
     currentUserId = getTelegramUserId();
     const saved = localStorage.getItem(`adnova_user_${currentUserId}`);
@@ -1125,15 +1321,34 @@ async function loadUserData() {
         saveUserData();
     }
     
+    // تحميل بيانات الإعلانات من الكاش
+    loadLocalAdCache();
+    
     await syncWithFirebase();
     updateUI();
     await loadTasksFromFirebase();
     checkAdminAndShowCrown();
+    
+    // بدء التزامن الدوري
+    startSyncInterval();
+    
+    // سحب بيانات الإعلانات من Firebase بعد التحميل للتأكد من التطابق
+    setTimeout(() => {
+        pullAdDataFromFirebase();
+    }, 2000);
+    
     return currentUser;
 }
 
 function saveUserData() {
     currentUser.completedTasks = userCompletedTasks;
+    // تحديث currentUser بقيم الكاش قبل الحفظ
+    currentUser.balance = localAdCache.balance;
+    currentUser.totalEarned = localAdCache.totalEarned;
+    currentUser.adsWatched = localAdCache.adsWatched;
+    currentUser.adsToday = localAdCache.adsToday;
+    currentUser.lastAdDate = localAdCache.lastAdDate;
+    
     localStorage.setItem(`adnova_user_${currentUserId}`, JSON.stringify(currentUser));
     syncToFirebase();
 }
@@ -1143,7 +1358,6 @@ async function syncWithFirebase() {
         const res = await fetch(`/api/users/${currentUserId}`);
         const data = await res.json();
         if (data.success && data.data) {
-            // دمج السحوبات الحالية مع الجديدة للحفاظ على الحالة
             const remoteWithdrawals = data.data.withdrawals || [];
             const localWithdrawals = currentUser?.withdrawals || [];
             
@@ -1154,6 +1368,15 @@ async function syncWithFirebase() {
             
             currentUser = { ...currentUser, ...data.data, withdrawals: mergedWithdrawals };
             userCompletedTasks = currentUser.completedTasks || [];
+            
+            // مزامنة بيانات الإعلانات من Firebase إلى الكاش إذا كان الرصيد مختلفاً
+            if (data.data.balance !== undefined && data.data.balance > localAdCache.balance) {
+                localAdCache.balance = data.data.balance;
+                localAdCache.totalEarned = data.data.totalEarned || localAdCache.totalEarned;
+                localAdCache.adsWatched = data.data.adsWatched || localAdCache.adsWatched;
+                saveLocalAdCache();
+            }
+            
             saveUserData();
             updateUI();
             renderWithdrawalHistory();
@@ -1207,6 +1430,11 @@ async function processReferral() {
             currentUser.referredBy = refCode;
             currentUser.balance += APP_CONFIG.welcomeBonus;
             currentUser.totalEarned += APP_CONFIG.welcomeBonus;
+            // تحديث الكاش أيضاً
+            localAdCache.balance = currentUser.balance;
+            localAdCache.totalEarned = currentUser.totalEarned;
+            saveLocalAdCache();
+            
             localStorage.setItem(processedKey, refCode);
             saveUserData();
             updateUI();
@@ -1233,7 +1461,7 @@ function shareInviteLink() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 8. 🎬 WATCH ADS
+// 8. 🎬 WATCH ADS (محسّن بالكامل للسرعة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function watchAd() {
@@ -1241,7 +1469,7 @@ async function watchAd() {
         showToast("Ad playing...", "warning");
         return;
     }
-    if (currentUser.adsToday >= APP_CONFIG.dailyAdLimit) {
+    if (localAdCache.adsToday >= APP_CONFIG.dailyAdLimit) {
         showToast(t("dailyLimitReached"), "warning");
         return;
     }
@@ -1259,15 +1487,15 @@ async function watchAd() {
     const success = await showAdSequence();
     
     if (success) {
-        currentUser.balance += APP_CONFIG.adReward;
-        currentUser.totalEarned += APP_CONFIG.adReward;
-        currentUser.adsWatched++;
-        currentUser.adsToday++;
-        saveUserData();
-        updateUI();
+        // تحديث الكاش المحلي فقط (بدون اتصال بـ Firebase)
+        updateLocalAdCache(APP_CONFIG.adReward);
+        
         showEarnToast();
         showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
-        await fetch("/api/reward", {
+        
+        // لا نرسل إلى Firebase هنا - سنرسل لاحقاً في التحديث الدوري
+        // ولكن يمكننا إرسال طلب غير متزامن لتسجيل الحدث (اختياري)
+        fetch("/api/ad-watched", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ initData: tg?.initDataUnsafe || {} })
@@ -1350,10 +1578,7 @@ function renderTasks() {
             actionText = "Follow";
         }
         
-        // ✅ الاحتفاظ بالمعرف الأصلي للتحقق (مخفي عن المستخدم)
         const identifier = task.username || task.link || task.identifier || "";
-        
-        // ✅ نص ثابت قصير للمستخدم بدلاً من الرابط
         const taskHint = "⚡ Instantly reward";
         
         html += `
@@ -1430,8 +1655,12 @@ async function verifyTask(taskId, type, identifier, reward) {
             
             if (data.success && !userCompletedTasks.includes(taskId)) {
                 userCompletedTasks.push(taskId);
+                // تحديث الرصيد والكاش
                 currentUser.balance += reward;
                 currentUser.totalEarned += reward;
+                localAdCache.balance += reward;
+                localAdCache.totalEarned += reward;
+                saveLocalAdCache();
                 saveUserData();
                 updateUI();
                 renderTasks();
@@ -1517,6 +1746,9 @@ async function processWithdrawal(amount, destination) {
         
         if (data.success) {
             currentUser.balance = data.newBalance;
+            localAdCache.balance = data.newBalance;
+            saveLocalAdCache();
+            
             currentUser.withdrawals.unshift({
                 id: Date.now(),
                 amount: amount,
@@ -1554,7 +1786,7 @@ async function submitWithdraw() {
         showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
         return;
     }
-    if (amount > currentUser.balance) {
+    if (amount > localAdCache.balance) {
         showToast(t("insufficientBalance"), "warning");
         return;
     }
@@ -1583,7 +1815,7 @@ async function submitWithdraw() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10.5. 📜 WITHDRAWAL HISTORY (محسنة بالكامل)
+// 10.5. 📜 WITHDRAWAL HISTORY
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawalHistory() {
@@ -1610,14 +1842,12 @@ function renderWithdrawalHistory() {
     let html = "";
 
     for (const wd of recentWithdrawals) {
-        // البحث عن إشعار مرتبط بهذا السحب
         const relatedNotif = notifications.find(n =>
             n.type === "withdraw" &&
             n.message.includes(`$${wd.amount?.toFixed(2)}`) &&
             Math.abs(new Date(n.timestamp) - new Date(wd.date)) < 3600000
         );
 
-        // تحديد الحالة من الإشعار إذا وجد
         let status = wd.status || "pending";
         let rejectReason = wd.rejectReason || null;
         let statusText = "";
@@ -1698,14 +1928,12 @@ function renderWithdrawalHistory() {
     }
 }
 
-// ========== دالة تحديث حالة السحب من الإشعار (بدون قراءة Firebase) ==========
 function updateWithdrawalStatusFromNotification(notification) {
     if (!notification || notification.type !== "withdraw") return;
     
     let newStatus = null;
     let rejectReason = null;
     
-    // استخراج الحالة من عنوان الإشعار أو محتواه
     if (notification.title.includes("Approved") || notification.message.includes("approved")) {
         newStatus = "approved";
     } else if (notification.title.includes("Rejected") || notification.message.includes("rejected")) {
@@ -1715,7 +1943,6 @@ function updateWithdrawalStatusFromNotification(notification) {
     }
     
     if (newStatus && currentUser?.withdrawals) {
-        // استخراج المبلغ من الإشعار
         const amountMatch = notification.message.match(/\$([0-9.]+)/);
         const amount = amountMatch ? parseFloat(amountMatch[1]) : null;
         
@@ -2709,7 +2936,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM (نسخة محسنة بالكامل)
+// 14. 🔔 NOTIFICATIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -2735,7 +2962,6 @@ function renderNotifications() {
     if (!container || !currentUser) return;
     const notifs = currentUser.notifications || [];
     
-    // الأحدث أولاً
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
@@ -2745,7 +2971,6 @@ function renderNotifications() {
     
     let html = "";
     for (const n of sortedNotifs) {
-        // ✅ تحديث حالة السحب من الإشعار مباشرة (بدون قراءة Firebase)
         if (n.type === "withdraw") {
             updateWithdrawalStatusFromNotification(n);
         }
@@ -2916,9 +3141,7 @@ function updateTONUI() {
     }
 }
 
-// ✅ دالة التحقق عبر TON (معدلة مع إغلاق نافذة التحقق أولاً)
 async function startTonVerification() {
-    // ✅ إغلاق نافذة التحقق أولاً لتجنب التداخل
     closeModal('verificationModal');
     
     if (!window.tonConnectUI) {
@@ -2998,22 +3221,22 @@ function updateUI() {
     if (!currentUser) return;
     
     const balanceEl = document.getElementById("balance");
-    if (balanceEl) balanceEl.textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`;
+    if (balanceEl) balanceEl.textContent = `$${localAdCache.balance?.toFixed(2) || "0.00"}`;
     
     const progressFill = document.getElementById("adProgressFill");
     if (progressFill) {
-        const prog = ((currentUser.adsToday || 0) / APP_CONFIG.dailyAdLimit) * 100;
+        const prog = ((localAdCache.adsToday || 0) / APP_CONFIG.dailyAdLimit) * 100;
         progressFill.style.width = `${prog}%`;
     }
     
     const progressLabel = document.getElementById("adProgressLabel");
-    if (progressLabel) progressLabel.textContent = `${currentUser.adsToday || 0} / ${APP_CONFIG.dailyAdLimit} today`;
+    if (progressLabel) progressLabel.textContent = `${localAdCache.adsToday || 0} / ${APP_CONFIG.dailyAdLimit} today`;
     
     const totalAds = document.getElementById("totalAdsWatched");
-    if (totalAds) totalAds.innerHTML = `${currentUser.adsWatched || 0} <span>ads</span>`;
+    if (totalAds) totalAds.innerHTML = `${localAdCache.adsWatched || 0} <span>ads</span>`;
     
     const totalEarned = document.getElementById("totalAdsEarned");
-    if (totalEarned) totalEarned.textContent = `$${currentUser.totalEarned?.toFixed(2) || "0.00"}`;
+    if (totalEarned) totalEarned.textContent = `$${localAdCache.totalEarned?.toFixed(2) || "0.00"}`;
     
     const totalInvites = document.getElementById("totalInvites");
     if (totalInvites) totalInvites.textContent = currentUser.inviteCount || 0;
@@ -3025,7 +3248,7 @@ function updateUI() {
     if (inviteLink) inviteLink.textContent = getReferralLink();
     
     const availBalance = document.getElementById("wdAvailBalance");
-    if (availBalance) availBalance.textContent = `$${currentUser.balance?.toFixed(2) || "0.00"}`;
+    if (availBalance) availBalance.textContent = `$${localAdCache.balance?.toFixed(2) || "0.00"}`;
     
     const userNameEl = document.getElementById("userName");
     if (userNameEl) userNameEl.textContent = currentUser.userName || "User";
@@ -3156,12 +3379,12 @@ async function init() {
     await initTONConnect();
     setTimeout(hideSplash, 500);
     setInterval(() => {
-        if (currentUser) {
+        if (localAdCache) {
             const today = new Date().toISOString().split("T")[0];
-            if (currentUser.lastAdDate !== today) {
-                currentUser.adsToday = 0;
-                currentUser.lastAdDate = today;
-                saveUserData();
+            if (localAdCache.lastAdDate !== today) {
+                localAdCache.adsToday = 0;
+                localAdCache.lastAdDate = today;
+                saveLocalAdCache();
                 updateUI();
             }
         }
@@ -3224,6 +3447,7 @@ console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
 console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
 console.log("[AdNova] Improved Features: Withdrawal History Colors | Full DateTime | Status Text | Notification Layout | Instant Status Update");
+console.log("[AdNova] Ad Performance: Local cache with sync every 6 hours ✅");
 
 // ============================================================================
 // نهاية الملف 🎯
