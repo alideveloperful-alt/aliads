@@ -1245,8 +1245,7 @@ bot.on('text', async (ctx) => {
                     `💰 *Reward:* $${taskSession.reward}\n` +
                     `🔄 *Reset:* ${taskSession.resetPeriod}\n` +
                     `🆔 *ID:* \`${taskId}\`\n\n` +
-                    `📋 Use /listtasks to see all tasks.`,
-                    { parse_mode: 'Markdown' }
+                    `📋 Use /listtasks to see all tasks.`
                 );
                 console.log(`✅ Task created via bot: ${taskId} - ${taskSession.name}`);
             } catch (error) {
