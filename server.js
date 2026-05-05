@@ -109,12 +109,12 @@ if (serviceAccount) {
         console.error('❌ Firebase init error:', error.message);
     }
 }
-
 // ============================================================================
 // 4. 🤖 Telegram Bot - جلسات المشرف والمهام
 // ============================================================================
 
 const bot = new Telegraf(BOT_TOKEN);
+bot.use(Telegraf.ignoreMarkdown());
 const botAdminSessions = new Map();
 const taskCreationSessions = new Map();
 const taskEditSessions = new Map();
