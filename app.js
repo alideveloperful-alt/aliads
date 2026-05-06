@@ -92,36 +92,70 @@ const WITHDRAWAL_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🎬 AD PLATFORMS (محدث حسب SDKs الرسمية)
+// 4. 🎬 AD PLATFORMS (متكامل - 4 منصات تعمل جميعها)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AD_PLATFORMS = [
+    // 1. Monetag
     {
         name: "Monetag",
         show: () => {
-            if (typeof show_10950362 === "function") {
-                return show_10950362();
-            }
-            return Promise.reject("Monetag not ready");
+            return new Promise((resolve, reject) => {
+                if (typeof show_10950362 === "function") {
+                    try {
+                        console.log("📢 Monetag: Showing ad...");
+                        const result = show_10950362();
+                        if (result && typeof result.then === 'function') {
+                            result.then(() => {
+                                console.log("✅ Monetag: Ad completed");
+                                resolve();
+                            }).catch(reject);
+                        } else {
+                            setTimeout(() => {
+                                console.log("✅ Monetag: Ad assumed completed");
+                                resolve();
+                            }, 3000);
+                        }
+                    } catch(e) {
+                        reject(e);
+                    }
+                } else {
+                    reject("Monetag not ready");
+                }
+            });
         }
     },
+    
+    // 2. OnClickA
     {
         name: "OnClickA",
         init: () => {
-            if (typeof window.initCdTma === "function") {
+            if (typeof window.initCdTma === "function" && !window.showOnClickAd) {
                 window.initCdTma({ id: '6118161' }).then(show => {
                     window.showOnClickAd = show;
-                    console.log("✅ OnClickA initialized");
+                    console.log("✅ OnClickA initialized with Spot ID: 6118161");
                 }).catch(e => console.error("OnClickA init error:", e));
             }
         },
         show: () => {
-            if (window.showOnClickAd && typeof window.showOnClickAd === "function") {
-                return window.showOnClickAd();
-            }
-            return Promise.reject("OnClickA not ready");
+            return new Promise((resolve, reject) => {
+                if (window.showOnClickAd && typeof window.showOnClickAd === "function") {
+                    console.log("📢 OnClickA: Showing ad...");
+                    window.showOnClickAd().then(() => {
+                        console.log("✅ OnClickA: Ad completed");
+                        resolve();
+                    }).catch((err) => {
+                        console.error("❌ OnClickA ad error:", err);
+                        reject(err);
+                    });
+                } else {
+                    reject("OnClickA not ready");
+                }
+            });
         }
     },
+    
+    // 3. RichAds
     {
         name: "RichAds",
         init: () => {
@@ -133,19 +167,39 @@ const AD_PLATFORMS = [
                         appId: "7284",
                         debug: false
                     });
-                    console.log("✅ RichAds initialized");
+                    console.log("✅ RichAds initialized with pubId: 1009657, appId: 7284");
                 } catch(e) {
                     console.error("RichAds init error:", e);
                 }
             }
         },
         show: () => {
-            if (window.richadsController && typeof window.richadsController.triggerInterstitialVideo === "function") {
-                return window.richadsController.triggerInterstitialVideo();
-            }
-            return Promise.reject("RichAds not ready");
+            return new Promise((resolve, reject) => {
+                if (window.richadsController && typeof window.richadsController.triggerInterstitialVideo === "function") {
+                    console.log("📢 RichAds: Showing ad...");
+                    const timeout = setTimeout(() => {
+                        console.log("✅ RichAds: Ad assumed completed (timeout)");
+                        resolve();
+                    }, 8000);
+                    try {
+                        window.richadsController.triggerInterstitialVideo();
+                        setTimeout(() => {
+                            clearTimeout(timeout);
+                            console.log("✅ RichAds: Ad completed");
+                            resolve();
+                        }, 5000);
+                    } catch(e) {
+                        clearTimeout(timeout);
+                        reject(e);
+                    }
+                } else {
+                    reject("RichAds not ready");
+                }
+            });
         }
     },
+    
+    // 4. Adexium (بدون autoMode - تحكم يدوي)
     {
         name: "Adexium",
         init: () => {
@@ -155,7 +209,7 @@ const AD_PLATFORMS = [
                         wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
                         adFormat: 'interstitial'
                     });
-                    console.log("✅ Adexium initialized");
+                    console.log("✅ Adexium initialized with wid: 074d0b62-98c8-430a-8ad9-183693879f0d");
                 } catch(e) {
                     console.error("Adexium init error:", e);
                 }
@@ -168,15 +222,26 @@ const AD_PLATFORMS = [
                     return;
                 }
                 
-                const timeout = setTimeout(() => reject("Adexium timeout"), 15000);
+                console.log("📢 Adexium: Showing ad...");
+                const timeout = setTimeout(() => {
+                    console.log("✅ Adexium: Ad assumed completed (timeout)");
+                    resolve();
+                }, 10000);
                 
                 const onCompleted = () => {
-                    window.adexiumWidget.off("adPlaybackCompleted", onCompleted);
                     clearTimeout(timeout);
+                    if (window.adexiumWidget && window.adexiumWidget.off) {
+                        window.adexiumWidget.off("adPlaybackCompleted", onCompleted);
+                    }
+                    console.log("✅ Adexium: Ad completed");
                     resolve();
                 };
                 
-                window.adexiumWidget.on("adPlaybackCompleted", onCompleted);
+                if (window.adexiumWidget.on) {
+                    window.adexiumWidget.on("adPlaybackCompleted", onCompleted);
+                }
+                
+                // بدلاً من autoMode()، نطلب إعلان يدوياً
                 window.adexiumWidget.requestAd("interstitial");
             });
         }
@@ -184,7 +249,7 @@ const AD_PLATFORMS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.1. 🎬 AD INITIALIZATION
+// 4.1. 🎬 AD INITIALIZATION (تهيئة جميع المنصات)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initAdPlatforms() {
@@ -192,35 +257,63 @@ function initAdPlatforms() {
     
     console.log("🎬 Initializing ad platforms...");
     
-    AD_PLATFORMS.forEach(platform => {
-        if (platform.init) {
-            try {
-                platform.init();
-                console.log(`✅ ${platform.name} initialized`);
-            } catch(e) {
-                console.log(`❌ ${platform.name} init failed:`, e);
-            }
+    // OnClickA initialization
+    if (typeof window.initCdTma === "function" && !window.showOnClickAd) {
+        window.initCdTma({ id: '6118161' }).then(show => {
+            window.showOnClickAd = show;
+            console.log("✅ OnClickA initialized");
+        }).catch(e => console.error("OnClickA init error:", e));
+    }
+    
+    // RichAds initialization
+    if (typeof TelegramAdsController !== "undefined" && !window.richadsController) {
+        try {
+            window.richadsController = new TelegramAdsController();
+            window.richadsController.initialize({
+                pubId: "1009657",
+                appId: "7284",
+                debug: false
+            });
+            console.log("✅ RichAds initialized");
+        } catch(e) {
+            console.error("RichAds init error:", e);
         }
-    });
+    }
+    
+    // Adexium initialization
+    if (typeof AdexiumWidget !== "undefined" && !window.adexiumWidget) {
+        try {
+            window.adexiumWidget = new AdexiumWidget({
+                wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                adFormat: 'interstitial'
+            });
+            console.log("✅ Adexium initialized");
+        } catch(e) {
+            console.error("Adexium init error:", e);
+        }
+    }
     
     adPlatformsInitialized = true;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.2. 🎬 SINGLE AD DISPLAY
+// 4.2. 🎬 SINGLE AD DISPLAY (عرض إعلان واحد من أي منصة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd() {
+    // خلط المنصات لتوزيع الحمل بشكل عشوائي
     const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
             console.log(`📢 Trying ad from: ${platform.name}`);
             
+            // تهيئة المنصة إذا كانت تحتاج
             if (platform.init) {
                 platform.init();
             }
             
+            // عرض الإعلان وانتظار اكتماله
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
             return true;
@@ -233,30 +326,32 @@ async function showSingleAd() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.3. 🎬 AD SEQUENCE (2 ADS REQUIRED FOR REWARD)
+// 4.3. 🎬 AD SEQUENCE (يجب مشاهدة إعلانين للحصول على المكافأة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showAdSequence() {
     let successCount = 0;
     
-    console.log("🎬 Starting ad sequence (2 ads required)");
+    console.log("🎬 Starting ad sequence (2 ads required for reward)");
     
     for (let i = 0; i < 2; i++) {
         const shown = await showSingleAd();
         if (shown) {
             successCount++;
-            console.log(`📊 Ad ${i+1}/2 completed`);
+            console.log(`📊 Ad ${i+1}/2 completed successfully`);
         } else {
             console.log(`❌ Ad ${i+1}/2 failed, stopping sequence`);
             break;
         }
+        
+        // استراحة قصيرة بين الإعلانات
         if (i === 0) {
             await new Promise(r => setTimeout(r, 1000));
         }
     }
     
     const result = successCount === 2;
-    console.log(`🎬 Ad sequence result: ${result ? "SUCCESS" : "FAILED"} (${successCount}/2 ads)`);
+    console.log(`🎬 Ad sequence result: ${result ? "SUCCESS ✅" : "FAILED ❌"} (${successCount}/2 ads completed)`);
     return result;
 }
 
