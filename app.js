@@ -92,13 +92,11 @@ const WITHDRAWAL_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🎬 AD PLATFORMS (متكامل - 4 منصات تعمل جميعها - مطور)
+// 4. 🎬 AD PLATFORMS (نسخة احترافية - جميع المنصات تعمل)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AD_PLATFORMS = [
-    // ============================================================
     // 1. Monetag
-    // ============================================================
     {
         name: "Monetag",
         show: () => {
@@ -128,30 +126,25 @@ const AD_PLATFORMS = [
         }
     },
     
-    // ============================================================
-    // 2. OnClickA
-    // ============================================================
+    // 2. OnClickA (معدل: استخدام window.show بدلاً من window.showOnClickAd)
     {
         name: "OnClickA",
         init: () => {
-            if (typeof window.initCdTma === "function" && !window.showOnClickAd) {
+            if (typeof window.initCdTma === "function" && !window.show) {
                 window.initCdTma({ id: '6118161' }).then(show => {
-                    window.showOnClickAd = show;
-                    console.log("✅ OnClickA initialized with Spot ID: 6118161");
+                    window.show = show;
+                    console.log("✅ OnClickA initialized");
                 }).catch(e => console.error("OnClickA init error:", e));
             }
         },
         show: () => {
             return new Promise((resolve, reject) => {
-                if (window.showOnClickAd && typeof window.showOnClickAd === "function") {
+                if (window.show && typeof window.show === "function") {
                     console.log("📢 OnClickA: Showing ad...");
-                    window.showOnClickAd().then(() => {
+                    window.show().then(() => {
                         console.log("✅ OnClickA: Ad completed");
                         resolve();
-                    }).catch((err) => {
-                        console.error("❌ OnClickA ad error:", err);
-                        reject(err);
-                    });
+                    }).catch(reject);
                 } else {
                     reject("OnClickA not ready");
                 }
@@ -159,13 +152,11 @@ const AD_PLATFORMS = [
         }
     },
     
-    // ============================================================
-    // 3. RichAds (بنفس طريقة REFI مع دالات احتياطية)
-    // ============================================================
+    // 3. RichAds
     {
         name: "RichAds",
         init: () => {
-            if (typeof TelegramAdsController !== "undefined" && !window.richadsController) {
+            if (!window.richadsController && typeof TelegramAdsController !== "undefined") {
                 try {
                     window.richadsController = new TelegramAdsController();
                     window.richadsController.initialize({
@@ -173,7 +164,7 @@ const AD_PLATFORMS = [
                         appId: "7284",
                         debug: false
                     });
-                    console.log("✅ RichAds initialized with pubId: 1009657, appId: 7284");
+                    console.log("✅ RichAds initialized");
                 } catch(e) {
                     console.error("RichAds init error:", e);
                 }
@@ -198,12 +189,11 @@ const AD_PLATFORMS = [
                     
                     console.log("📢 RichAds: Showing ad...");
                     let resolved = false;
-                    let timeoutId = null;
+                    let timeoutId = setTimeout(() => {
+                        if (!resolved) reject("RichAds timeout");
+                    }, 15000);
                     
-                    const cleanup = () => {
-                        if (timeoutId) clearTimeout(timeoutId);
-                    };
-                    
+                    const cleanup = () => clearTimeout(timeoutId);
                     const onSuccess = () => {
                         if (resolved) return;
                         resolved = true;
@@ -211,23 +201,13 @@ const AD_PLATFORMS = [
                         console.log("✅ RichAds: Ad completed");
                         resolve();
                     };
-                    
                     const onError = (err) => {
                         if (resolved) return;
                         resolved = true;
                         cleanup();
-                        console.log("❌ RichAds ad error:", err);
                         reject(err || "RichAds ad failed");
                     };
                     
-                    timeoutId = setTimeout(() => {
-                        if (!resolved) {
-                            console.log("❌ RichAds timeout");
-                            onError("RichAds timeout");
-                        }
-                    }, 15000);
-                    
-                    // دالات متعددة احتياطية (مثل REFI)
                     if (typeof window.richadsController.triggerInterstitialVideo === "function") {
                         window.richadsController.triggerInterstitialVideo().then(onSuccess).catch(onError);
                     } else if (typeof window.richadsController.showInterstitial === "function") {
@@ -239,26 +219,23 @@ const AD_PLATFORMS = [
                     }
                     
                 } catch(e) {
-                    console.error("❌ RichAds error:", e);
                     reject("RichAds error: " + e.message);
                 }
             });
         }
     },
     
-    // ============================================================
-    // 4. Adexium (بنفس طريقة REFI مع أحداث كاملة)
-    // ============================================================
+    // 4. Adexium (مبسط مثل REFI - إزالة onAdReceived و displayAd)
     {
         name: "Adexium",
         init: () => {
-            if (typeof AdexiumWidget !== "undefined" && !window.adexiumWidget) {
+            if (!window.adexiumWidget && typeof AdexiumWidget !== "undefined") {
                 try {
                     window.adexiumWidget = new AdexiumWidget({
                         wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
                         adFormat: 'interstitial'
                     });
-                    console.log("✅ Adexium initialized with wid: 074d0b62-98c8-430a-8ad9-183693879f0d");
+                    console.log("✅ Adexium initialized");
                 } catch(e) {
                     console.error("Adexium init error:", e);
                 }
@@ -275,84 +252,48 @@ const AD_PLATFORMS = [
                     }
                     
                     if (!window.adexiumWidget) {
-                        reject("Adexium widget not initialized");
+                        reject("Adexium not initialized");
                         return;
                     }
                     
-                    console.log("📢 Adexium: Showing ad...");
+                    console.log("📢 Adexium: Requesting ad...");
                     let resolved = false;
-                    let timeoutId = null;
+                    let timeoutId = setTimeout(() => {
+                        if (!resolved) reject("Adexium timeout");
+                    }, 15000);
                     
                     const cleanup = () => {
-                        if (timeoutId) clearTimeout(timeoutId);
+                        clearTimeout(timeoutId);
                         try {
-                            if (window.adexiumWidget) {
-                                window.adexiumWidget.off('adReceived', onAdReceived);
-                                window.adexiumWidget.off('noAdFound', onNoAdFound);
-                                window.adexiumWidget.off('adPlaybackCompleted', onAdPlaybackCompleted);
-                                window.adexiumWidget.off('adClosed', onAdClosed);
-                                window.adexiumWidget.off('adDisplayed', onAdDisplayed);
-                            }
+                            window.adexiumWidget.off('adPlaybackCompleted', onSuccess);
+                            window.adexiumWidget.off('noAdFound', onError);
+                            window.adexiumWidget.off('adError', onError);
                         } catch(e) {}
                     };
                     
-                    const onAdReceived = (ad) => {
+                    const onSuccess = () => {
                         if (resolved) return;
-                        console.log("✅ Adexium ad received:", ad);
-                        try {
-                            if (window.adexiumWidget && typeof window.adexiumWidget.displayAd === "function") {
-                                window.adexiumWidget.displayAd(ad);
-                            }
-                        } catch(e) {
-                            cleanup();
-                            reject("Failed to display ad: " + e.message);
-                        }
-                    };
-                    
-                    const onNoAdFound = () => {
-                        if (resolved) return;
-                        console.log("❌ Adexium no ad found");
-                        cleanup();
-                        reject("No ad available");
-                    };
-                    
-                    const onAdPlaybackCompleted = () => {
-                        if (resolved) return;
-                        console.log("✅ Adexium ad playback completed");
                         resolved = true;
                         cleanup();
+                        console.log("✅ Adexium: Ad completed");
                         resolve();
                     };
                     
-                    const onAdClosed = () => {
+                    const onError = (err) => {
                         if (resolved) return;
-                        console.log("❌ Adexium ad closed by user");
+                        resolved = true;
                         cleanup();
-                        reject("Ad closed by user");
+                        console.log("❌ Adexium error:", err);
+                        reject(err || "No ad available");
                     };
                     
-                    const onAdDisplayed = () => {
-                        console.log("✅ Adexium ad displayed");
-                    };
-                    
-                    window.adexiumWidget.on('adReceived', onAdReceived);
-                    window.adexiumWidget.on('noAdFound', onNoAdFound);
-                    window.adexiumWidget.on('adPlaybackCompleted', onAdPlaybackCompleted);
-                    window.adexiumWidget.on('adClosed', onAdClosed);
-                    window.adexiumWidget.on('adDisplayed', onAdDisplayed);
-                    
-                    timeoutId = setTimeout(() => {
-                        if (!resolved) {
-                            console.log("❌ Adexium request timeout");
-                            cleanup();
-                            reject("Ad request timeout");
-                        }
-                    }, 15000);
+                    window.adexiumWidget.on('adPlaybackCompleted', onSuccess);
+                    window.adexiumWidget.on('noAdFound', onError);
+                    window.adexiumWidget.on('adError', onError);
                     
                     window.adexiumWidget.requestAd("interstitial");
                     
                 } catch(e) {
-                    console.error("❌ Adexium error:", e);
                     reject("Adexium error: " + e.message);
                 }
             });
@@ -361,7 +302,7 @@ const AD_PLATFORMS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.1. 🎬 AD INITIALIZATION (تهيئة خفيفة - لا تعيد تهيئة المنصات المتكررة)
+// 4.1. 🎬 AD INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initAdPlatforms() {
@@ -369,55 +310,36 @@ function initAdPlatforms() {
     
     console.log("🎬 Initializing ad platforms...");
     
-    // ============================================================
-    // OnClickA initialization (only platform that needs JS init)
-    // ============================================================
-    if (typeof window.initCdTma === "function" && !window.showOnClickAd) {
+    if (typeof window.initCdTma === "function" && !window.show) {
         window.initCdTma({ id: '6118161' }).then(show => {
-            window.showOnClickAd = show;
-            console.log("✅ OnClickA initialized with Spot ID: 6118161");
+            window.show = show;
+            console.log("✅ OnClickA initialized");
         }).catch(e => console.error("OnClickA init error:", e));
     }
     
-    // ============================================================
-    // RichAds initialization (already initialized in index.html)
-    // Just verify it exists and log status
-    // ============================================================
-    if (typeof TelegramAdsController !== "undefined") {
-        if (!window.richadsController) {
-            try {
-                window.richadsController = new TelegramAdsController();
-                window.richadsController.initialize({
-                    pubId: "1009657",
-                    appId: "7284",
-                    debug: false
-                });
-                console.log("✅ RichAds initialized");
-            } catch(e) {
-                console.error("RichAds init error:", e);
-            }
-        } else {
-            console.log("✅ RichAds already initialized");
+    if (typeof TelegramAdsController !== "undefined" && !window.richadsController) {
+        try {
+            window.richadsController = new TelegramAdsController();
+            window.richadsController.initialize({
+                pubId: "1009657",
+                appId: "7284",
+                debug: false
+            });
+            console.log("✅ RichAds initialized");
+        } catch(e) {
+            console.error("RichAds init error:", e);
         }
     }
     
-    // ============================================================
-    // Adexium initialization (already initialized in index.html)
-    // Just verify it exists and log status
-    // ============================================================
-    if (typeof AdexiumWidget !== "undefined") {
-        if (!window.adexiumWidget) {
-            try {
-                window.adexiumWidget = new AdexiumWidget({
-                    wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
-                    adFormat: 'interstitial'
-                });
-                console.log("✅ Adexium initialized");
-            } catch(e) {
-                console.error("Adexium init error:", e);
-            }
-        } else {
-            console.log("✅ Adexium already initialized");
+    if (typeof AdexiumWidget !== "undefined" && !window.adexiumWidget) {
+        try {
+            window.adexiumWidget = new AdexiumWidget({
+                wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                adFormat: 'interstitial'
+            });
+            console.log("✅ Adexium initialized");
+        } catch(e) {
+            console.error("Adexium init error:", e);
         }
     }
     
@@ -425,38 +347,29 @@ function initAdPlatforms() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.2. 🎬 SINGLE AD DISPLAY (يدعم استبعاد منصة معينة)
+// 4.2. 🎬 SINGLE AD DISPLAY
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd(excludePlatformNames = []) {
-    // تصفية المنصات لاستبعاد المنصات المحددة
     let availablePlatforms = AD_PLATFORMS;
     
     if (excludePlatformNames.length > 0) {
         availablePlatforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
-        // إذا تم استبعاد جميع المنصات، نستخدم القائمة الكاملة
         if (availablePlatforms.length === 0) {
-            availablePlatforms = [...AD_PLATFORMS];
+            console.log(`❌ No platforms available after excluding: ${excludePlatformNames}`);
+            return { success: false, platformName: null };
         }
     }
     
-    // خلط المنصات المتاحة لتوزيع الحمل بشكل عشوائي
     const shuffled = [...availablePlatforms].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
             console.log(`📢 Trying ad from: ${platform.name}`);
-            
-            // تهيئة المنصة إذا كانت تحتاج (فقط OnClickA يحتاج)
-            if (platform.init && platform.name === "OnClickA") {
-                platform.init();
-            }
-            
-            // عرض الإعلان وانتظار اكتماله
+            if (platform.init) platform.init();
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
             return { success: true, platformName: platform.name };
-            
         } catch(error) {
             console.log(`❌ Ad failed from ${platform.name}:`, error);
         }
@@ -466,54 +379,53 @@ async function showSingleAd(excludePlatformNames = []) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.3. 🎬 AD SEQUENCE (يضمن منصتين مختلفتين)
+// 4.3. 🎬 AD SEQUENCE (إعلانين من منصتين مختلفتين)
 // ═══════════════════════════════════════════════════════════════════════════
 
+let adSequenceInProgress = false;
+
 async function showAdSequence() {
+    if (adSequenceInProgress) {
+        console.log("⏳ Ad sequence already in progress");
+        return false;
+    }
+    
+    adSequenceInProgress = true;
     let successCount = 0;
     let lastPlatformName = null;
     
     console.log("🎬 Starting ad sequence (2 ads required for reward)");
     
-    // ============================================================
-    // الإعلان الأول - أي منصة متاحة
-    // ============================================================
-    console.log("📺 Showing FIRST ad...");
     const firstAd = await showSingleAd();
-    
     if (firstAd.success) {
         successCount++;
         lastPlatformName = firstAd.platformName;
         console.log(`✅ First ad completed from: ${lastPlatformName}`);
     } else {
-        console.log(`❌ First ad failed, stopping sequence`);
+        adSequenceInProgress = false;
         return false;
     }
     
-    // استراحة قصيرة بين الإعلانات (تجنب التحميل الزائد)
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // ============================================================
-    // الإعلان الثاني - منصة مختلفة عن الأولى
-    // ============================================================
-    console.log("📺 Showing SECOND ad (different platform)...");
     const secondAd = await showSingleAd([lastPlatformName]);
-    
     if (secondAd.success) {
         successCount++;
-        console.log(`✅ Second ad completed from: ${secondAd.platformName} (different from ${lastPlatformName})`);
+        console.log(`✅ Second ad completed from: ${secondAd.platformName}`);
     } else {
         console.log(`❌ Second ad failed`);
     }
     
+    adSequenceInProgress = false;
     const result = successCount === 2;
-    console.log(`🎬 Ad sequence result: ${result ? "SUCCESS ✅" : "FAILED ❌"} (${successCount}/2 ads completed)`);
+    console.log(`🎬 Ad sequence result: ${result ? "SUCCESS ✅" : "FAILED ❌"}`);
     
     return result;
 }
 
-// دالة showSingleAd القديمة مع اسم مختلف أو استبدالها بالكامل
-
+// ═══════════════════════════════════════════════════════════════════════════
+// نهاية القسم 4
+// ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
 // 5. 🌍 LANGUAGE SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
