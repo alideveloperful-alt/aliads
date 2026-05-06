@@ -3317,5 +3317,95 @@ body.rtl .task-card:hover {
 }
 
 /* ============================================================================
+   LIMITED TASKS COUNTER - عداد المهام المحدودة
+   ============================================================================ */
+
+/* حاوية العداد */
+.task-limited {
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* شريط التقدم */
+.task-limited-bar {
+    width: 100%;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+/* شريط التقدم الممتلئ */
+.task-limited-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #d4af37, #f5d97e, #d4af37);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 3px rgba(212, 175, 55, 0.5);
+}
+
+/* نص العداد */
+.task-limited-text {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+    padding: 3px 8px;
+    border-radius: 20px;
+    width: fit-content;
+}
+
+/* أيقونة داخل العداد */
+.task-limited-text::before {
+    content: "🏆";
+    font-size: 9px;
+}
+
+/* RTL للغة العربية */
+body.rtl .task-limited-bar {
+    direction: ltr;
+}
+
+body.rtl .task-limited-text {
+    direction: rtl;
+}
+
+/* تنسيق زر "Fully Claimed" */
+.task-full-badge {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.task-full-badge::before {
+    content: "🔒";
+    font-size: 11px;
+}
+
+/* تحسين عند اكتمال المهمة */
+.task-card.completed .task-limited-text {
+    opacity: 0.6;
+}
+
+.task-card.completed .task-limited-fill {
+    background: linear-gradient(90deg, #9ca3af, #d1d5db);
+}
+
+/* ============================================================================
+   END OF STYLESHEET
+   ============================================================================ */
+/* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
