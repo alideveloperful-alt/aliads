@@ -361,7 +361,7 @@ const AD_PLATFORMS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.1. 🎬 AD INITIALIZATION (تهيئة جميع المنصات)
+// 4.1. 🎬 AD INITIALIZATION (تهيئة خفيفة - لا تعيد تهيئة المنصات المتكررة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initAdPlatforms() {
@@ -370,44 +370,54 @@ function initAdPlatforms() {
     console.log("🎬 Initializing ad platforms...");
     
     // ============================================================
-    // OnClickA initialization
+    // OnClickA initialization (only platform that needs JS init)
     // ============================================================
     if (typeof window.initCdTma === "function" && !window.showOnClickAd) {
         window.initCdTma({ id: '6118161' }).then(show => {
             window.showOnClickAd = show;
-            console.log("✅ OnClickA initialized");
+            console.log("✅ OnClickA initialized with Spot ID: 6118161");
         }).catch(e => console.error("OnClickA init error:", e));
     }
     
     // ============================================================
-    // RichAds initialization
+    // RichAds initialization (already initialized in index.html)
+    // Just verify it exists and log status
     // ============================================================
-    if (typeof TelegramAdsController !== "undefined" && !window.richadsController) {
-        try {
-            window.richadsController = new TelegramAdsController();
-            window.richadsController.initialize({
-                pubId: "1009657",
-                appId: "7284",
-                debug: false
-            });
-            console.log("✅ RichAds initialized");
-        } catch(e) {
-            console.error("RichAds init error:", e);
+    if (typeof TelegramAdsController !== "undefined") {
+        if (!window.richadsController) {
+            try {
+                window.richadsController = new TelegramAdsController();
+                window.richadsController.initialize({
+                    pubId: "1009657",
+                    appId: "7284",
+                    debug: false
+                });
+                console.log("✅ RichAds initialized");
+            } catch(e) {
+                console.error("RichAds init error:", e);
+            }
+        } else {
+            console.log("✅ RichAds already initialized");
         }
     }
     
     // ============================================================
-    // Adexium initialization
+    // Adexium initialization (already initialized in index.html)
+    // Just verify it exists and log status
     // ============================================================
-    if (typeof AdexiumWidget !== "undefined" && !window.adexiumWidget) {
-        try {
-            window.adexiumWidget = new AdexiumWidget({
-                wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
-                adFormat: 'interstitial'
-            });
-            console.log("✅ Adexium initialized");
-        } catch(e) {
-            console.error("Adexium init error:", e);
+    if (typeof AdexiumWidget !== "undefined") {
+        if (!window.adexiumWidget) {
+            try {
+                window.adexiumWidget = new AdexiumWidget({
+                    wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                    adFormat: 'interstitial'
+                });
+                console.log("✅ Adexium initialized");
+            } catch(e) {
+                console.error("Adexium init error:", e);
+            }
+        } else {
+            console.log("✅ Adexium already initialized");
         }
     }
     
@@ -421,27 +431,32 @@ function initAdPlatforms() {
 async function showSingleAd(excludePlatformNames = []) {
     // تصفية المنصات لاستبعاد المنصات المحددة
     let availablePlatforms = AD_PLATFORMS;
+    
     if (excludePlatformNames.length > 0) {
         availablePlatforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
+        // إذا تم استبعاد جميع المنصات، نستخدم القائمة الكاملة
         if (availablePlatforms.length === 0) {
             availablePlatforms = [...AD_PLATFORMS];
         }
     }
     
-    // خلط المنصات المتاحة
+    // خلط المنصات المتاحة لتوزيع الحمل بشكل عشوائي
     const shuffled = [...availablePlatforms].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
             console.log(`📢 Trying ad from: ${platform.name}`);
             
-            if (platform.init) {
+            // تهيئة المنصة إذا كانت تحتاج (فقط OnClickA يحتاج)
+            if (platform.init && platform.name === "OnClickA") {
                 platform.init();
             }
             
+            // عرض الإعلان وانتظار اكتماله
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
             return { success: true, platformName: platform.name };
+            
         } catch(error) {
             console.log(`❌ Ad failed from ${platform.name}:`, error);
         }
@@ -460,7 +475,9 @@ async function showAdSequence() {
     
     console.log("🎬 Starting ad sequence (2 ads required for reward)");
     
-    // الإعلان الأول - أي منصة
+    // ============================================================
+    // الإعلان الأول - أي منصة متاحة
+    // ============================================================
     console.log("📺 Showing FIRST ad...");
     const firstAd = await showSingleAd();
     
@@ -473,10 +490,12 @@ async function showAdSequence() {
         return false;
     }
     
-    // استراحة بين الإعلانات
-    await new Promise(r => setTimeout(r, 1000));
+    // استراحة قصيرة بين الإعلانات (تجنب التحميل الزائد)
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // الإعلان الثاني - منصة مختلفة
+    // ============================================================
+    // الإعلان الثاني - منصة مختلفة عن الأولى
+    // ============================================================
     console.log("📺 Showing SECOND ad (different platform)...");
     const secondAd = await showSingleAd([lastPlatformName]);
     
@@ -484,11 +503,12 @@ async function showAdSequence() {
         successCount++;
         console.log(`✅ Second ad completed from: ${secondAd.platformName} (different from ${lastPlatformName})`);
     } else {
-        console.log(`❌ Second ad failed, stopping sequence`);
+        console.log(`❌ Second ad failed`);
     }
     
     const result = successCount === 2;
     console.log(`🎬 Ad sequence result: ${result ? "SUCCESS ✅" : "FAILED ❌"} (${successCount}/2 ads completed)`);
+    
     return result;
 }
 
