@@ -333,6 +333,30 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
     await ctx.reply(welcomeText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 
+// ✅ دالة مساعدة جديدة لإنشاء المهام (عادية أو محدودة)
+async function createNewTask(taskData, ctx) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: taskData.type,
+        name: taskData.name,
+        identifier: taskData.identifier,
+        username: taskData.identifier,
+        link: taskData.identifier,
+        reward: taskData.reward,
+        resetPeriod: taskData.resetPeriod,
+        active: true,
+        isLimited: taskData.isLimited || false,
+        maxCompletions: taskData.maxCompletions || 0,
+        completedCount: 0,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    
+    await db.collection('tasks').doc(taskId).set(newTask);
+    return taskId;
+}
+
 // ============================================================================
 // 4.2 دوال إدارة طلبات السحب عبر البوت
 // ============================================================================
@@ -1221,6 +1245,74 @@ bot.on('text', async (ctx) => {
                 return ctx.reply('❌ *Invalid period!* Please choose: daily, weekly, or once', { parse_mode: 'Markdown' });
             }
             taskSession.resetPeriod = message.toLowerCase();
+            
+            // ✅ الخطوة 6: هل المهمة محدودة؟
+            taskSession.step = 'isLimited';
+            ctx.reply(
+                `🔢 *Step 6:* Is this a limited task?\n` +
+                `• Reply with \`yes\` to set a limit (e.g., 100 users)\n` +
+                `• Reply with \`no\` for unlimited task`,
+                { parse_mode: 'Markdown' }
+            );
+        } else if (taskSession.step === 'isLimited') {
+            if (message.toLowerCase() === 'yes') {
+                taskSession.isLimited = true;
+                taskSession.step = 'maxCompletions';
+                ctx.reply(
+                    `🔢 *Step 7:* Enter the maximum number of completions:\n` +
+                    `• Example: \`100\`, \`500\`, \`1000\`\n\n` +
+                    `📝 Type the number:`,
+                    { parse_mode: 'Markdown' }
+                );
+            } else {
+                taskSession.isLimited = false;
+                taskSession.maxCompletions = 0;
+                
+                // إنشاء المهمة غير المحدودة
+                const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+                const newTask = {
+                    id: taskId,
+                    type: taskSession.type,
+                    name: taskSession.name,
+                    identifier: taskSession.identifier,
+                    username: taskSession.identifier,
+                    link: taskSession.identifier,
+                    reward: taskSession.reward,
+                    resetPeriod: taskSession.resetPeriod,
+                    active: true,
+                    isLimited: false,
+                    maxCompletions: 0,
+                    completedCount: 0,
+                    createdAt: new Date().toISOString(),
+                    createdBy: ADMIN_ID
+                };
+                try {
+                    await db.collection('tasks').doc(taskId).set(newTask);
+                    ctx.reply(
+                        `✅ *Task Created Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                        `📌 *Name:* ${taskSession.name}\n` +
+                        `🏷️ *Type:* ${taskSession.type}\n` +
+                        `🔗 *Identifier:* ${taskSession.identifier}\n` +
+                        `💰 *Reward:* $${taskSession.reward}\n` +
+                        `🔄 *Reset:* ${taskSession.resetPeriod}\n` +
+                        `🆔 *ID:* \`${taskId}\`\n\n` +
+                        `📋 Use /listtasks to see all tasks.`
+                    );
+                    console.log(`✅ Task created via bot: ${taskId} - ${taskSession.name}`);
+                } catch (error) {
+                    console.error('Error creating task:', error);
+                    ctx.reply('❌ *Error creating task!* Please try again.', { parse_mode: 'Markdown' });
+                }
+                taskCreationSessions.delete(userId);
+            }
+        } else if (taskSession.step === 'maxCompletions') {
+            const max = parseInt(message);
+            if (isNaN(max) || max <= 0) {
+                return ctx.reply('❌ *Invalid number!* Please enter a valid number (e.g., 100)', { parse_mode: 'Markdown' });
+            }
+            taskSession.maxCompletions = max;
+            
+            // إنشاء المهمة المحدودة
             const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
             const newTask = {
                 id: taskId,
@@ -1232,24 +1324,28 @@ bot.on('text', async (ctx) => {
                 reward: taskSession.reward,
                 resetPeriod: taskSession.resetPeriod,
                 active: true,
+                isLimited: true,
+                maxCompletions: max,
+                completedCount: 0,
                 createdAt: new Date().toISOString(),
                 createdBy: ADMIN_ID
             };
             try {
                 await db.collection('tasks').doc(taskId).set(newTask);
                 ctx.reply(
-                    `✅ *Task Created Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `✅ *Limited Task Created Successfully!*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
                     `📌 *Name:* ${taskSession.name}\n` +
                     `🏷️ *Type:* ${taskSession.type}\n` +
                     `🔗 *Identifier:* ${taskSession.identifier}\n` +
                     `💰 *Reward:* $${taskSession.reward}\n` +
                     `🔄 *Reset:* ${taskSession.resetPeriod}\n` +
+                    `🏆 *Limited:* ${max} users max\n` +
                     `🆔 *ID:* \`${taskId}\`\n\n` +
                     `📋 Use /listtasks to see all tasks.`
                 );
-                console.log(`✅ Task created via bot: ${taskId} - ${taskSession.name}`);
+                console.log(`✅ Limited task created via bot: ${taskId} - ${taskSession.name} (max: ${max})`);
             } catch (error) {
-                console.error('Error creating task:', error);
+                console.error('Error creating limited task:', error);
                 ctx.reply('❌ *Error creating task!* Please try again.', { parse_mode: 'Markdown' });
             }
             taskCreationSessions.delete(userId);
@@ -1756,6 +1852,7 @@ app.post('/api/verify-channel', async (req, res) => {
             return res.json({ success: false, error: 'Missing required fields' });
         }
         console.log(`🔍 Verifying ${userId} for task ${taskId} (type: ${taskType})`);
+        
         let isVerified = false;
         if (taskType === 'channel') {
             const isMember = await verifyChannelMembership(userId, channelUsername);
@@ -1765,28 +1862,64 @@ app.post('/api/verify-channel', async (req, res) => {
             isVerified = true;
             console.log(`✅ Auto-verified for type: ${taskType}`);
         }
+        
         if (!isVerified) {
             return res.json({ success: false, error: '❌ You are not a member of this channel/group. Please join first and try again.' });
         }
+        
         if (db && reward) {
+            // ✅ التحقق من المهمة المحدودة أولاً
+            const taskRef = db.collection('tasks').doc(taskId);
+            const taskDoc = await taskRef.get();
+            
+            if (!taskDoc.exists) {
+                return res.json({ success: false, error: 'Task not found' });
+            }
+            
+            const taskData = taskDoc.data();
+            
+            // ✅ التحقق من المهمة المحدودة (Limited Task)
+            if (taskData && taskData.isLimited) {
+                if (taskData.completedCount >= taskData.maxCompletions) {
+                    return res.json({ success: false, error: 'This task has reached its limit! No more rewards available.' });
+                }
+            }
+            
             const userRef = db.collection('users').doc(userId);
             const userDoc = await userRef.get();
+            
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 const completedTasks = userData.completedTasks || [];
+                
                 if (!completedTasks.includes(taskId)) {
+                    // ✅ زيادة عداد المهمة المحدودة إذا كانت محدودة
+                    if (taskData && taskData.isLimited) {
+                        await taskRef.update({
+                            completedCount: admin.firestore.FieldValue.increment(1)
+                        });
+                    }
+                    
+                    // ✅ تحديث رصيد المستخدم
                     await userRef.update({
                         balance: admin.firestore.FieldValue.increment(reward),
                         totalEarned: admin.firestore.FieldValue.increment(reward),
                         completedTasks: admin.firestore.FieldValue.arrayUnion(taskId),
                         [`taskLastCompletions.${taskId}`]: new Date().toISOString()
                     });
+                    
                     await addNotification(userId, {
                         type: 'success',
                         title: '✅ Task Completed!',
                         message: `+$${reward.toFixed(2)} added from ${channelUsername}`
                     });
+                    
                     console.log(`✅ Task ${taskId} completed by ${userId}, +$${reward}`);
+                    if (taskData && taskData.isLimited) {
+                        const remaining = taskData.maxCompletions - (taskData.completedCount + 1);
+                        console.log(`🏆 Limited task: ${remaining} remaining out of ${taskData.maxCompletions}`);
+                    }
+                    
                     return res.json({ success: true, message: 'Task completed successfully!' });
                 } else {
                     return res.json({ success: false, error: 'Task already completed!' });
