@@ -10,37 +10,70 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- Font Awesome 6 (الأيقونات) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     
-    <!-- ========== منصات الإعلانات (5 منصات) ========== -->
-    <!-- Monetag Ad SDK -->
+    <!-- ============================================================ -->
+    <!-- 🎬 AD PLATFORMS - Professional initialization (4 platforms) -->
+    <!-- ============================================================ -->
+    
+    <!-- 1. Monetag -->
     <script src='//libtl.com/sdk.js' data-zone='10950362' data-sdk='show_10950362'></script>
     
-    <!-- OnClickA Ad SDK -->
+    <!-- 2. OnClickA -->
     <script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
+    <script>
+        (function initOnClickA() {
+            if (typeof window.initCdTma === 'function') {
+                window.initCdTma({ id: '6118161' }).then(show => {
+                    window.showOnClickAd = show;
+                    console.log("✅ OnClickA initialized");
+                }).catch(e => console.error("OnClickA init error:", e));
+            }
+        })();
+    </script>
     
-    <!-- RichAds SDK -->
+    <!-- 3. RichAds -->
     <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
+    <script>
+        (function initRichAds() {
+            if (typeof TelegramAdsController !== 'undefined') {
+                window.richadsController = new TelegramAdsController();
+                window.richadsController.initialize({
+                    pubId: "1009657",
+                    appId: "7284",
+                    debug: false
+                });
+                console.log("✅ RichAds initialized");
+            }
+        })();
+    </script>
     
-    <!-- Adexium Ad SDK -->
-    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
-    
-    <!-- AdsGram Ad SDK -->
-    <!--script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-    <!-- ========== نهاية منصات الإعلانات ========== -->
+    <!-- 4. Adexium -->
+    <script src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+    <script>
+        (function initAdexium() {
+            if (typeof AdexiumWidget !== 'undefined') {
+                window.adexiumWidget = new AdexiumWidget({
+                    wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                    adFormat: 'interstitial'
+                });
+                console.log("✅ Adexium initialized");
+            }
+        })();
+    </script>
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. 🚀 SPLASH SCREEN - شاشة التحميل -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 1. SPLASH SCREEN -->
+    <!-- ============================================================ -->
     
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
@@ -48,12 +81,6 @@
                 <svg class="splash-logo-img" viewBox="0 0 200 200" fill="none">
                     <circle cx="100" cy="100" r="95" fill="#1a1a2e" stroke="#d4af37" stroke-width="3"/>
                     <path d="M100 40 L115 75 L155 80 L125 105 L135 145 L100 125 L65 145 L75 105 L45 80 L85 75 L100 40Z" fill="#d4af37" stroke="#fff" stroke-width="2"/>
-                    <defs>
-                        <linearGradient id="splashBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#2d2d3d"/>
-                            <stop offset="100%" stop-color="#0d0d1a"/>
-                        </linearGradient>
-                    </defs>
                 </svg>
             </div>
             <div class="splash-sub">
@@ -68,15 +95,15 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. 📱 MAIN APP CONTENT -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 2. MAIN APP CONTENT -->
+    <!-- ============================================================ -->
     
     <div id="mainContent" style="display: none;">
         
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 3. 🎨 HEADER (مع أيقونة الدعم) -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 3. HEADER -->
+        <!-- ======================================================== -->
         
         <header>
             <div class="app-title">
@@ -104,9 +131,9 @@
             </div>
         </header>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 4. 💰 BALANCE CARD -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 4. BALANCE CARD -->
+        <!-- ======================================================== -->
         
         <div class="balance-card">
             <div class="balance-card-top">
@@ -145,9 +172,9 @@
             <div id="tonConnectButton" style="display: none;"></div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 5. 📺 PAGE: ADS -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 5. PAGE: ADS -->
+        <!-- ======================================================== -->
         
         <div id="page-ads" class="page active">
             <div class="card">
@@ -209,10 +236,7 @@
                 </div>
             </div>
 
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!-- 5.1. 📜 WITHDRAWAL HISTORY CARD (مع زر Refresh) -->
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            
+            <!-- Withdrawal History Card -->
             <div class="card withdrawal-history-card">
                 <div class="card-header">
                     <div class="card-icon withdraw">
@@ -226,18 +250,16 @@
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
-                <div id="withdrawalHistoryList" class="withdrawal-history-list">
-                    <!-- سيتم تعبئتها بواسطة JavaScript -->
-                </div>
+                <div id="withdrawalHistoryList" class="withdrawal-history-list"></div>
                 <button id="viewAllWithdrawalsBtn" class="view-all-btn" onclick="showAllWithdrawals()" style="display: none;">
                     <i class="fas fa-eye"></i> <span data-i18n="viewAll">View All</span>
                 </button>
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 6. 📋 PAGE: TASKS -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 6. PAGE: TASKS -->
+        <!-- ======================================================== -->
         
         <div id="page-tasks" class="page">
             <div class="task-wrapper-card">
@@ -252,9 +274,9 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 7. 👥 PAGE: INVITE -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 7. PAGE: INVITE -->
+        <!-- ======================================================== -->
         
         <div id="page-invite" class="page">
             <div class="invite-wrapper-card">
@@ -295,9 +317,9 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 8. 💸 PAGE: WITHDRAW -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 8. PAGE: WITHDRAW -->
+        <!-- ======================================================== -->
         
         <div id="page-withdraw" class="page">
             <div class="wd-outer-card">
@@ -327,9 +349,9 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 9. 🧭 BOTTOM NAVIGATION -->
-        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- ======================================================== -->
+        <!-- 9. BOTTOM NAVIGATION -->
+        <!-- ======================================================== -->
         
         <nav class="bottom-nav">
             <button class="nav-item active" data-page="ads" onclick="switchTab('ads')">
@@ -351,9 +373,9 @@
         </nav>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 10. 🌍 LANGUAGE MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 10. LANGUAGE MODAL -->
+    <!-- ============================================================ -->
     
     <div id="langModal" class="lang-modal-overlay" onclick="closeLanguageModal(event)">
         <div class="lang-modal">
@@ -363,9 +385,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 11. 🔔 NOTIFICATIONS MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 11. NOTIFICATIONS MODAL -->
+    <!-- ============================================================ -->
     
     <div id="notificationsModal" class="modal">
         <div class="modal-content">
@@ -383,9 +405,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 12. ✅ CONFIRM MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 12. CONFIRM MODAL -->
+    <!-- ============================================================ -->
     
     <div id="confirmModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
@@ -399,9 +421,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 13. 👑 ADMIN AUTH MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 13. ADMIN AUTH MODAL -->
+    <!-- ============================================================ -->
     
     <div id="adminAuthModal" class="modal">
         <div class="modal-content">
@@ -418,9 +440,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 14. 🎛️ ADMIN PANEL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 14. ADMIN PANEL -->
+    <!-- ============================================================ -->
     
     <div id="adminPanel" class="admin-panel hidden">
         <div class="admin-panel-header">
@@ -430,9 +452,9 @@
         <div id="adminContent"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 15. 🔒 VERIFICATION MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 15. VERIFICATION MODAL -->
+    <!-- ============================================================ -->
     
     <div id="verificationModal" class="modal">
         <div class="modal-content verify-modal">
@@ -482,9 +504,9 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 16. 📜 ALL WITHDRAWALS MODAL -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 16. ALL WITHDRAWALS MODAL -->
+    <!-- ============================================================ -->
     
     <div id="allWithdrawalsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
@@ -494,21 +516,19 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div id="allWithdrawalsList" class="modal-body" style="max-height: 500px; overflow-y: auto;">
-                <!-- سيتم تعبئتها بواسطة JavaScript -->
-            </div>
+            <div id="allWithdrawalsList" class="modal-body" style="max-height: 500px; overflow-y: auto;"></div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 17. 🍞 TOAST CONTAINER -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 17. TOAST CONTAINER -->
+    <!-- ============================================================ -->
     
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- 18. 📜 MAIN SCRIPT -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================================ -->
+    <!-- 18. MAIN SCRIPT -->
+    <!-- ============================================================ -->
     
     <script src="app.js"></script>
 </body>
