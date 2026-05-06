@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN - شاشة التحميل
+   02. SPLASH SCREEN - شاشة تحميل احترافية
    ============================================================================ */
 
 .splash-screen {
@@ -75,12 +75,20 @@ body.rtl {
     align-items: center;
     justify-content: center;
     margin-bottom: 22px;
+    animation: gentleFloat 2s ease-in-out infinite;
+}
+
+@keyframes gentleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
 }
 
 .splash-logo-img {
     width: 176px;
     height: auto;
     display: block;
+    filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.25));
+    transition: filter 0.3s ease;
 }
 
 .splash-sub {
@@ -91,6 +99,7 @@ body.rtl {
     margin-bottom: 28px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 
@@ -109,25 +118,59 @@ body.rtl {
     border-radius: 1px;
 }
 
+/* شريط تحميل احترافي */
 .splash-loader {
-    width: 150px;
-    height: 3px;
-    background: rgba(212, 175, 55, 0.18);
-    border-radius: 3px;
+    width: 160px;
+    height: 4px;
+    background: rgba(212, 175, 55, 0.12);
+    border-radius: 4px;
     overflow: hidden;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .splash-loader-bar {
     height: 100%;
-    width: 45%;
-    background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
-    border-radius: 3px;
-    animation: splashShimmer 1.4s ease-in-out infinite;
+    width: 35%;
+    background: linear-gradient(90deg, transparent 0%, #d4af37 25%, #f0d050 50%, #d4af37 75%, transparent 100%);
+    border-radius: 4px;
+    animation: shimmerAdv 1.8s ease-in-out infinite;
 }
 
-@keyframes splashShimmer {
-    0% { transform: translateX(-220%); }
-    100% { transform: translateX(380%); }
+@keyframes shimmerAdv {
+    0% { transform: translateX(-200%); width: 30%; }
+    50% { transform: translateX(-30%); width: 55%; }
+    100% { transform: translateX(180%); width: 30%; }
+}
+
+/* إضافة نبض خفيف للشريط */
+.splash-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 4px;
+    animation: pulseGlow 1.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0px rgba(212, 175, 55, 0); }
+    50% { box-shadow: 0 0 6px rgba(212, 175, 55, 0.4); }
+}
+
+.splash-version {
+    font-size: 11px;
+    color: rgba(212, 175, 55, 0.5);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-top: 18px;
+    text-align: center;
+    opacity: 0.8;
+    transition: opacity 0.3s;
 }
 
 /* ============================================================================
