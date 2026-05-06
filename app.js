@@ -415,63 +415,84 @@ function initAdPlatforms() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.2. 🎬 SINGLE AD DISPLAY (عرض إعلان واحد من أي منصة)
+// 4.2. 🎬 SINGLE AD DISPLAY (يدعم استبعاد منصة معينة)
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function showSingleAd() {
-    // خلط المنصات لتوزيع الحمل بشكل عشوائي
-    const shuffled = [...AD_PLATFORMS].sort(() => Math.random() - 0.5);
+async function showSingleAd(excludePlatformNames = []) {
+    // تصفية المنصات لاستبعاد المنصات المحددة
+    let availablePlatforms = AD_PLATFORMS;
+    if (excludePlatformNames.length > 0) {
+        availablePlatforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
+        if (availablePlatforms.length === 0) {
+            availablePlatforms = [...AD_PLATFORMS];
+        }
+    }
+    
+    // خلط المنصات المتاحة
+    const shuffled = [...availablePlatforms].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
             console.log(`📢 Trying ad from: ${platform.name}`);
             
-            // تهيئة المنصة إذا كانت تحتاج
             if (platform.init) {
                 platform.init();
             }
             
-            // عرض الإعلان وانتظار اكتماله
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
-            return true;
+            return { success: true, platformName: platform.name };
         } catch(error) {
             console.log(`❌ Ad failed from ${platform.name}:`, error);
         }
     }
     
-    return false;
+    return { success: false, platformName: null };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.3. 🎬 AD SEQUENCE (يجب مشاهدة إعلانين للحصول على المكافأة)
+// 4.3. 🎬 AD SEQUENCE (يضمن منصتين مختلفتين)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showAdSequence() {
     let successCount = 0;
+    let lastPlatformName = null;
     
     console.log("🎬 Starting ad sequence (2 ads required for reward)");
     
-    for (let i = 0; i < 2; i++) {
-        const shown = await showSingleAd();
-        if (shown) {
-            successCount++;
-            console.log(`📊 Ad ${i+1}/2 completed successfully`);
-        } else {
-            console.log(`❌ Ad ${i+1}/2 failed, stopping sequence`);
-            break;
-        }
-        
-        // استراحة قصيرة بين الإعلانات
-        if (i === 0) {
-            await new Promise(r => setTimeout(r, 1000));
-        }
+    // الإعلان الأول - أي منصة
+    console.log("📺 Showing FIRST ad...");
+    const firstAd = await showSingleAd();
+    
+    if (firstAd.success) {
+        successCount++;
+        lastPlatformName = firstAd.platformName;
+        console.log(`✅ First ad completed from: ${lastPlatformName}`);
+    } else {
+        console.log(`❌ First ad failed, stopping sequence`);
+        return false;
+    }
+    
+    // استراحة بين الإعلانات
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // الإعلان الثاني - منصة مختلفة
+    console.log("📺 Showing SECOND ad (different platform)...");
+    const secondAd = await showSingleAd([lastPlatformName]);
+    
+    if (secondAd.success) {
+        successCount++;
+        console.log(`✅ Second ad completed from: ${secondAd.platformName} (different from ${lastPlatformName})`);
+    } else {
+        console.log(`❌ Second ad failed, stopping sequence`);
     }
     
     const result = successCount === 2;
     console.log(`🎬 Ad sequence result: ${result ? "SUCCESS ✅" : "FAILED ❌"} (${successCount}/2 ads completed)`);
     return result;
 }
+
+// دالة showSingleAd القديمة مع اسم مختلف أو استبدالها بالكامل
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 5. 🌍 LANGUAGE SYSTEM
