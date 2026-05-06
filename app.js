@@ -1561,6 +1561,34 @@ function renderTasks() {
     let html = '<div class="tasks-grid">';
     for (const task of tasksList) {
         const isCompleted = userCompletedTasks.includes(task.id);
+        
+        // التحقق من اكتمال العدد للمهمة المحدودة
+        let isFull = false;
+        let remainingText = '';
+        let limitedHtml = '';
+        
+        if (task.isLimited) {
+            const completed = task.completedCount || 0;
+            const max = task.maxCompletions || 0;
+            const remaining = max - completed;
+            const percent = (completed / max) * 100;
+            
+            if (remaining <= 0) {
+                isFull = true;
+            }
+            
+            limitedHtml = `
+                <div class="task-limited">
+                    <div class="task-limited-bar">
+                        <div class="task-limited-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="task-limited-text">
+                        🏆 ${remaining} / ${max} remaining
+                    </div>
+                </div>
+            `;
+        }
+        
         let icon = "fab fa-telegram";
         let actionText = "Join";
         
@@ -1581,6 +1609,16 @@ function renderTasks() {
         const identifier = task.username || task.link || task.identifier || "";
         const taskHint = "⚡ Instantly reward";
         
+        // تحديد حالة الزر
+        let buttonHtml = '';
+        if (isCompleted) {
+            buttonHtml = `<span class="task-completed-badge">✅ Completed</span>`;
+        } else if (isFull) {
+            buttonHtml = `<span class="task-full-badge">🔒 Fully Claimed</span>`;
+        } else {
+            buttonHtml = `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>`;
+        }
+        
         html += `
             <div class="task-card ${isCompleted ? 'completed' : ''}">
                 <div class="task-left">
@@ -1588,11 +1626,12 @@ function renderTasks() {
                     <div class="task-info">
                         <h4>${escapeHtml(task.name)}</h4>
                         <p class="task-hint">${taskHint}</p>
+                        ${limitedHtml}
                     </div>
                 </div>
                 <div class="task-right">
                     <div class="task-reward">+$${task.reward.toFixed(2)}</div>
-                    ${!isCompleted ? `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>` : `<span class="task-completed-badge">✅ Completed</span>`}
+                    ${buttonHtml}
                 </div>
             </div>
         `;
