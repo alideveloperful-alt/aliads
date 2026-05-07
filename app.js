@@ -305,20 +305,34 @@ const AD_PLATFORMS = [
     name: "GigaPub",
     show: () => {
         return new Promise((resolve, reject) => {
-            if (typeof window.showGiga === "function") {
-                console.log("📢 GigaPub: Showing ad...");
-                window.showGiga()
-                    .then(() => {
-                        console.log("✅ GigaPub: Ad completed");
-                        resolve();
-                    })
-                    .catch((error) => {
-                        console.error("❌ GigaPub ad error:", error);
-                        reject(error);
-                    });
-            } else {
-                reject("GigaPub not ready");
-            }
+            // انتظر حتى تصبح showGiga جاهزة (حتى 3 ثواني)
+            let attempts = 0;
+            const maxAttempts = 30; // 3 ثواني (100ms * 30)
+            
+            const checkAndShow = () => {
+                if (typeof window.showGiga === "function") {
+                    console.log("📢 GigaPub: Showing ad...");
+                    window.showGiga()
+                        .then(() => {
+                            console.log("✅ GigaPub: Ad completed");
+                            resolve();
+                        })
+                        .catch((error) => {
+                            console.error("❌ GigaPub ad error:", error);
+                            reject(error);
+                        });
+                } else {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        console.log(`⏳ GigaPub not ready yet, waiting... (${attempts}/${maxAttempts})`);
+                        setTimeout(checkAndShow, 100);
+                    } else {
+                        reject("GigaPub SDK not loaded after 3 seconds");
+                    }
+                }
+            };
+            
+            checkAndShow();
         });
     }
 }
