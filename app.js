@@ -3679,6 +3679,9 @@ window.verifyByReferrals = verifyByReferrals;
 window.showReferralInvite = showReferralInvite;
 window.startTonVerification = startTonVerification;
 window.openSupportChat = openSupportChat;
+window.initAdPlatforms = initAdPlatforms;
+window.showSingleAd = showSingleAd;
+window.showAdSequence = showAdSequence;
 
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
