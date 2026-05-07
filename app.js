@@ -180,6 +180,7 @@ const AD_PLATFORMS = [
                 } catch(e) {
                     reject("RichAds error: " + e.message);
                 }
+                }
             });
         }
     },
