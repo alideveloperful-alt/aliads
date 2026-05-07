@@ -298,7 +298,7 @@ const AD_PLATFORMS = [
                 }
             });
         }
-    }
+    },
 
     // 5. GigaPub
 {
