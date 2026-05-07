@@ -17,53 +17,47 @@
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     
     <!-- ============================================================ -->
-    <!-- 🎬 AD PLATFORMS - Professional initialization (4 platforms) -->
+    <!-- 🎬 AD PLATFORMS - مثل REFI بالضبط مع معرفات AdNova -->
     <!-- ============================================================ -->
     
     <!-- 1. Monetag -->
     <script src='//libtl.com/sdk.js' data-zone='10950362' data-sdk='show_10950362'></script>
     
-    <!-- 2. OnClickA -->
+    <!-- 2. OnClickA (مثل REFI: يستخدم window.show) -->
     <script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
     <script>
-        (function initOnClickA() {
-            if (typeof window.initCdTma === 'function') {
-                window.initCdTma({ id: '6118161' }).then(show => {
-                    window.showOnClickAd = show;
-                    console.log("✅ OnClickA initialized");
-                }).catch(e => console.error("OnClickA init error:", e));
-            }
-        })();
+        if (typeof window.initCdTma === 'function') {
+            window.initCdTma({ id: '6118161' }).then(show => {
+                window.show = show;
+                console.log("✅ OnClickA initialized with Spot ID: 6118161");
+            }).catch(e => console.error("OnClickA init error:", e));
+        }
     </script>
     
-    <!-- 3. RichAds -->
+    <!-- 3. RichAds (مثل REFI: manual mode only) -->
     <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
     <script>
-        (function initRichAds() {
-            if (typeof TelegramAdsController !== 'undefined') {
-                window.richadsController = new TelegramAdsController();
-                window.richadsController.initialize({
-                    pubId: "1009657",
-                    appId: "7284",
-                    debug: false
-                });
-                console.log("✅ RichAds initialized");
-            }
-        })();
+        if (typeof TelegramAdsController !== 'undefined') {
+            window.richadsController = new TelegramAdsController();
+            window.richadsController.initialize({
+                pubId: "1009657",
+                appId: "7284",
+                debug: false
+            });
+            console.log("✅ RichAds initialized (manual mode only)");
+        }
     </script>
     
-    <!-- 4. Adexium -->
+    <!-- 4. Adexium (مثل REFI: manual mode only, بدون autoMode) -->
     <script src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script>
-        (function initAdexium() {
-            if (typeof AdexiumWidget !== 'undefined') {
-                window.adexiumWidget = new AdexiumWidget({
-                    wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
-                    adFormat: 'interstitial'
-                });
-                console.log("✅ Adexium initialized");
-            }
-        })();
+        if (typeof AdexiumWidget !== 'undefined') {
+            window.adexiumWidget = new AdexiumWidget({
+                wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
+                adFormat: 'interstitial'
+            });
+            console.log("✅ Adexium initialized (manual mode only)");
+        }
     </script>
     
     <!-- Main Stylesheet -->
