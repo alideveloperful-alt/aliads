@@ -1789,6 +1789,7 @@ function renderTasks() {
         
         let icon = "fab fa-telegram";
         let actionText = "Join";
+        let isCodeTask = false;
         
         if (task.type === "youtube") {
             icon = "fab fa-youtube";
@@ -1802,10 +1803,14 @@ function renderTasks() {
         } else if (task.type === "twitter") {
             icon = "fab fa-twitter";
             actionText = "Follow";
+        } else if (task.type === "code") {
+            icon = "fas fa-key";
+            actionText = "Enter Code";
+            isCodeTask = true;
         }
         
         const identifier = task.username || task.link || task.identifier || "";
-        const taskHint = "⚡ Instantly reward";
+        const taskHint = isCodeTask ? (task.hint || "🔑 Enter the secret code to claim reward") : "⚡ Instantly reward";
         
         // تحديد حالة الزر
         let buttonHtml = '';
@@ -1813,6 +1818,9 @@ function renderTasks() {
             buttonHtml = `<span class="task-completed-badge">✅ Completed</span>`;
         } else if (isFull) {
             buttonHtml = `<span class="task-full-badge">🔒 Fully Claimed</span>`;
+        } else if (isCodeTask) {
+            // مهام الكود - تفتح نافذة منبثقة بدلاً من الرابط
+            buttonHtml = `<button class="task-btn code-task-btn" onclick="openCodeModal('${task.id}', '${escapeHtml(task.name)}', ${task.reward}, '${escapeHtml(task.hint || '')}')">🔐 ${actionText}</button>`;
         } else {
             buttonHtml = `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>`;
         }
@@ -1910,6 +1918,115 @@ async function verifyTask(taskId, type, identifier, reward) {
             showToast("Verification error", "error");
         }
     }, 5000);
+}
+
+// ====== Code Modal Functions (للمهام من نوع code) ======
+let currentCodeTask = null;
+
+function openCodeModal(taskId, taskName, reward, hint) {
+    currentCodeTask = { id: taskId, reward: reward };
+    
+    // إنشاء النافذة المنبثقة إذا لم تكن موجودة
+    let modal = document.getElementById('codeModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'codeModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content code-modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-key"></i> <span id="codeModalTitle">Enter Secret Code</span></h3>
+                    <button class="close-btn" onclick="closeCodeModal()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="code-hint" id="codeHint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span></span>
+                    </div>
+                    <div class="code-input-group">
+                        <input type="text" id="codeInput" class="code-input" placeholder="Enter code here..." autocomplete="off">
+                        <button class="code-submit-btn" onclick="submitCode()">
+                            <i class="fas fa-check-circle"></i> Verify & Claim
+                        </button>
+                    </div>
+                    <div class="code-reward-info">
+                        <i class="fas fa-coins"></i>
+                        <span>Reward: <strong id="codeRewardAmount">$0.00</strong></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    document.getElementById('codeModalTitle').textContent = taskName;
+    document.getElementById('codeHint').querySelector('span').textContent = hint || 'No hint provided';
+    document.getElementById('codeRewardAmount').textContent = `$${reward.toFixed(2)}`;
+    document.getElementById('codeInput').value = '';
+    
+    modal.classList.add('show');
+}
+
+function closeCodeModal() {
+    const modal = document.getElementById('codeModal');
+    if (modal) modal.classList.remove('show');
+    currentCodeTask = null;
+}
+
+async function submitCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    
+    if (!code) {
+        showToast('Please enter the code', 'warning');
+        return;
+    }
+    
+    const btn = document.querySelector('#codeModal .code-submit-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    
+    try {
+        const res = await fetch("/api/verify-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                taskId: currentCodeTask.id,
+                code: code
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            // تحديث الرصيد والكاش
+            currentUser.balance += currentCodeTask.reward;
+            currentUser.totalEarned += currentCodeTask.reward;
+            localAdCache.balance += currentCodeTask.reward;
+            localAdCache.totalEarned += currentCodeTask.reward;
+            
+            // إضافة المهمة إلى قائمة المكتملة
+            if (!userCompletedTasks.includes(currentCodeTask.id)) {
+                userCompletedTasks.push(currentCodeTask.id);
+            }
+            
+            saveLocalAdCache();
+            saveUserData();
+            updateUI();
+            renderTasks();
+            showToast(`+$${currentCodeTask.reward.toFixed(2)} added!`, "success");
+            closeCodeModal();
+        } else {
+            showToast(data.error || 'Invalid code!', 'error');
+        }
+    } catch(e) {
+        console.error("Code verification error:", e);
+        showToast("Verification error", "error");
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
