@@ -92,7 +92,7 @@ const WITHDRAWAL_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🎬 AD PLATFORMS (نسخة احترافية - جميع المنصات تعمل)
+// 4. 🎬 AD PLATFORMS (نسخة مطابقة لـ REFI مع معرفات AdNova)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AD_PLATFORMS = [
@@ -100,49 +100,29 @@ const AD_PLATFORMS = [
     {
         name: "Monetag",
         show: () => {
-            return new Promise((resolve, reject) => {
-                if (typeof show_10950362 === "function") {
-                    try {
-                        console.log("📢 Monetag: Showing ad...");
-                        const result = show_10950362();
-                        if (result && typeof result.then === 'function') {
-                            result.then(() => {
-                                console.log("✅ Monetag: Ad completed");
-                                resolve();
-                            }).catch(reject);
-                        } else {
-                            setTimeout(() => {
-                                console.log("✅ Monetag: Ad assumed completed");
-                                resolve();
-                            }, 3000);
-                        }
-                    } catch(e) {
-                        reject(e);
-                    }
-                } else {
-                    reject("Monetag not ready");
-                }
-            });
+            if (typeof show_10950362 === "function") {
+                return show_10950362();
+            }
+            return Promise.reject("Monetag not ready");
         }
     },
 
-    // 2. OnClickA (معدل: استخدام window.show بدلاً من window.showOnClickAd)
+    // 2. OnClickA
     {
         name: "OnClickA",
         init: () => {
             if (typeof window.initCdTma === "function" && !window.show) {
                 window.initCdTma({ id: '6118161' }).then(show => {
                     window.show = show;
-                    console.log("✅ OnClickA initialized");
+                    console.log("✅ OnClickA initialized with Spot ID: 6118161");
                 }).catch(e => console.error("OnClickA init error:", e));
             }
         },
         show: () => {
             return new Promise((resolve, reject) => {
                 if (window.show && typeof window.show === "function") {
-                    console.log("📢 OnClickA: Showing ad...");
                     window.show().then(() => {
-                        console.log("✅ OnClickA: Ad completed");
+                        console.log("✅ OnClickA rewarded video completed");
                         resolve();
                     }).catch(reject);
                 } else {
@@ -151,8 +131,8 @@ const AD_PLATFORMS = [
             });
         }
     },
-    
-    // 3.RichAds
+
+    // 3. RichAds
     {
         name: "RichAds",
         init: () => {
@@ -164,7 +144,7 @@ const AD_PLATFORMS = [
                         appId: "7284",
                         debug: false
                     });
-                    console.log("✅ RichAds initialized");
+                    console.log("✅ RichAds controller initialized");
                 } catch(e) {
                     console.error("RichAds init error:", e);
                 }
@@ -181,33 +161,42 @@ const AD_PLATFORMS = [
                             debug: false
                         });
                     }
-                    
+
                     if (!window.richadsController) {
                         reject("RichAds not initialized");
                         return;
                     }
-                    
-                    console.log("📢 RichAds: Showing ad...");
+
                     let resolved = false;
-                    let timeoutId = setTimeout(() => {
-                        if (!resolved) reject("RichAds timeout");
-                    }, 15000);
-                    
-                    const cleanup = () => clearTimeout(timeoutId);
+                    let timeoutId = null;
+
+                    const cleanup = () => {
+                        if (timeoutId) clearTimeout(timeoutId);
+                    };
+
                     const onSuccess = () => {
                         if (resolved) return;
                         resolved = true;
                         cleanup();
-                        console.log("✅ RichAds: Ad completed");
+                        console.log("✅ RichAds ad completed");
                         resolve();
                     };
+
                     const onError = (err) => {
                         if (resolved) return;
                         resolved = true;
                         cleanup();
+                        console.log("❌ RichAds error:", err);
                         reject(err || "RichAds ad failed");
                     };
-                    
+
+                    timeoutId = setTimeout(() => {
+                        if (!resolved) {
+                            console.log("❌ RichAds timeout");
+                            onError("RichAds timeout");
+                        }
+                    }, 15000);
+
                     if (typeof window.richadsController.triggerInterstitialVideo === "function") {
                         window.richadsController.triggerInterstitialVideo().then(onSuccess).catch(onError);
                     } else if (typeof window.richadsController.showInterstitial === "function") {
@@ -217,15 +206,15 @@ const AD_PLATFORMS = [
                     } else {
                         reject("RichAds no show method found");
                     }
-                    
+
                 } catch(e) {
                     reject("RichAds error: " + e.message);
                 }
             });
         }
     },
-    
-    // 4. Adexium (مبسط مثل REFI - إزالة onAdReceived و displayAd)
+
+    // 4. Adexium
     {
         name: "Adexium",
         init: () => {
@@ -235,7 +224,7 @@ const AD_PLATFORMS = [
                         wid: '074d0b62-98c8-430a-8ad9-183693879f0d',
                         adFormat: 'interstitial'
                     });
-                    console.log("✅ Adexium initialized");
+                    console.log("✅ Adexium widget initialized");
                 } catch(e) {
                     console.error("Adexium init error:", e);
                 }
@@ -250,49 +239,79 @@ const AD_PLATFORMS = [
                             adFormat: 'interstitial'
                         });
                     }
-                    
+
                     if (!window.adexiumWidget) {
-                        reject("Adexium not initialized");
+                        reject("Adexium widget not initialized");
                         return;
                     }
-                    
-                    console.log("📢 Adexium: Requesting ad...");
+
                     let resolved = false;
-                    let timeoutId = setTimeout(() => {
-                        if (!resolved) reject("Adexium timeout");
-                    }, 15000);
-                    
+                    let timeoutId = null;
+
                     const cleanup = () => {
-                        clearTimeout(timeoutId);
+                        if (timeoutId) clearTimeout(timeoutId);
                         try {
-                            window.adexiumWidget.off('adPlaybackCompleted', onSuccess);
-                            window.adexiumWidget.off('noAdFound', onError);
-                            window.adexiumWidget.off('adError', onError);
+                            window.adexiumWidget.off('adReceived', onAdReceived);
+                            window.adexiumWidget.off('noAdFound', onNoAdFound);
+                            window.adexiumWidget.off('adPlaybackCompleted', onAdPlaybackCompleted);
+                            window.adexiumWidget.off('adClosed', onAdClosed);
+                            window.adexiumWidget.off('adDisplayed', onAdDisplayed);
                         } catch(e) {}
                     };
-                    
-                    const onSuccess = () => {
+
+                    const onAdReceived = (ad) => {
                         if (resolved) return;
+                        console.log("✅ Adexium ad received:", ad);
+                        try {
+                            window.adexiumWidget.displayAd(ad);
+                        } catch(e) {
+                            cleanup();
+                            reject("Failed to display ad: " + e.message);
+                        }
+                    };
+
+                    const onNoAdFound = () => {
+                        if (resolved) return;
+                        console.log("❌ Adexium no ad found");
+                        cleanup();
+                        reject("No ad available");
+                    };
+
+                    const onAdPlaybackCompleted = () => {
+                        if (resolved) return;
+                        console.log("✅ Adexium ad playback completed");
                         resolved = true;
                         cleanup();
-                        console.log("✅ Adexium: Ad completed");
                         resolve();
                     };
-                    
-                    const onError = (err) => {
+
+                    const onAdClosed = () => {
                         if (resolved) return;
-                        resolved = true;
+                        console.log("❌ Adexium ad closed by user");
                         cleanup();
-                        console.log("❌ Adexium error:", err);
-                        reject(err || "No ad available");
+                        reject("Ad closed by user");
                     };
-                    
-                    window.adexiumWidget.on('adPlaybackCompleted', onSuccess);
-                    window.adexiumWidget.on('noAdFound', onError);
-                    window.adexiumWidget.on('adError', onError);
-                    
+
+                    const onAdDisplayed = () => {
+                        console.log("✅ Adexium ad displayed");
+                    };
+
+                    window.adexiumWidget.on('adReceived', onAdReceived);
+                    window.adexiumWidget.on('noAdFound', onNoAdFound);
+                    window.adexiumWidget.on('adPlaybackCompleted', onAdPlaybackCompleted);
+                    window.adexiumWidget.on('adClosed', onAdClosed);
+                    window.adexiumWidget.on('adDisplayed', onAdDisplayed);
+
+                    timeoutId = setTimeout(() => {
+                        if (!resolved) {
+                            console.log("❌ Adexium request timeout");
+                            cleanup();
+                            reject("Ad request timeout");
+                        }
+                    }, 15000);
+
                     window.adexiumWidget.requestAd("interstitial");
-                    
+
                 } catch(e) {
                     reject("Adexium error: " + e.message);
                 }
@@ -300,47 +319,20 @@ const AD_PLATFORMS = [
         }
     },
 
-    // 5. GigaPub
-{
-    name: "GigaPub",
-    show: () => {
-        return new Promise((resolve, reject) => {
-            // انتظر حتى تصبح showGiga جاهزة (حتى 3 ثواني)
-            let attempts = 0;
-            const maxAttempts = 30; // 3 ثواني (100ms * 30)
-            
-            const checkAndShow = () => {
-                if (typeof window.showGiga === "function") {
-                    console.log("📢 GigaPub: Showing ad...");
-                    window.showGiga()
-                        .then(() => {
-                            console.log("✅ GigaPub: Ad completed");
-                            resolve();
-                        })
-                        .catch((error) => {
-                            console.error("❌ GigaPub ad error:", error);
-                            reject(error);
-                        });
-                } else {
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        console.log(`⏳ GigaPub not ready yet, waiting... (${attempts}/${maxAttempts})`);
-                        setTimeout(checkAndShow, 100);
-                    } else {
-                        reject("GigaPub SDK not loaded after 3 seconds");
-                    }
-                }
-            };
-            
-            checkAndShow();
-        });
+    // 5. GigaPub (بدون AdsGram كما في REFI)
+    {
+        name: "GigaPub",
+        show: () => {
+            if (typeof window.showGiga === "function") {
+                return window.showGiga();
+            }
+            return Promise.reject("GigaPub not ready");
+        }
     }
-}
-
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.1. 🎬 AD INITIALIZATION
+// 4.1. 🎬 AD INITIALIZATION (مطابق لـ REFI)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initAdPlatforms() {
@@ -385,11 +377,10 @@ function initAdPlatforms() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4.2. 🎬 SINGLE AD DISPLAY
+// 4.2. 🎬 SINGLE AD DISPLAY (مطابق لـ REFI - مبسط)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd(excludePlatformNames = []) {
-    // نسخة مبسطة مثل REFI بالضبط
     let platforms = AD_PLATFORMS;
     
     if (excludePlatformNames.length > 0) {
@@ -403,18 +394,8 @@ async function showSingleAd(excludePlatformNames = []) {
         try {
             console.log(`📢 Trying: ${platform.name}`);
             
-            // تهيئة بسيطة (فقط إذا وجدت)
-            if (platform.init && platform.name !== "GigaPub") {
+            if (platform.init) {
                 platform.init();
-            }
-            
-            // انتظار بسيط لضمان جاهزية GigaPub
-            if (platform.name === "GigaPub") {
-                let waitCount = 0;
-                while (typeof window.showGiga !== "function" && waitCount < 20) {
-                    await new Promise(r => setTimeout(r, 100));
-                    waitCount++;
-                }
             }
             
             await platform.show();
