@@ -97,10 +97,40 @@ const WITHDRAWAL_METHODS = [
 
 const AD_PLATFORMS = [
     // 1. Monetag
-    
+    {
+        name: "Monetag",
+        show: () => {
+            if (typeof show_10950362 === "function") {
+                return show_10950362();
+            }
+            return Promise.reject("Monetag not ready");
+        }
+    },
 
     // 2. OnClickA
-    
+    {
+        name: "OnClickA",
+        init: () => {
+            if (typeof window.initCdTma === "function" && !window.show) {
+                window.initCdTma({ id: '6118161' }).then(show => {
+                    window.show = show;
+                    console.log("✅ OnClickA initialized with Spot ID: 6118161");
+                }).catch(e => console.error("OnClickA init error:", e));
+            }
+        },
+        show: () => {
+            return new Promise((resolve, reject) => {
+                if (window.show && typeof window.show === "function") {
+                    window.show().then(() => {
+                        console.log("✅ OnClickA rewarded video completed");
+                        resolve();
+                    }).catch(reject);
+                } else {
+                    reject("OnClickA not ready");
+                }
+            });
+        }
+    },
 
     // 3. RichAds
     {
@@ -179,7 +209,6 @@ const AD_PLATFORMS = [
 
                 } catch(e) {
                     reject("RichAds error: " + e.message);
-                }
                 }
             });
         }
