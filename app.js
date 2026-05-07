@@ -125,7 +125,29 @@ const AD_PLATFORMS = [
             });
         }
     },
-    
+
+    // 5. GigaPub
+{
+    name: "GigaPub",
+    show: () => {
+        return new Promise((resolve, reject) => {
+            if (typeof window.showGiga === "function") {
+                console.log("📢 GigaPub: Showing ad...");
+                window.showGiga()
+                    .then(() => {
+                        console.log("✅ GigaPub: Ad completed");
+                        resolve();
+                    })
+                    .catch((error) => {
+                        console.error("❌ GigaPub ad error:", error);
+                        reject(error);
+                    });
+            } else {
+                reject("GigaPub not ready");
+            }
+        });
+    }
+}
     // 2. OnClickA (معدل: استخدام window.show بدلاً من window.showOnClickAd)
     {
         name: "OnClickA",
