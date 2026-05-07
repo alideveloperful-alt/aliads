@@ -97,61 +97,6 @@ const WITHDRAWAL_METHODS = [
 
 const AD_PLATFORMS = [
     // 1. Monetag
-    {
-        name: "Monetag",
-        show: () => {
-            return new Promise((resolve, reject) => {
-                if (typeof show_10950362 === "function") {
-                    try {
-                        console.log("📢 Monetag: Showing ad...");
-                        const result = show_10950362();
-                        if (result && typeof result.then === 'function') {
-                            result.then(() => {
-                                console.log("✅ Monetag: Ad completed");
-                                resolve();
-                            }).catch(reject);
-                        } else {
-                            setTimeout(() => {
-                                console.log("✅ Monetag: Ad assumed completed");
-                                resolve();
-                            }, 3000);
-                        }
-                    } catch(e) {
-                        reject(e);
-                    }
-                } else {
-                    reject("Monetag not ready");
-                }
-            });
-        }
-    },
-
-    // 2. OnClickA (معدل: استخدام window.show بدلاً من window.showOnClickAd)
-    {
-        name: "OnClickA",
-        init: () => {
-            if (typeof window.initCdTma === "function" && !window.show) {
-                window.initCdTma({ id: '6118161' }).then(show => {
-                    window.show = show;
-                    console.log("✅ OnClickA initialized");
-                }).catch(e => console.error("OnClickA init error:", e));
-            }
-        },
-        show: () => {
-            return new Promise((resolve, reject) => {
-                if (window.show && typeof window.show === "function") {
-                    console.log("📢 OnClickA: Showing ad...");
-                    window.show().then(() => {
-                        console.log("✅ OnClickA: Ad completed");
-                        resolve();
-                    }).catch(reject);
-                } else {
-                    reject("OnClickA not ready");
-                }
-            });
-        }
-    },
-    
     // 3. RichAds
     {
         name: "RichAds",
