@@ -389,27 +389,40 @@ function initAdPlatforms() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function showSingleAd(excludePlatformNames = []) {
-    let availablePlatforms = AD_PLATFORMS;
+    // نسخة مبسطة مثل REFI بالضبط
+    let platforms = AD_PLATFORMS;
     
     if (excludePlatformNames.length > 0) {
-        availablePlatforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
-        if (availablePlatforms.length === 0) {
-            console.log(`❌ No platforms available after excluding: ${excludePlatformNames}`);
-            return { success: false, platformName: null };
-        }
+        platforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
     }
     
-    const shuffled = [...availablePlatforms].sort(() => Math.random() - 0.5);
+    // خلط عشوائي
+    const shuffled = [...platforms].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
         try {
-            console.log(`📢 Trying ad from: ${platform.name}`);
-            if (platform.init) platform.init();
+            console.log(`📢 Trying: ${platform.name}`);
+            
+            // تهيئة بسيطة (فقط إذا وجدت)
+            if (platform.init && platform.name !== "GigaPub") {
+                platform.init();
+            }
+            
+            // انتظار بسيط لضمان جاهزية GigaPub
+            if (platform.name === "GigaPub") {
+                let waitCount = 0;
+                while (typeof window.showGiga !== "function" && waitCount < 20) {
+                    await new Promise(r => setTimeout(r, 100));
+                    waitCount++;
+                }
+            }
+            
             await platform.show();
             console.log(`✅ Ad completed from: ${platform.name}`);
             return { success: true, platformName: platform.name };
+            
         } catch(error) {
-            console.log(`❌ Ad failed from ${platform.name}:`, error);
+            console.log(`❌ Failed from ${platform.name}:`, error);
         }
     }
     
