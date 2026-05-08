@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN - شاشة التحميل
+   02. SPLASH SCREEN
    ============================================================================ */
 
 .splash-screen {
@@ -74,7 +74,7 @@ body.rtl {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;        /* كانت 22px → قللنا المسافة */
+    margin-bottom: 22px;
 }
 
 .splash-logo-img {
@@ -84,50 +84,89 @@ body.rtl {
 }
 
 .splash-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     font-size: 14.5px;
     color: rgba(100, 80, 20, 0.65);
     font-weight: 500;
     letter-spacing: 0.2px;
-    margin-bottom: 16px;        /* كانت 28px → قللنا المسافة */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    margin-bottom: 5px;
 }
 
 .splash-deco {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
 }
 
-.splash-deco::before {
+/* الشعاع الأيسر (قبل العلامة الأولى) */
+.splash-deco:first-child::before {
     content: '';
-    display: block;
-    width: 24px;
+    display: inline-block;
+    width: 30px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(180, 140, 20, 0.55));
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6));
+    margin-right: 8px;
     border-radius: 1px;
 }
 
-/* شريط التحميل - في وسط الشاشة */
+/* العلامة الأولى */
+.splash-deco:first-child {
+    order: 1;
+}
+
+/* اسم التطبيق */
+#splashTitle {
+    order: 2;
+}
+
+/* العلامة الثانية */
+.splash-deco:last-child {
+    order: 3;
+}
+
+/* الشعاع الأيمن (بعد العلامة الثانية) */
+.splash-deco:last-child::after {
+    content: '';
+    display: inline-block;
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.6));
+    margin-left: 8px;
+    border-radius: 1px;
+}
+
+/* إزالة الشعاع الافتراضي القديم */
+.splash-deco::before {
+    content: none;
+}
+
+.splash-deco-right::before {
+    content: none;
+}
+
+.splash-deco-gem {
+    font-size: 9px;
+    color: #c9a227;
+    line-height: 1;
+    opacity: 0.85;
+}
+
 .splash-loader {
     width: 150px;
     height: 3px;
     background: rgba(212, 175, 55, 0.18);
     border-radius: 3px;
     overflow: hidden;
-    margin: 0 auto;
 }
 
-/* شريط التحميل المتوهج */
 .splash-loader-bar {
     height: 100%;
     width: 45%;
     background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
     border-radius: 3px;
     animation: splashShimmer 1.4s ease-in-out infinite;
-    box-shadow: 0 0 4px rgba(212, 175, 55, 0.5);
 }
 
 @keyframes splashShimmer {
@@ -140,7 +179,7 @@ body.rtl {
     font-size: 11px;
     color: rgba(100, 80, 20, 0.55);
     font-weight: 500;
-    margin-top: 5px;           /* قريبة جداً من الشريط */
+    margin-top: 5px;
     text-align: center;
 }
 
