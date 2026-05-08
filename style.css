@@ -2606,5 +2606,232 @@ body.rtl #codeModal .code-hint {
 }
 
 /* ============================================================================
+   VERIFICATION MODAL - تحسين احترافي (أضف إلى آخر الملف)
+   ============================================================================ */
+
+/* تحسين النافذة الرئيسية */
+.verify-modal {
+    max-width: 420px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+/* عنوان النافذة */
+.verify-modal h3 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+}
+
+.verify-modal .modal-body > p {
+    font-size: 14px;
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+/* خيارات التحقق - بطاقات منفصلة */
+.verify-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--white);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.verify-option:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* أيقونة الخيار */
+.verify-option-icon {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.verify-option-icon i {
+    font-size: 28px;
+    color: var(--gold);
+}
+
+/* محتوى الخيار */
+.verify-option-content {
+    flex: 1;
+}
+
+.verify-option-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+}
+
+.verify-option-desc {
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 12px;
+}
+
+/* شريط التقدم */
+.verify-progress-bar-container {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 99px;
+    height: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.verify-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+/* إحصائيات التحقق */
+.verify-stats {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray);
+    margin-top: 6px;
+}
+
+.verify-warning {
+    font-size: 12px;
+    color: var(--warning);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.verify-success {
+    font-size: 12px;
+    color: var(--success);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* فوائد طريقة TON */
+.verify-benefits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.verify-benefits span {
+    font-size: 11px;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* زر TON */
+.verify-ton-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(145deg, #0098ea, #0077be);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 40px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    width: auto;
+}
+
+.verify-ton-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 152, 234, 0.3);
+}
+
+/* زر التذكير لاحقاً */
+.verify-later-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 40px;
+    padding: 12px;
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.verify-later-btn:hover {
+    background: var(--gray-light);
+    border-color: var(--gold);
+    color: var(--gold-dark);
+}
+
+/* أيقونة القفل في الأعلى */
+.verify-modal-icon {
+    text-align: center;
+    font-size: 48px;
+    margin: 8px 0 8px;
+}
+
+/* RTL support */
+body.rtl .verify-option {
+    flex-direction: row;
+}
+
+body.rtl .verify-option-content {
+    text-align: right;
+}
+
+body.rtl .verify-benefits span {
+    justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .verify-modal {
+        max-width: 360px;
+    }
+    
+    .verify-option {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .verify-option-content {
+        text-align: center;
+    }
+    
+    .verify-benefits {
+        justify-content: center;
+    }
+}
+/* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
