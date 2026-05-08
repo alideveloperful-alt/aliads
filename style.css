@@ -125,33 +125,110 @@ body.rtl {
 .splash-deco:last-child {
     order: 3;
 }
+/* ============================================================================
+   02. SPLASH SCREEN - شاشة التحميل
+   ============================================================================ */
 
-/* الشعاع الأيمن (بعد العلامة الثانية) */
-.splash-deco:last-child::after {
-    content: '';
-    display: inline-block;
-    width: 30px;
-    height: 1px;
-    background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.6));
-    margin-left: 8px;
-    border-radius: 1px;
+/* -------------------------------------------------------------------------
+   2.1 الحاوية الرئيسية
+   ------------------------------------------------------------------------- */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f5f0, #fff8ed);
+    transition: opacity 0.55s ease, visibility 0.55s ease;
 }
 
-/* إزالة الشعاع الافتراضي القديم */
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------
+   2.2 الشعار (Logo)
+   ------------------------------------------------------------------------- */
+
+.splash-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.splash-logo-img {
+    width: 176px;
+    height: auto;
+    display: block;
+}
+
+/* -------------------------------------------------------------------------
+   2.3 النص الرئيسي (AdNova Network)
+   ------------------------------------------------------------------------- */
+
+.splash-sub {
+    font-size: 14.5px;
+    color: rgba(100, 80, 20, 0.65);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.splash-deco {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* -------------------------------------------------------------------------
+   2.4 الشعاع الأيسر (قبل العلامة الأولى)
+   ------------------------------------------------------------------------- */
+
+.splash-deco:first-child::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6));
+    border-radius: 1px;
+    margin-right: 6px;
+}
+
+/* -------------------------------------------------------------------------
+   2.5 الشعاع الأيمن (بعد العلامة الثانية)
+   ------------------------------------------------------------------------- */
+
+.splash-deco:last-child::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.6));
+    border-radius: 1px;
+    margin-left: 6px;
+}
+
+/* -------------------------------------------------------------------------
+   2.6 إلغاء الشعاع الافتراضي القديم
+   ------------------------------------------------------------------------- */
+
 .splash-deco::before {
     content: none;
 }
 
-.splash-deco-right::before {
-    content: none;
-}
-
-.splash-deco-gem {
-    font-size: 9px;
-    color: #c9a227;
-    line-height: 1;
-    opacity: 0.85;
-}
+/* -------------------------------------------------------------------------
+   2.7 شريط التحميل (Loader)
+   ------------------------------------------------------------------------- */
 
 .splash-loader {
     width: 150px;
@@ -159,6 +236,7 @@ body.rtl {
     background: rgba(212, 175, 55, 0.18);
     border-radius: 3px;
     overflow: hidden;
+    margin: 0 auto;
 }
 
 .splash-loader-bar {
@@ -167,6 +245,7 @@ body.rtl {
     background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
     border-radius: 3px;
     animation: splashShimmer 1.4s ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.5);
 }
 
 @keyframes splashShimmer {
@@ -174,7 +253,10 @@ body.rtl {
     100% { transform: translateX(380%); }
 }
 
-/* كلمة Nova - قريبة جداً من الشريط */
+/* -------------------------------------------------------------------------
+   2.8 نسخة التطبيق (Version)
+   ------------------------------------------------------------------------- */
+
 .splash-version {
     font-size: 11px;
     color: rgba(100, 80, 20, 0.55);
