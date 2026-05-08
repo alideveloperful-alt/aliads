@@ -83,7 +83,7 @@ APP_URL = process.env.APP_URL;
 const APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
-    adReward: 0.01,
+    adReward: 0.1,
     dailyAdLimit: 50,
     minWithdraw: 50.00,
     requiredReferrals: 0,
@@ -310,11 +310,11 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 • 🎥 Subscribe to YouTube
 • 🎵 Follow on TikTok
 • 🐦 Follow on Twitter
-• 💰 Earn *$0.05 - $0.50* per task
+• 💰 Earn *$0.05 - $50* per task
 
 💳 *WITHDRAWAL METHODS*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• 💳 PayPal / Skrill / Payoneer
+• 💳 PayPal / Skrill / Payoneer / Binance Pay
 • ₿ USDT (BEP20 & TRC20)
 • 📱 TON / SBP (Russia)
 • 🎮 PUBG UC / Free Fire
