@@ -3638,6 +3638,9 @@ body.rtl .code-input {
         font-size: 14px;
         letter-spacing: 2px;
     }
+
+#codeModal.show {
+    display: flex !important;
 }
 /* ============================================================================
    END OF STYLESHEET
