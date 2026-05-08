@@ -2606,7 +2606,7 @@ body.rtl #codeModal .code-hint {
 }
 
 /* ============================================================================
-   VERIFICATION MODAL - تصحيح كامل (نص في المنتصف)
+   VERIFICATION MODAL - التصميم الاحترافي النهائي
    ============================================================================ */
 
 /* النافذة الرئيسية */
@@ -2614,7 +2614,7 @@ body.rtl #codeModal .code-hint {
     max-width: 520px !important;
     width: 90% !important;
     background: var(--white);
-    border-radius: 36px;
+    border-radius: 40px;
     overflow: hidden;
     box-shadow: var(--shadow-heavy);
     position: relative;
@@ -2628,108 +2628,109 @@ body.rtl #codeModal .code-hint {
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold), var(--gold-dark));
     z-index: 10;
 }
 
-/* ===== إجبار جميع العناصر على التوسيط ===== */
+/* حاوية المحتوى - مع مسافات داخلية كبيرة */
 .verify-modal .modal-body {
-    padding: 0 24px 32px 24px !important;
-    display: flex;
-    flex-direction: column;
+    padding: 0 28px 32px 28px !important;
 }
 
 /* أيقونة القفل */
 .verify-modal-icon {
     text-align: center !important;
-    display: block !important;
-    margin: 28px auto 12px auto !important;
-    padding: 0 !important;
-    width: 100% !important;
+    margin: 32px auto 16px auto !important;
 }
 
 .verify-modal-icon i {
-    font-size: 52px;
+    font-size: 56px;
     color: var(--gold);
-    display: inline-block;
+    filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.25));
 }
 
-/* عنوان النافذة h3 - توسيط كامل */
+/* عنوان Verification Required */
 .verify-modal h3 {
     text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-    margin: 0 auto 8px auto !important;
-    padding: 0 16px !important;
-    font-size: 24px !important;
+    font-size: 26px !important;
     font-weight: 800 !important;
     background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     color: transparent !important;
-    letter-spacing: -0.3px;
+    margin: 0 0 12px 0 !important;
+    padding: 0 !important;
+    letter-spacing: -0.5px;
 }
 
-/* النص التوضيحي p - توسيط كامل */
+/* ===== النص التوضيحي - محسن بالكامل ===== */
 .verify-modal .modal-body > p {
     text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-    margin: 0 auto 20px auto !important;
-    padding: 0 16px !important;
     font-size: 14px !important;
-    color: var(--gray) !important;
-    line-height: 1.5;
-    box-sizing: border-box;
+    font-weight: 500 !important;
+    color: #5a6a7a !important;
+    line-height: 1.6 !important;
+    margin: 0 0 24px 0 !important;
+    padding: 0 16px !important;
+    max-width: 100% !important;
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 20px;
+    padding: 14px 20px !important;
+    border: 1px solid rgba(212, 175, 55, 0.12);
 }
 
-/* الخط الفاصل تحت النص */
+/* الخط الفاصل الذهبي */
 .verify-modal .modal-body > p::after {
     content: '';
     display: block;
-    width: 50px;
+    width: 60px;
     height: 3px;
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 18px auto 0 auto;
+    margin: 16px auto 0 auto;
     border-radius: 99px;
 }
 
-/* خيارات التحقق */
+/* خيارات التحقق - بطاقات فاخرة */
 .verify-option {
     display: flex;
     align-items: center;
     gap: 18px;
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.01));
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 24px;
-    padding: 16px 20px;
-    margin-bottom: 14px;
+    background: linear-gradient(145deg, #ffffff, #fafafc);
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    border-radius: 28px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    box-sizing: border-box;
+    transition: all 0.3s cubic-bezier(0.2, 0.95, 0.4, 1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .verify-option:hover {
     border-color: var(--gold);
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.03));
-    transform: translateY(-2px);
+    background: linear-gradient(145deg, #fffef8, #fffaf0);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px -12px rgba(212, 175, 55, 0.25);
 }
 
 /* أيقونة الخيار */
 .verify-option-icon {
-    width: 52px;
-    height: 52px;
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.04));
-    border-radius: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.verify-option:hover .verify-option-icon {
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.1));
 }
 
 .verify-option-icon i {
-    font-size: 26px;
+    font-size: 28px;
     color: var(--gold);
 }
 
@@ -2739,32 +2740,35 @@ body.rtl #codeModal .code-hint {
 }
 
 .verify-option-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--dark);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
+    letter-spacing: -0.2px;
 }
 
 .verify-option-desc {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--gray);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 /* شريط التقدم */
 .verify-progress-bar-container {
     background: rgba(0, 0, 0, 0.06);
     border-radius: 99px;
-    height: 6px;
-    margin: 8px 0;
+    height: 7px;
+    margin: 10px 0;
     overflow: hidden;
 }
 
 .verify-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
     border-radius: 99px;
-    transition: width 0.3s;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.4);
 }
 
 /* إحصائيات */
@@ -2772,38 +2776,41 @@ body.rtl #codeModal .code-hint {
     font-size: 12px;
     font-weight: 600;
     color: var(--gold-dark);
+    margin-top: 6px;
 }
 
 .verify-warning {
     font-size: 12px;
     color: var(--warning);
-    margin-top: 6px;
+    margin-top: 8px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     background: rgba(245, 158, 11, 0.1);
-    padding: 4px 12px;
-    border-radius: 30px;
+    padding: 5px 14px;
+    border-radius: 40px;
+    font-weight: 500;
 }
 
 .verify-success {
     font-size: 12px;
     color: var(--success);
-    margin-top: 6px;
+    margin-top: 8px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     background: rgba(16, 185, 129, 0.1);
-    padding: 4px 12px;
-    border-radius: 30px;
+    padding: 5px 14px;
+    border-radius: 40px;
+    font-weight: 500;
 }
 
 /* فوائد TON */
 .verify-benefits {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 8px 0;
+    gap: 12px;
+    margin: 10px 0;
 }
 
 .verify-benefits span {
@@ -2811,57 +2818,67 @@ body.rtl #codeModal .code-hint {
     color: var(--success);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.06);
+    padding: 4px 12px;
+    border-radius: 30px;
 }
 
 /* زر TON */
 .verify-ton-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     background: linear-gradient(145deg, var(--gold), var(--gold-dark));
     color: var(--dark);
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
-    padding: 8px 20px;
-    border-radius: 40px;
-    margin-top: 8px;
+    padding: 10px 24px;
+    border-radius: 60px;
+    margin-top: 10px;
     cursor: pointer;
     transition: all 0.25s ease;
     border: none;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
 }
 
 .verify-ton-btn:hover {
     transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+    background: linear-gradient(145deg, var(--gold-light), var(--gold));
 }
 
 /* زر التذكير */
 .verify-later-btn {
     width: 100%;
     background: transparent;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 40px;
-    padding: 12px;
-    margin-top: 20px;
+    border: 1.5px solid rgba(212, 175, 55, 0.25);
+    border-radius: 60px;
+    padding: 13px;
+    margin-top: 24px;
     font-size: 14px;
     font-weight: 600;
-    color: var(--gray);
+    color: var(--gold-dark);
     cursor: pointer;
     transition: all 0.25s ease;
     text-align: center;
+    letter-spacing: 0.3px;
 }
 
 .verify-later-btn:hover {
-    background: var(--gray-light);
+    background: rgba(212, 175, 55, 0.08);
     border-color: var(--gold);
-    color: var(--gold-dark);
+    transform: translateY(-2px);
 }
 
 /* RTL Support */
 body.rtl .verify-modal h3,
 body.rtl .verify-modal .modal-body > p {
     text-align: center !important;
+}
+
+body.rtl .verify-option {
+    flex-direction: row;
 }
 
 /* Responsive */
@@ -2871,13 +2888,23 @@ body.rtl .verify-modal .modal-body > p {
     }
     
     .verify-modal .modal-body {
-        padding: 0 16px 28px 16px !important;
+        padding: 0 18px 28px 18px !important;
+    }
+    
+    .verify-modal h3 {
+        font-size: 23px !important;
+    }
+    
+    .verify-modal .modal-body > p {
+        font-size: 13px !important;
+        padding: 12px 16px !important;
     }
     
     .verify-option {
         flex-direction: column;
         text-align: center;
         gap: 12px;
+        padding: 16px;
     }
     
     .verify-option-content {
@@ -2897,13 +2924,14 @@ body.rtl .verify-modal .modal-body > p {
     .verify-benefits {
         justify-content: center;
     }
-    
-    .verify-modal h3 {
-        font-size: 22px !important;
+}
+
+@media (max-width: 400px) {
+    .verify-modal .modal-body {
+        padding: 0 14px 24px 14px !important;
     }
     
     .verify-modal .modal-body > p {
-        font-size: 13px !important;
-        padding: 0 8px !important;
+        padding: 10px 12px !important;
     }
 }
