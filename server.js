@@ -1112,6 +1112,8 @@ bot.on('text', async (ctx) => {
     const userId = ctx.from.id.toString();
     const message = ctx.message.text;
     const authSession = botAdminSessions.get(userId);
+    
+    // ========== المصادقة ==========
     if (authSession && authSession.step === 'awaiting_password') {
         if (message === ADMIN_PASSWORD) {
             botAdminSessions.set(userId, { step: 'authenticated' });
@@ -1139,6 +1141,8 @@ bot.on('text', async (ctx) => {
         }
         return;
     }
+    
+    // ========== البث الجماعي ==========
     if (authSession && authSession.step === 'awaiting_broadcast') {
         ctx.reply(`📢 Broadcasting to all users...`);
         const result = await broadcastToAllUsers(message);
@@ -1154,6 +1158,8 @@ bot.on('text', async (ctx) => {
         botAdminSessions.delete(userId);
         return;
     }
+    
+    // ========== رفض السحب (سبب الرفض) ==========
     if (authSession && authSession.step === 'awaiting_reject_reason') {
         const withdrawalId = authSession.withdrawalId;
         const reason = message;
@@ -1173,8 +1179,11 @@ bot.on('text', async (ctx) => {
         botAdminSessions.delete(userId);
         return;
     }
+    
+    // ========== إضافة مهمة جديدة ==========
     const taskSession = taskCreationSessions.get(userId);
     if (taskSession) {
+        // الخطوة 1: اسم المهمة
         if (taskSession.step === 'name') {
             taskSession.name = message;
             taskSession.step = 'type';
@@ -1186,29 +1195,29 @@ bot.on('text', async (ctx) => {
                 `• youtube - YouTube Channel\n` +
                 `• tiktok - TikTok Account\n` +
                 `• twitter - Twitter / X Account\n` +
-                `• code - Verification Code Task\n\n` +
+                `• code - Verification Code Task (NEW!)\n\n` +
                 `📝 Type the type:`
             );
-        } else if (taskSession.step === 'type') {
+        }
+        // الخطوة 2: نوع المهمة
+        else if (taskSession.step === 'type') {
             const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter', 'code'];
             if (!validTypes.includes(message.toLowerCase())) {
                 return ctx.reply(`❌ Invalid type! Please choose: channel, bot, youtube, tiktok, twitter, or code`);
             }
             taskSession.type = message.toLowerCase();
+            taskSession.step = 'identifier';
             
-            // ✅ إذا كان النوع code، لا نحتاج identifier
+            // رسالة مختلفة قليلاً لـ code
             if (taskSession.type === 'code') {
-                taskSession.identifier = '';
-                taskSession.step = 'reward';
                 ctx.reply(
                     `📝 Task Name: ${taskSession.name}\n` +
                     `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                    `💰 Step 4: Enter reward amount (USD):\n` +
-                    `• Example: 0.05, 0.10, 0.25\n\n` +
-                    `📝 Type the reward:`
+                    `🔗 Step 3: Enter the link or URL where users can find the secret code:\n` +
+                    `• Example: https://mywebsite.com/secret-page\n\n` +
+                    `📝 Type the link:`
                 );
             } else {
-                taskSession.step = 'identifier';
                 ctx.reply(
                     `📝 Task Name: ${taskSession.name}\n` +
                     `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -1220,7 +1229,9 @@ bot.on('text', async (ctx) => {
                     `📝 Type the identifier:`
                 );
             }
-        } else if (taskSession.step === 'identifier') {
+        }
+        // الخطوة 3: identifier (الرابط أو المعرف)
+        else if (taskSession.step === 'identifier') {
             taskSession.identifier = message;
             taskSession.step = 'reward';
             ctx.reply(
@@ -1231,7 +1242,9 @@ bot.on('text', async (ctx) => {
                 `• Example: 0.05, 0.10, 0.25\n\n` +
                 `📝 Type the reward:`
             );
-        } else if (taskSession.step === 'reward') {
+        }
+        // الخطوة 4: المكافأة
+        else if (taskSession.step === 'reward') {
             const reward = parseFloat(message);
             if (isNaN(reward) || reward <= 0) {
                 return ctx.reply(`❌ Invalid reward! Please enter a valid number (e.g., 0.05)`);
@@ -1241,7 +1254,7 @@ bot.on('text', async (ctx) => {
             ctx.reply(
                 `📝 Task Name: ${taskSession.name}\n` +
                 `🏷️ Type: ${taskSession.type}\n` +
-                `🔗 Identifier: ${taskSession.identifier || 'N/A'}\n` +
+                `🔗 Identifier: ${taskSession.identifier}\n` +
                 `💰 Reward: $${reward}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
                 `🔄 Step 5: Choose reset period:\n` +
                 `• daily - Resets every day\n` +
@@ -1249,21 +1262,23 @@ bot.on('text', async (ctx) => {
                 `• once - One time only\n\n` +
                 `📝 Type the reset period:`
             );
-        } else if (taskSession.step === 'resetPeriod') {
+        }
+        // الخطوة 5: فترة إعادة التعيين
+        else if (taskSession.step === 'resetPeriod') {
             const validPeriods = ['daily', 'weekly', 'once'];
             if (!validPeriods.includes(message.toLowerCase())) {
                 return ctx.reply(`❌ Invalid period! Please choose: daily, weekly, or once`);
             }
             taskSession.resetPeriod = message.toLowerCase();
-            
-            // ✅ الخطوة 6: هل المهمة محدودة؟
             taskSession.step = 'isLimited';
             ctx.reply(
                 `🔢 Step 6: Is this a limited task?\n` +
                 `• Reply with yes to set a limit (e.g., 100 users)\n` +
                 `• Reply with no for unlimited task`
             );
-        } else if (taskSession.step === 'isLimited') {
+        }
+        // الخطوة 6: هل المهمة محدودة؟
+        else if (taskSession.step === 'isLimited') {
             if (message.toLowerCase() === 'yes') {
                 taskSession.isLimited = true;
                 taskSession.step = 'maxCompletions';
@@ -1280,17 +1295,19 @@ bot.on('text', async (ctx) => {
                 if (taskSession.type === 'code') {
                     taskSession.step = 'needsCode';
                     ctx.reply(
-                        `🔐 Step 7: Does this task require a verification code?\n\n` +
+                        `🔐 Step 8: Does this task require a verification code?\n\n` +
                         `• Reply with yes to set a verification code\n` +
-                        `• Reply with no for normal task (users just click complete)`
+                        `• Reply with no for normal task (users just visit the link)`
                     );
                 } else {
-                    // إنشاء المهمة العادية (غير محدودة)
+                    // إنشاء المهمة العادية (غير محدودة، بدون كود)
                     await createNormalTask(ctx, taskSession);
                     taskCreationSessions.delete(userId);
                 }
             }
-        } else if (taskSession.step === 'maxCompletions') {
+        }
+        // الخطوة 7: عدد المستخدمين الأقصى (للمهمة المحدودة)
+        else if (taskSession.step === 'maxCompletions') {
             const max = parseInt(message);
             if (isNaN(max) || max <= 0) {
                 return ctx.reply(`❌ Invalid number! Please enter a valid number (e.g., 100)`);
@@ -1303,19 +1320,21 @@ bot.on('text', async (ctx) => {
                 ctx.reply(
                     `🔐 Step 8: Does this task require a verification code?\n\n` +
                     `• Reply with yes to set a verification code\n` +
-                    `• Reply with no for normal task (users just click complete)`
+                    `• Reply with no for normal task (users just visit the link)`
                 );
             } else {
-                // إنشاء المهمة المحدودة
+                // إنشاء المهمة المحدودة (بدون كود)
                 await createLimitedTask(ctx, taskSession);
                 taskCreationSessions.delete(userId);
             }
-        } else if (taskSession.step === 'needsCode') {
+        }
+        // الخطوة 8: هل تحتاج كود تحقق؟
+        else if (taskSession.step === 'needsCode') {
             if (message.toLowerCase() === 'yes') {
                 taskSession.needsCode = true;
                 taskSession.step = 'verificationCode';
                 ctx.reply(
-                    `🔑 Step ${taskSession.isLimited ? '9' : '8'}: Enter the verification code:\n\n` +
+                    `🔑 Step 9: Enter the verification code:\n\n` +
                     `• Example: SECRET2025, WINNER, ADNOVA100\n` +
                     `• Users will need to enter this code to claim reward\n\n` +
                     `📝 Type the code:`
@@ -1333,19 +1352,23 @@ bot.on('text', async (ctx) => {
                 }
                 taskCreationSessions.delete(userId);
             }
-        } else if (taskSession.step === 'verificationCode') {
+        }
+        // الخطوة 9: إدخال الكود
+        else if (taskSession.step === 'verificationCode') {
             if (!message || message.trim() === '') {
                 return ctx.reply(`❌ Please enter a valid verification code!`);
             }
             taskSession.verificationCode = message.trim().toUpperCase();
             taskSession.step = 'hint';
             ctx.reply(
-                `💡 Step ${taskSession.isLimited ? '10' : '9'}: Enter a hint for users:\n\n` +
+                `💡 Step 10: Enter a hint for users:\n\n` +
                 `• This hint will help users find the code\n` +
                 `• Example: "Check the footer of our website"\n\n` +
                 `📝 Type the hint:`
             );
-        } else if (taskSession.step === 'hint') {
+        }
+        // الخطوة 10: إدخال التلميح
+        else if (taskSession.step === 'hint') {
             taskSession.hint = message || 'No hint provided';
             
             // إنشاء المهمة مع الكود
@@ -1358,6 +1381,8 @@ bot.on('text', async (ctx) => {
         }
         return;
     }
+    
+    // ========== تعديل/حذف المهام ==========
     const editSession = taskEditSessions.get(userId);
     if (editSession) {
         if (editSession.step === 'select') {
@@ -1432,6 +1457,156 @@ bot.on('text', async (ctx) => {
         return;
     }
 });
+
+// ============================================================================
+// دوال مساعدة لإنشاء المهام (قسم 4.6)
+// ============================================================================
+
+async function createNormalTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: taskSession.type,
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: false,
+        maxCompletions: 0,
+        completedCount: 0,
+        needsCode: false,
+        verificationCode: null,
+        hint: null,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: ${taskSession.type}\n` +
+        `🔗 Identifier: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Task created: ${taskId} - ${taskSession.name}`);
+}
+
+async function createLimitedTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: taskSession.type,
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: true,
+        maxCompletions: taskSession.maxCompletions,
+        completedCount: 0,
+        needsCode: false,
+        verificationCode: null,
+        hint: null,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Limited Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: ${taskSession.type}\n` +
+        `🔗 Identifier: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Limited task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions})`);
+}
+
+async function createCodeTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: 'code',
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: false,
+        maxCompletions: 0,
+        completedCount: 0,
+        needsCode: true,
+        verificationCode: taskSession.verificationCode,
+        hint: taskSession.hint,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: Code Verification\n` +
+        `🔗 Link: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🔑 Code: ${taskSession.verificationCode}\n` +
+        `💡 Hint: ${taskSession.hint}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Code task created: ${taskId} - ${taskSession.name} (code: ${taskSession.verificationCode})`);
+}
+
+async function createLimitedCodeTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: 'code',
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: true,
+        maxCompletions: taskSession.maxCompletions,
+        completedCount: 0,
+        needsCode: true,
+        verificationCode: taskSession.verificationCode,
+        hint: taskSession.hint,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Limited Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: Code Verification (Limited)\n` +
+        `🔗 Link: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
+        `🔑 Code: ${taskSession.verificationCode}\n` +
+        `💡 Hint: ${taskSession.hint}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Limited code task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions}, code: ${taskSession.verificationCode})`);
+}
 
 // ============================================================================
 // 4.7 معالجة أزرار الـ Callback Query
