@@ -1921,13 +1921,21 @@ async function verifyTask(taskId, type, identifier, reward) {
 }
 
 // ====== Code Modal Functions (للمهام من نوع code) ======
+// ============================================================================
+// CODE MODAL FUNCTIONS - نسخة محسنة (نافذة الكود)
+// ============================================================================
+
 let currentCodeTask = null;
 
 function openCodeModal(taskId, taskName, reward, hint) {
+    console.log("🔐 Opening code modal for:", taskName);
+    
     currentCodeTask = { id: taskId, reward: reward };
     
-    // إنشاء النافذة المنبثقة إذا لم تكن موجودة
+    // البحث عن النافذة
     let modal = document.getElementById('codeModal');
+    
+    // إذا كانت النافذة غير موجودة، نقوم بإنشائها
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'codeModal';
@@ -1935,22 +1943,25 @@ function openCodeModal(taskId, taskName, reward, hint) {
         modal.innerHTML = `
             <div class="modal-content code-modal">
                 <div class="modal-header">
-                    <h3><i class="fas fa-key"></i> <span id="codeModalTitle">Enter Secret Code</span></h3>
-                    <button class="close-btn" onclick="closeCodeModal()"><i class="fas fa-times"></i></button>
+                    <h3><i class="fas fa-key" style="color: #d4af37;"></i> <span id="codeModalTitle">Enter Secret Code</span></h3>
+                    <button class="close-btn" onclick="closeCodeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div class="code-hint" id="codeHint">
-                        <i class="fas fa-lightbulb"></i>
+                        <i class="fas fa-lightbulb" style="color: #d4af37;"></i>
                         <span></span>
                     </div>
                     <div class="code-input-group">
-                        <input type="text" id="codeInput" class="code-input" placeholder="Enter code here..." autocomplete="off">
-                        <button class="code-submit-btn" onclick="submitCode()">
+                        <input type="text" id="codeInput" class="code-input" 
+                               placeholder="Enter code here..." autocomplete="off">
+                        <button class="code-submit-btn" id="codeSubmitBtn" onclick="submitCode()">
                             <i class="fas fa-check-circle"></i> Verify & Claim
                         </button>
                     </div>
                     <div class="code-reward-info">
-                        <i class="fas fa-coins"></i>
+                        <i class="fas fa-coins" style="color: #d4af37;"></i>
                         <span>Reward: <strong id="codeRewardAmount">$0.00</strong></span>
                     </div>
                 </div>
@@ -1959,79 +1970,124 @@ function openCodeModal(taskId, taskName, reward, hint) {
         document.body.appendChild(modal);
     }
     
-    document.getElementById('codeModalTitle').textContent = taskName;
-    document.getElementById('codeHint').querySelector('span').textContent = hint || 'No hint provided';
-    document.getElementById('codeRewardAmount').textContent = `$${reward.toFixed(2)}`;
-    document.getElementById('codeInput').value = '';
+    // تحديث محتوى النافذة
+    const titleSpan = document.getElementById('codeModalTitle');
+    if (titleSpan) titleSpan.textContent = taskName;
     
+    const hintSpan = document.querySelector('#codeHint span');
+    if (hintSpan) hintSpan.textContent = hint || 'No hint provided';
+    
+    const rewardSpan = document.getElementById('codeRewardAmount');
+    if (rewardSpan) rewardSpan.textContent = `$${reward.toFixed(2)}`;
+    
+    const inputField = document.getElementById('codeInput');
+    if (inputField) inputField.value = '';
+    
+    // ✅ إظهار النافذة (الجزء المهم)
+    modal.style.display = 'flex';
     modal.classList.add('show');
+    
+    // تركيز تلقائي على حقل الإدخال
+    setTimeout(() => {
+        const input = document.getElementById('codeInput');
+        if (input) input.focus();
+    }, 100);
 }
 
 function closeCodeModal() {
     const modal = document.getElementById('codeModal');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    }
     currentCodeTask = null;
 }
 
 async function submitCode() {
-    const code = document.getElementById('codeInput').value.trim();
+    const codeInput = document.getElementById('codeInput');
+    const code = codeInput?.value.trim();
     
     if (!code) {
-        showToast('Please enter the code', 'warning');
+        showToast('⚠️ Please enter the verification code', 'warning');
+        if (codeInput) codeInput.focus();
         return;
     }
     
-    const btn = document.querySelector('#codeModal .code-submit-btn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    if (!currentCodeTask) {
+        showToast('❌ Invalid task. Please try again.', 'error');
+        closeCodeModal();
+        return;
+    }
+    
+    // تعطيل الزر أثناء المعالجة
+    const btn = document.getElementById('codeSubmitBtn');
+    const originalText = btn?.innerHTML || 'Verify & Claim';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    }
     
     try {
-        const res = await fetch("/api/verify-code", {
+        const response = await fetch("/api/verify-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 userId: currentUserId,
                 taskId: currentCodeTask.id,
-                code: code
+                code: code.toUpperCase()
             })
         });
         
-        const data = await res.json();
+        const data = await response.json();
         
         if (data.success) {
-            // تحديث الرصيد والكاش
-            currentUser.balance += currentCodeTask.reward;
-            currentUser.totalEarned += currentCodeTask.reward;
-            localAdCache.balance += currentCodeTask.reward;
-            localAdCache.totalEarned += currentCodeTask.reward;
+            // تحديث الرصيد المحلي
+            if (currentUser) {
+                currentUser.balance = (currentUser.balance || 0) + currentCodeTask.reward;
+                currentUser.totalEarned = (currentUser.totalEarned || 0) + currentCodeTask.reward;
+            }
+            
+            // تحديث الكاش المحلي
+            if (typeof localAdCache !== 'undefined') {
+                localAdCache.balance = (localAdCache.balance || 0) + currentCodeTask.reward;
+                localAdCache.totalEarned = (localAdCache.totalEarned || 0) + currentCodeTask.reward;
+                if (typeof saveLocalAdCache === 'function') saveLocalAdCache();
+            }
             
             // إضافة المهمة إلى قائمة المكتملة
-            if (!userCompletedTasks.includes(currentCodeTask.id)) {
+            if (typeof userCompletedTasks !== 'undefined' && !userCompletedTasks.includes(currentCodeTask.id)) {
                 userCompletedTasks.push(currentCodeTask.id);
             }
             
-            saveLocalAdCache();
-            saveUserData();
-            updateUI();
-            renderTasks();
-            showToast(`+$${currentCodeTask.reward.toFixed(2)} added!`, "success");
+            // حفظ البيانات وتحديث الواجهة
+            if (typeof saveUserData === 'function') saveUserData();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof renderTasks === 'function') renderTasks();
+            
+            showToast(`🎉 +$${currentCodeTask.reward.toFixed(2)} Earned!`, 'success');
             closeCodeModal();
         } else {
-            showToast(data.error || 'Invalid code!', 'error');
+            showToast(data.error || '❌ Invalid code! Please try again.', 'error');
+            if (codeInput) {
+                codeInput.focus();
+                codeInput.select();
+            }
         }
-    } catch(e) {
-        console.error("Code verification error:", e);
-        showToast("Verification error", "error");
+    } catch(error) {
+        console.error("Code verification error:", error);
+        showToast('🌐 Network error. Please try again.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
-    
-    btn.disabled = false;
-    btn.innerHTML = originalText;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 10. 💸 WITHDRAW SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 
 function renderWithdrawMethods() {
     const container = document.getElementById("withdrawMethodsContainer");
