@@ -2606,10 +2606,10 @@ body.rtl #codeModal .code-hint {
 }
 
 /* ============================================================================
-   VERIFICATION MODAL - إعادة تنسيق كاملة (بدون تعديل HTML)
+   VERIFICATION MODAL - تصحيح كامل (نص في المنتصف)
    ============================================================================ */
 
-/* تنسيق النافذة الرئيسية */
+/* النافذة الرئيسية */
 .verify-modal {
     max-width: 520px !important;
     width: 90% !important;
@@ -2632,45 +2632,58 @@ body.rtl #codeModal .code-hint {
     z-index: 10;
 }
 
-/* إعادة تنسيق الأيقونة */
+/* ===== إجبار جميع العناصر على التوسيط ===== */
+.verify-modal .modal-body {
+    padding: 0 24px 32px 24px !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* أيقونة القفل */
 .verify-modal-icon {
     text-align: center !important;
-    font-size: 52px !important;
-    margin: 28px 0 12px 0 !important;
+    display: block !important;
+    margin: 28px auto 12px auto !important;
     padding: 0 !important;
+    width: 100% !important;
 }
 
 .verify-modal-icon i {
+    font-size: 52px;
     color: var(--gold);
-    filter: drop-shadow(0 4px 8px rgba(212, 175, 55, 0.2));
+    display: inline-block;
 }
 
-/* إعادة تنسيق العنوان h3 */
+/* عنوان النافذة h3 - توسيط كامل */
 .verify-modal h3 {
     text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 auto 8px auto !important;
+    padding: 0 16px !important;
     font-size: 24px !important;
     font-weight: 800 !important;
     background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     color: transparent !important;
-    margin: 0 0 8px 0 !important;
-    padding: 0 20px !important;
     letter-spacing: -0.3px;
 }
 
-/* إعادة تنسيق النص التوضيحي p */
+/* النص التوضيحي p - توسيط كامل */
 .verify-modal .modal-body > p {
     text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 auto 20px auto !important;
+    padding: 0 16px !important;
     font-size: 14px !important;
     color: var(--gray) !important;
-    margin: 0 auto 24px auto !important;
-    padding: 0 24px !important;
-    line-height: 1.5 !important;
-    max-width: 90% !important;
+    line-height: 1.5;
+    box-sizing: border-box;
 }
 
-/* إضافة خط فاصل ذهبي تحت النص */
+/* الخط الفاصل تحت النص */
 .verify-modal .modal-body > p::after {
     content: '';
     display: block;
@@ -2681,12 +2694,7 @@ body.rtl #codeModal .code-hint {
     border-radius: 99px;
 }
 
-/* تحسين المسافات الداخلية */
-.verify-modal .modal-body {
-    padding: 0 20px 28px 20px !important;
-}
-
-/* تحسين الخيارات */
+/* خيارات التحقق */
 .verify-option {
     display: flex;
     align-items: center;
@@ -2698,6 +2706,8 @@ body.rtl #codeModal .code-hint {
     margin-bottom: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .verify-option:hover {
@@ -2839,6 +2849,7 @@ body.rtl #codeModal .code-hint {
     color: var(--gray);
     cursor: pointer;
     transition: all 0.25s ease;
+    text-align: center;
 }
 
 .verify-later-btn:hover {
@@ -2847,10 +2858,20 @@ body.rtl #codeModal .code-hint {
     color: var(--gold-dark);
 }
 
+/* RTL Support */
+body.rtl .verify-modal h3,
+body.rtl .verify-modal .modal-body > p {
+    text-align: center !important;
+}
+
 /* Responsive */
 @media (max-width: 550px) {
     .verify-modal {
         max-width: 450px !important;
+    }
+    
+    .verify-modal .modal-body {
+        padding: 0 16px 28px 16px !important;
     }
     
     .verify-option {
@@ -2883,6 +2904,6 @@ body.rtl #codeModal .code-hint {
     
     .verify-modal .modal-body > p {
         font-size: 13px !important;
-        padding: 0 16px !important;
+        padding: 0 8px !important;
     }
 }
