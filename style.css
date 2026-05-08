@@ -3716,60 +3716,6 @@ body.rtl .code-input {
     transform: none;
 }
 
-/* ============================================================ */
-/* تعديل ترتيب عناصر splash-sub */
-/* ============================================================ */
-
-.splash-sub {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.splash-deco {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    order: 2;
-}
-
-.splash-deco:first-child {
-    order: 1;
-}
-
-.splash-deco:last-child {
-    order: 4;
-}
-
-#splashTitle {
-    order: 3;
-}
-
-/* تعديل شكل الخط */
-.splash-deco::before {
-    content: '';
-    display: block;
-    width: 30px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6), transparent);
-    border-radius: 1px;
-}
-
-.splash-deco:first-child::before {
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6));
-}
-
-.splash-deco:last-child::before {
-    background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.6));
-}
-
-.splash-deco-right::before {
-    background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.6));
-}
-/* ============================================================================
-   END OF STYLESHEET
-   ============================================================================ */
 /* ============================================================================
    END OF STYLESHEET
    ============================================================================ */
