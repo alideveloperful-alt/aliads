@@ -2663,20 +2663,45 @@ body.rtl #codeModal .code-hint {
     letter-spacing: -0.5px;
 }
 
-/* ===== النص التوضيحي - محسن بالكامل ===== */
+/* ===== النص التوضيحي - تصميم احترافي في المنتصف ===== */
 .verify-modal .modal-body > p {
     text-align: center !important;
     font-size: 14px !important;
     font-weight: 500 !important;
     color: #5a6a7a !important;
-    line-height: 1.6 !important;
-    margin: 0 0 24px 0 !important;
-    padding: 0 16px !important;
-    max-width: 100% !important;
-    background: rgba(212, 175, 55, 0.05);
-    border-radius: 20px;
-    padding: 14px 20px !important;
-    border: 1px solid rgba(212, 175, 55, 0.12);
+    line-height: 1.65 !important;
+    margin: 0 auto 28px auto !important;
+    padding: 16px 24px !important;
+    max-width: 90% !important;
+    width: fit-content !important;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.06), rgba(212, 175, 55, 0.02));
+    border-radius: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    backdrop-filter: blur(4px);
+    position: relative;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+/* إضافة أيقونة صغيرة قبل النص */
+.verify-modal .modal-body > p::before {
+    content: '🔒';
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 12px;
+    opacity: 0.7;
+    vertical-align: middle;
+}
+
+/* إضافة أيقونة صغيرة بعد النص */
+.verify-modal .modal-body > p::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 14px auto 0 auto;
+    border-radius: 99px;
 }
 
 /* الخط الفاصل الذهبي */
