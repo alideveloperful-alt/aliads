@@ -2543,7 +2543,7 @@ function showVerificationModal(currentInvites, requiredInvites, amount, destinat
                 </button>
                 <div class="verify-modal-icon">🔒</div>
                 <h3>Verification Required</h3>
-                <p>To withdraw funds, you must verify your account. Choose one method below:</p>
+                <p class="verify-description-text">To withdraw funds, you must verify your account. Choose one method below:</p>
                 
                 <div class="verify-option" onclick="showReferralInvite()">
                     <div class="verify-option-icon">
