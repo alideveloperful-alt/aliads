@@ -2912,3 +2912,78 @@ body.rtl #notificationsList .notification-icon {
     filter: blur(1px);
     transition: all 0.2s;
 }
+
+/* ============================================================================
+   26. WATCH AD BUTTON - تحسين متكامل
+   ============================================================================ */
+
+/* تثبيت ارتفاع الزر */
+.watch-ad-btn {
+    min-height: 130px;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+/* تأثير أثناء التحميل */
+.watch-ad-btn:disabled {
+    opacity: 0.9;
+    cursor: wait;
+}
+
+/* إخفاء المحتوى الأصلي بلطف أثناء التحميل */
+.watch-ad-btn:disabled .watch-ad-inner,
+.watch-ad-btn:disabled .watch-ad-progress-wrap {
+    opacity: 0.3;
+    filter: blur(1px);
+    transition: all 0.2s;
+}
+
+/* مؤشر تحميل متحرك - دوران مع ارتجاج */
+.watch-ad-btn:disabled::before {
+    content: "⏳";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    z-index: 10;
+    animation: spinShake 1.2s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* حركة الدوران مع ارتجاج في النهاية */
+@keyframes spinShake {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    80% {
+        transform: translate(-50%, -50%) rotate(340deg) scale(1.1);
+    }
+    85% {
+        transform: translate(-50%, -50%) rotate(350deg) scale(0.95);
+    }
+    90% {
+        transform: translate(-50%, -50%) rotate(355deg) scale(1.05);
+    }
+    95% {
+        transform: translate(-50%, -50%) rotate(358deg) scale(0.98);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg) scale(1);
+    }
+}
+
+/* ضمان عودة الزر إلى وضعه الطبيعي بعد إزالة disabled */
+.watch-ad-btn:not(:disabled) .watch-ad-inner,
+.watch-ad-btn:not(:disabled) .watch-ad-progress-wrap {
+    opacity: 1 !important;
+    filter: blur(0) !important;
+    transition: all 0.3s ease;
+}
+
+/* إخفاء المؤشر عندما يكون الزر مفعلاً */
+.watch-ad-btn:not(:disabled)::before {
+    display: none;
+    content: none;
+}
