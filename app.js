@@ -1,10 +1,5 @@
 // ============================================================================
-// ADNOVA NETWORK - FRONTEND v15.0 (مع تحسين أداء الإعلانات)
-// ============================================================================
-// التحسينات الجديدة:
-// - تخزين بيانات الإعلانات في localStorage مع تسجيل دوري إلى Firebase كل 6 ساعات
-// - تسريع تجربة مشاهدة الإعلانات بشكل كبير
-// - الحفاظ على جميع الميزات والوظائف الحالية
+// ADNOVA NETWORK - FRONTEND v16.0 (VIP System + Floating Notifications)
 // ============================================================================
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46,10 +41,10 @@ let allUsers = [];
 // متغير لتخزين بيانات السحب أثناء التحقق
 let pendingWithdrawalData = null;
 
-// عنوان محفظة TON الخاصة بالمنصة (يتم تعبئته من الخادم)
+// عنوان محفظة TON الخاصة بالمنصة
 let PLATFORM_TON_WALLET = null;
 
-// ========== تحسين الإعلانات: ذاكرة تخزين محلية ==========
+// ذاكرة تخزين الإعلانات
 let localAdCache = {
     balance: 0,
     totalEarned: 0,
@@ -59,12 +54,13 @@ let localAdCache = {
     lastSync: null
 };
 let syncIntervalId = null;
-const SYNC_INTERVAL_HOURS = 6; // مزامنة كل 6 ساعات
+const SYNC_INTERVAL_HOURS = 6;
 
+// إعدادات التطبيق
 let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
-    adReward: 0.01,
+    adReward: 0.10,
     dailyAdLimit: 50,
     minWithdraw: 10.00,
     requiredReferrals: 1,
@@ -92,11 +88,10 @@ const WITHDRAWAL_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. 🎬 AD PLATFORMS (نسخة مطابقة لـ REFI مع معرفات AdNova)
+// 4. 🎬 AD PLATFORMS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AD_PLATFORMS = [
-    // 1. Monetag
     {
         name: "Monetag",
         show: () => {
@@ -106,15 +101,13 @@ const AD_PLATFORMS = [
             return Promise.reject("Monetag not ready");
         }
     },
-
-    // 2. OnClickA
     {
         name: "OnClickA",
         init: () => {
             if (typeof window.initCdTma === "function" && !window.show) {
                 window.initCdTma({ id: '6118161' }).then(show => {
                     window.show = show;
-                    console.log("✅ OnClickA initialized with Spot ID: 6118161");
+                    console.log("✅ OnClickA initialized");
                 }).catch(e => console.error("OnClickA init error:", e));
             }
         },
@@ -131,8 +124,6 @@ const AD_PLATFORMS = [
             });
         }
     },
-
-    // 3. RichAds
     {
         name: "RichAds",
         init: () => {
@@ -213,8 +204,6 @@ const AD_PLATFORMS = [
             });
         }
     },
-
-    // 4. Adexium
     {
         name: "Adexium",
         init: () => {
@@ -318,8 +307,6 @@ const AD_PLATFORMS = [
             });
         }
     },
-
-    // 5. GigaPub (بدون AdsGram كما في REFI)
     {
         name: "GigaPub",
         show: () => {
@@ -330,10 +317,6 @@ const AD_PLATFORMS = [
         }
     }
 ];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 4.1. 🎬 AD INITIALIZATION (مطابق لـ REFI)
-// ═══════════════════════════════════════════════════════════════════════════
 
 function initAdPlatforms() {
     if (adPlatformsInitialized) return;
@@ -376,10 +359,6 @@ function initAdPlatforms() {
     adPlatformsInitialized = true;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 4.2. 🎬 SINGLE AD DISPLAY (مطابق لـ REFI - مبسط)
-// ═══════════════════════════════════════════════════════════════════════════
-
 async function showSingleAd(excludePlatformNames = []) {
     let platforms = AD_PLATFORMS;
     
@@ -387,7 +366,6 @@ async function showSingleAd(excludePlatformNames = []) {
         platforms = AD_PLATFORMS.filter(p => !excludePlatformNames.includes(p.name));
     }
     
-    // خلط عشوائي
     const shuffled = [...platforms].sort(() => Math.random() - 0.5);
     
     for (const platform of shuffled) {
@@ -409,10 +387,6 @@ async function showSingleAd(excludePlatformNames = []) {
     
     return { success: false, platformName: null };
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 4.3. 🎬 AD SEQUENCE (إعلانين من منصتين مختلفتين)
-// ═══════════════════════════════════════════════════════════════════════════
 
 let adSequenceInProgress = false;
 
@@ -455,9 +429,6 @@ async function showAdSequence() {
     return result;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// نهاية القسم 4
-// ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
 // 5. 🌍 LANGUAGE SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1308,7 +1279,6 @@ function loadLocalAdCache() {
             const parsed = JSON.parse(saved);
             localAdCache = parsed;
             
-            // التحقق من تغيير اليوم لإعادة تعيين adsToday
             if (localAdCache.lastAdDate !== today) {
                 localAdCache.adsToday = 0;
                 localAdCache.lastAdDate = today;
@@ -1322,7 +1292,6 @@ function loadLocalAdCache() {
         initLocalAdCache(today);
     }
     
-    // مزامنة القيم مع currentUser إذا كان موجوداً
     if (currentUser) {
         currentUser.balance = localAdCache.balance;
         currentUser.totalEarned = localAdCache.totalEarned;
@@ -1351,19 +1320,16 @@ function saveLocalAdCache() {
 function updateLocalAdCache(adReward) {
     const today = new Date().toISOString().split("T")[0];
     
-    // التحقق من اليوم
     if (localAdCache.lastAdDate !== today) {
         localAdCache.adsToday = 0;
         localAdCache.lastAdDate = today;
     }
     
-    // تحديث القيم
     localAdCache.balance += adReward;
     localAdCache.totalEarned += adReward;
     localAdCache.adsWatched++;
     localAdCache.adsToday++;
     
-    // تحديث currentUser أيضاً
     if (currentUser) {
         currentUser.balance = localAdCache.balance;
         currentUser.totalEarned = localAdCache.totalEarned;
@@ -1382,7 +1348,6 @@ async function syncLocalAdsToFirebase() {
     console.log("[AdNova] Syncing ad data to Firebase...");
     
     try {
-        // إرسال الفروق إلى السيرفر
         const res = await fetch("/api/sync-ads", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1426,7 +1391,6 @@ async function pullAdDataFromFirebase() {
             const firebaseTotalEarned = data.data.totalEarned || 0;
             const firebaseAdsWatched = data.data.adsWatched || 0;
             
-            // مقارنة القيم وأخذ الأكبر (لحماية المستخدم من فقدان البيانات)
             if (firebaseBalance > localAdCache.balance) {
                 localAdCache.balance = firebaseBalance;
             }
@@ -1437,7 +1401,6 @@ async function pullAdDataFromFirebase() {
                 localAdCache.adsWatched = firebaseAdsWatched;
             }
             
-            // تحديث currentUser
             if (currentUser) {
                 currentUser.balance = localAdCache.balance;
                 currentUser.totalEarned = localAdCache.totalEarned;
@@ -1456,19 +1419,15 @@ async function pullAdDataFromFirebase() {
 function startSyncInterval() {
     if (syncIntervalId) clearInterval(syncIntervalId);
     
-    // مزامنة كل 6 ساعات
     const intervalMs = SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
     syncIntervalId = setInterval(() => {
         syncLocalAdsToFirebase();
     }, intervalMs);
     
-    // أيضاً عند إغلاق الصفحة
     window.addEventListener("beforeunload", () => {
         syncLocalAdsToFirebase();
     });
 }
-
-// نهاية دوال تحسين الإعلانات
 
 async function loadUserData() {
     currentUserId = getTelegramUserId();
@@ -1519,7 +1478,6 @@ async function loadUserData() {
         saveUserData();
     }
     
-    // تحميل بيانات الإعلانات من الكاش
     loadLocalAdCache();
     
     await syncWithFirebase();
@@ -1527,10 +1485,8 @@ async function loadUserData() {
     await loadTasksFromFirebase();
     checkAdminAndShowCrown();
     
-    // بدء التزامن الدوري
     startSyncInterval();
     
-    // سحب بيانات الإعلانات من Firebase بعد التحميل للتأكد من التطابق
     setTimeout(() => {
         pullAdDataFromFirebase();
     }, 2000);
@@ -1540,7 +1496,6 @@ async function loadUserData() {
 
 function saveUserData() {
     currentUser.completedTasks = userCompletedTasks;
-    // تحديث currentUser بقيم الكاش قبل الحفظ
     currentUser.balance = localAdCache.balance;
     currentUser.totalEarned = localAdCache.totalEarned;
     currentUser.adsWatched = localAdCache.adsWatched;
@@ -1567,7 +1522,6 @@ async function syncWithFirebase() {
             currentUser = { ...currentUser, ...data.data, withdrawals: mergedWithdrawals };
             userCompletedTasks = currentUser.completedTasks || [];
             
-            // مزامنة بيانات الإعلانات من Firebase إلى الكاش إذا كان الرصيد مختلفاً
             if (data.data.balance !== undefined && data.data.balance > localAdCache.balance) {
                 localAdCache.balance = data.data.balance;
                 localAdCache.totalEarned = data.data.totalEarned || localAdCache.totalEarned;
@@ -1628,7 +1582,6 @@ async function processReferral() {
             currentUser.referredBy = refCode;
             currentUser.balance += APP_CONFIG.welcomeBonus;
             currentUser.totalEarned += APP_CONFIG.welcomeBonus;
-            // تحديث الكاش أيضاً
             localAdCache.balance = currentUser.balance;
             localAdCache.totalEarned = currentUser.totalEarned;
             saveLocalAdCache();
@@ -1659,7 +1612,7 @@ function shareInviteLink() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 8. 🎬 WATCH ADS (محسّن بالكامل للسرعة)
+// 8. 🎬 WATCH ADS
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function watchAd() {
@@ -1685,14 +1638,12 @@ async function watchAd() {
     const success = await showAdSequence();
     
     if (success) {
-        // تحديث الكاش المحلي فقط (بدون اتصال بـ Firebase)
-        updateLocalAdCache(APP_CONFIG.adReward);
+        const reward = getCurrentAdReward();
+        updateLocalAdCache(reward);
         
-        showEarnToast();
-        showToast(t("adRewardAdded", { amount: APP_CONFIG.adReward.toFixed(2) }), "success");
+        showEarnToast(reward);
+        showToast(t("adRewardAdded", { amount: reward.toFixed(2) }), "success");
         
-        // لا نرسل إلى Firebase هنا - سنرسل لاحقاً في التحديث الدوري
-        // ولكن يمكننا إرسال طلب غير متزامن لتسجيل الحدث (اختياري)
         fetch("/api/ad-watched", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1709,11 +1660,11 @@ async function watchAd() {
     }
 }
 
-function showEarnToast() {
+function showEarnToast(reward) {
     const toast = document.getElementById("earn-toast");
     if (!toast) return;
     const span = document.getElementById("earnToastAmount");
-    if (span) span.textContent = `+ $${APP_CONFIG.adReward.toFixed(2)} Earned`;
+    if (span) span.textContent = `+ $${reward.toFixed(2)} Earned`;
     toast.classList.remove("hide");
     toast.classList.add("show");
     setTimeout(() => {
@@ -1760,9 +1711,7 @@ function renderTasks() {
     for (const task of tasksList) {
         const isCompleted = userCompletedTasks.includes(task.id);
         
-        // التحقق من اكتمال العدد للمهمة المحدودة
         let isFull = false;
-        let remainingText = '';
         let limitedHtml = '';
         
         if (task.isLimited) {
@@ -1812,14 +1761,12 @@ function renderTasks() {
         const identifier = task.username || task.link || task.identifier || "";
         const taskHint = isCodeTask ? (task.hint || "🔑 Enter the secret code to claim reward") : "⚡ Instantly reward";
         
-        // تحديد حالة الزر
         let buttonHtml = '';
         if (isCompleted) {
             buttonHtml = `<span class="task-completed-badge">✅ Completed</span>`;
         } else if (isFull) {
             buttonHtml = `<span class="task-full-badge">🔒 Fully Claimed</span>`;
         } else if (isCodeTask) {
-            // مهام الكود - تفتح نافذة منبثقة بدلاً من الرابط
             buttonHtml = `<button class="task-btn code-task-btn" onclick="openCodeModal('${task.id}', '${escapeHtml(task.name)}', ${task.reward}, '${escapeHtml(task.hint || '')}')">🔐 ${actionText}</button>`;
         } else {
             buttonHtml = `<button class="task-btn" onclick="verifyTask('${task.id}', '${task.type}', '${escapeHtml(identifier)}', ${task.reward})">${actionText}</button>`;
@@ -1900,7 +1847,6 @@ async function verifyTask(taskId, type, identifier, reward) {
             
             if (data.success && !userCompletedTasks.includes(taskId)) {
                 userCompletedTasks.push(taskId);
-                // تحديث الرصيد والكاش
                 currentUser.balance += reward;
                 currentUser.totalEarned += reward;
                 localAdCache.balance += reward;
@@ -1920,10 +1866,7 @@ async function verifyTask(taskId, type, identifier, reward) {
     }, 5000);
 }
 
-// ====== Code Modal Functions (للمهام من نوع code) ======
-// ============================================================================
-// CODE MODAL FUNCTIONS - نسخة محسنة (نافذة الكود)
-// ============================================================================
+// ====== Code Modal Functions ======
 
 let currentCodeTask = null;
 
@@ -1932,10 +1875,8 @@ function openCodeModal(taskId, taskName, reward, hint) {
     
     currentCodeTask = { id: taskId, reward: reward };
     
-    // البحث عن النافذة
     let modal = document.getElementById('codeModal');
     
-    // إذا كانت النافذة غير موجودة، نقوم بإنشائها
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'codeModal';
@@ -1970,7 +1911,6 @@ function openCodeModal(taskId, taskName, reward, hint) {
         document.body.appendChild(modal);
     }
     
-    // تحديث محتوى النافذة
     const titleSpan = document.getElementById('codeModalTitle');
     if (titleSpan) titleSpan.textContent = taskName;
     
@@ -1983,11 +1923,9 @@ function openCodeModal(taskId, taskName, reward, hint) {
     const inputField = document.getElementById('codeInput');
     if (inputField) inputField.value = '';
     
-    // ✅ إظهار النافذة (الجزء المهم)
     modal.style.display = 'flex';
     modal.classList.add('show');
     
-    // تركيز تلقائي على حقل الإدخال
     setTimeout(() => {
         const input = document.getElementById('codeInput');
         if (input) input.focus();
@@ -2019,7 +1957,6 @@ async function submitCode() {
         return;
     }
     
-    // تعطيل الزر أثناء المعالجة
     const btn = document.getElementById('codeSubmitBtn');
     const originalText = btn?.innerHTML || 'Verify & Claim';
     
@@ -2042,25 +1979,21 @@ async function submitCode() {
         const data = await response.json();
         
         if (data.success) {
-            // تحديث الرصيد المحلي
             if (currentUser) {
                 currentUser.balance = (currentUser.balance || 0) + currentCodeTask.reward;
                 currentUser.totalEarned = (currentUser.totalEarned || 0) + currentCodeTask.reward;
             }
             
-            // تحديث الكاش المحلي
             if (typeof localAdCache !== 'undefined') {
                 localAdCache.balance = (localAdCache.balance || 0) + currentCodeTask.reward;
                 localAdCache.totalEarned = (localAdCache.totalEarned || 0) + currentCodeTask.reward;
                 if (typeof saveLocalAdCache === 'function') saveLocalAdCache();
             }
             
-            // إضافة المهمة إلى قائمة المكتملة
             if (typeof userCompletedTasks !== 'undefined' && !userCompletedTasks.includes(currentCodeTask.id)) {
                 userCompletedTasks.push(currentCodeTask.id);
             }
             
-            // حفظ البيانات وتحديث الواجهة
             if (typeof saveUserData === 'function') saveUserData();
             if (typeof updateUI === 'function') updateUI();
             if (typeof renderTasks === 'function') renderTasks();
@@ -2191,9 +2124,14 @@ async function processWithdrawal(amount, destination) {
 async function submitWithdraw() {
     const amount = parseFloat(document.getElementById("wdAmountInput")?.value);
     const destination = document.getElementById("wdDestInput")?.value.trim();
+    const limits = getVIPWithdrawalLimits();
     
-    if (!amount || amount < APP_CONFIG.minWithdraw) {
-        showToast(`Minimum withdrawal is $${APP_CONFIG.minWithdraw}`, "warning");
+    if (!amount || amount < limits.min) {
+        showToast(`Minimum withdrawal is $${limits.min}`, "warning");
+        return;
+    }
+    if (amount > limits.max) {
+        showToast(`Maximum withdrawal is $${limits.max}`, "warning");
         return;
     }
     if (amount > localAdCache.balance) {
@@ -2215,8 +2153,8 @@ async function submitWithdraw() {
     
     try {
         const userRes = await fetch(`/api/users/${currentUserId}`);
-        const userData = await userRes.json();
-        const currentInvites = userData.data?.inviteCount || currentUser.inviteCount || 0;
+        const userDataWeb = await userRes.json();
+        const currentInvites = userDataWeb.data?.inviteCount || currentUser.inviteCount || 0;
         showVerificationModal(currentInvites, APP_CONFIG.requiredReferralsForVerify, amount, destination);
     } catch(e) {
         console.error("Error fetching user data:", e);
@@ -3419,7 +3357,6 @@ function renderNotifications() {
             iconName = "fa-crown";
         }
         
-        // ✅ التعديل: إضافة notification-header لعرض title و time في صف واحد
         html += `
             <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
                 <div class="notification-icon ${iconClass}">
@@ -3554,78 +3491,6 @@ function updateTONUI() {
     }
 }
 
-async function startTonVerification() {
-    closeModal('verificationModal');
-    
-    if (!window.tonConnectUI) {
-        showToast("TON Connect not ready", "error");
-        return;
-    }
-    
-    if (!PLATFORM_TON_WALLET) {
-        showToast("Platform wallet not configured. Please contact support.", "error");
-        console.error("PLATFORM_TON_WALLET is not set");
-        return;
-    }
-    
-    if (!tonConnected || !tonWalletAddress) {
-        showToast("Please connect your TON wallet first", "info");
-        await connectTONWallet();
-        if (!tonConnected || !tonWalletAddress) {
-            showToast("Please connect your TON wallet to continue", "warning");
-            return;
-        }
-    }
-    
-    showToast("Please confirm transaction in TON Wallet...", "info");
-    
-    const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 600,
-        messages: [{
-            address: PLATFORM_TON_WALLET,
-            amount: "10000000"
-        }]
-    };
-    
-    try {
-        const result = await window.tonConnectUI.sendTransaction(transaction);
-        
-        const response = await fetch("/api/ton/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                userId: currentUserId,
-                txHash: result.boc,
-                amount: "0.01"
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            currentUser.isVerified = true;
-            currentUser.tonWalletVerified = true;
-            currentUser.verificationMethod = 'ton';
-            currentUser.verificationDate = new Date().toISOString();
-            saveUserData();
-            
-            showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
-            
-            if (pendingWithdrawalData) {
-                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
-                pendingWithdrawalData = null;
-            } else {
-                updateUI();
-            }
-        } else {
-            showToast("Verification failed: " + (data.error || "Unknown error"), "error");
-        }
-    } catch(e) {
-        console.error("Transaction error:", e);
-        showToast("Transaction cancelled or failed", "warning");
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // 16. 🎨 UI UPDATES
 // ═══════════════════════════════════════════════════════════════════════════
@@ -3664,7 +3529,15 @@ function updateUI() {
     if (availBalance) availBalance.textContent = `$${localAdCache.balance?.toFixed(2) || "0.00"}`;
     
     const userNameEl = document.getElementById("userName");
-    if (userNameEl) userNameEl.textContent = currentUser.userName || "User";
+    if (userNameEl) {
+        const vipData = loadVIPStatus();
+        if (vipData) {
+            const icons = { silver: '🥈', gold: '🥇', platinum: '👑' };
+            userNameEl.innerHTML = `${currentUser.userName || "User"} ${icons[vipData.level] || '👑'}`;
+        } else {
+            userNameEl.innerHTML = currentUser.userName || "User";
+        }
+    }
     
     const userChatId = document.getElementById("userChatId");
     if (userChatId) userChatId.textContent = `ID: ${currentUserId?.slice(-8) || "-----"}`;
@@ -3770,7 +3643,181 @@ function openSupportChat() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 19. 🚀 INITIALIZATION
+// 19. 🎲 FLOATING WITHDRAWAL NOTIFICATIONS (وهمية)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let floatingNotificationInterval = null;
+
+const WITHDRAWAL_NOTIFICATIONS = [
+    { message: "💸 Withdrawal via PayPal • user***@gmail.com • $12.50", method: "paypal", amount: 12.50 },
+    { message: "💸 Withdrawal via PayPal • john***@outlook.com • $24.80", method: "paypal", amount: 24.80 },
+    { message: "💸 Withdrawal via PayPal • sarah***@yahoo.com • $37.20", method: "paypal", amount: 37.20 },
+    { message: "💸 Withdrawal via PayPal • mike***@gmail.com • $51.35", method: "paypal", amount: 51.35 },
+    { message: "💸 Withdrawal via Payoneer • busin***@company.com • $156.40", method: "payoneer", amount: 156.40 },
+    { message: "💸 Withdrawal via USDT (BEP20) • 0x3f...a2d1 • $25.00", method: "usdt_bep20", amount: 25.00 },
+    { message: "💸 Withdrawal via USDT (TRC20) • TEx...9kL3 • $15.30", method: "usdt_trc20", amount: 15.30 },
+    { message: "💸 Withdrawal via TON • EQD...kL9p • $45.00", method: "ton", amount: 45.00 },
+    { message: "💸 Withdrawal via Binance Pay • ID: 382*** • $22.50", method: "binance_pay", amount: 22.50 },
+    { message: "💸 Withdrawal via SBP • +7 912***4567 • $18.40", method: "sbp", amount: 18.40 },
+    { message: "💸 Withdrawal via Mobile Recharge • +44 7***890 • $5.50", method: "mobile", amount: 5.50 },
+    { message: "💸 Withdrawal via PUBG UC • PlayerID: 987*** • $30.00", method: "pubg", amount: 30.00 },
+    { message: "💸 Withdrawal via Free Fire • PlayerID: 159*** • $25.00", method: "freefire", amount: 25.00 }
+];
+
+function showFloatingWithdrawalToast() {
+    const randomIndex = Math.floor(Math.random() * WITHDRAWAL_NOTIFICATIONS.length);
+    const notification = WITHDRAWAL_NOTIFICATIONS[randomIndex];
+    
+    let toast = document.getElementById('floatingWithdrawalToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'floatingWithdrawalToast';
+        toast.className = 'floating-toast';
+        document.body.appendChild(toast);
+    }
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-money-bill-wave" style="font-size: 18px; color: #d4af37;"></i>
+            <span>${notification.message}</span>
+        </div>
+    `;
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+    
+    console.log(`📢 Floating notification: ${notification.message}`);
+}
+
+function startFloatingWithdrawalNotifications() {
+    if (floatingNotificationInterval) clearInterval(floatingNotificationInterval);
+    
+    const getRandomDelay = () => {
+        const min = 3 * 60 * 1000;
+        const max = 10 * 60 * 1000;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+    
+    const scheduleNext = () => {
+        const delay = getRandomDelay();
+        console.log(`⏰ Next floating notification in ${Math.round(delay / 60000)} minutes`);
+        
+        floatingNotificationInterval = setTimeout(() => {
+            showFloatingWithdrawalToast();
+            scheduleNext();
+        }, delay);
+    };
+    
+    scheduleNext();
+}
+
+function stopFloatingWithdrawalNotifications() {
+    if (floatingNotificationInterval) {
+        clearTimeout(floatingNotificationInterval);
+        floatingNotificationInterval = null;
+        console.log("🛑 Floating notifications stopped");
+    }
+}
+
+function testFloatingNotification() {
+    showFloatingWithdrawalToast();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 20. 👑 VIP SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+const VIP_PLANS = {
+    silver: { name: 'Silver', priceTON: 5, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈' },
+    gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇' },
+    platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑' }
+};
+
+function saveVIPStatus(level, expiryDate) {
+    localStorage.setItem('vip_data', JSON.stringify({
+        level: level,
+        expiryDate: expiryDate,
+        activatedAt: new Date().toISOString()
+    }));
+}
+
+function loadVIPStatus() {
+    const saved = localStorage.getItem('vip_data');
+    if (!saved) return null;
+    
+    const vip = JSON.parse(saved);
+    const now = new Date();
+    const expiry = new Date(vip.expiryDate);
+    
+    if (expiry > now) {
+        return vip;
+    } else {
+        localStorage.removeItem('vip_data');
+        return null;
+    }
+}
+
+function getVIPMultiplier() {
+    const vip = loadVIPStatus();
+    if (vip && VIP_PLANS[vip.level]) {
+        return VIP_PLANS[vip.level].multiplier;
+    }
+    return 1;
+}
+
+function getCurrentAdReward() {
+    const baseReward = APP_CONFIG.adReward || 0.10;
+    const multiplier = getVIPMultiplier();
+    return baseReward * multiplier;
+}
+
+function getVIPWithdrawalLimits() {
+    const vip = loadVIPStatus();
+    if (vip && VIP_PLANS[vip.level]) {
+        return {
+            min: VIP_PLANS[vip.level].minWithdraw,
+            max: VIP_PLANS[vip.level].maxWithdraw
+        };
+    }
+    return { min: APP_CONFIG.minWithdraw || 10, max: 500 };
+}
+
+function getVIPReferralBonus() {
+    const vip = loadVIPStatus();
+    if (vip && VIP_PLANS[vip.level]) {
+        return VIP_PLANS[vip.level].referralBonus;
+    }
+    return APP_CONFIG.referralBonus || 0.50;
+}
+
+function getVIPRemainingDays() {
+    const vip = loadVIPStatus();
+    if (!vip) return 0;
+    
+    const now = new Date();
+    const expiry = new Date(vip.expiryDate);
+    const diffTime = expiry - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+}
+
+// جعل دوال VIP متاحة عالمياً
+window.saveVIPStatus = saveVIPStatus;
+window.loadVIPStatus = loadVIPStatus;
+window.getVIPMultiplier = getVIPMultiplier;
+window.getCurrentAdReward = getCurrentAdReward;
+window.getVIPWithdrawalLimits = getVIPWithdrawalLimits;
+window.getVIPReferralBonus = getVIPReferralBonus;
+window.getVIPRemainingDays = getVIPRemainingDays;
+window.showFloatingWithdrawalToast = showFloatingWithdrawalToast;
+window.startFloatingWithdrawalNotifications = startFloatingWithdrawalNotifications;
+window.testFloatingNotification = testFloatingNotification;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 21. 🚀 INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function hideSplash() {
@@ -3790,6 +3837,10 @@ async function init() {
     checkAdminAndShowCrown();
     initAdPlatforms();
     await initTONConnect();
+    
+    // بدء الإشعارات الوهمية
+    startFloatingWithdrawalNotifications();
+    
     setTimeout(hideSplash, 500);
     setInterval(() => {
         if (localAdCache) {
@@ -3812,7 +3863,7 @@ if (document.readyState === "loading") {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 20. 🌐 GLOBAL EXPORTS
+// 22. 🌐 GLOBAL EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.switchTab = switchTab;
@@ -3861,8 +3912,8 @@ window.showAdSequence = showAdSequence;
 
 console.log("[AdNova] Platform ready | Ad Reward: $" + APP_CONFIG.adReward);
 console.log("[AdNova] Features: Referrals | Withdrawal Methods | Dynamic Tasks | Admin Panel | 10 Languages | TON Connect | Support Chat");
-console.log("[AdNova] Task Types: channel, bot, youtube, tiktok, twitter");
-console.log("[AdNova] Improved Features: Withdrawal History Colors | Full DateTime | Status Text | Notification Layout | Instant Status Update");
+console.log("[AdNova] VIP System: Silver x3, Gold x6, Platinum x10 | 7 days duration");
+console.log("[AdNova] Floating Notifications: Every 3-10 minutes | Withdrawal only");
 console.log("[AdNova] Ad Performance: Local cache with sync every 6 hours ✅");
 
 // ============================================================================
