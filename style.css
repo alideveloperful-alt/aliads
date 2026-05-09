@@ -2825,3 +2825,156 @@ body.rtl #notificationsList .notification-header {
 body.rtl .notification-actions {
     flex-direction: row-reverse !important;
 }
+
+/* ============================================================================
+   26. FIX: NOTIFICATIONS MODAL - تحسين خاص لتيليجرام WebView
+   ============================================================================ */
+
+/* قواعد خاصة لتيليجرام WebView */
+@media all and (display-mode: standalone), (display-mode: minimal-ui) {
+    #notificationsModal .modal-content {
+        width: 95% !important;
+        max-width: 460px !important;
+    }
+}
+
+/* إصلاح كرت الإشعار داخل تليجرام */
+#notificationsList .notification-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    margin-bottom: 10px !important;
+    border-radius: 18px !important;
+    background: linear-gradient(145deg, #1e1e2e, #16162a) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* أيقونة الإشعار - ثابتة لا تتأثر */
+#notificationsList .notification-icon {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    flex-shrink: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+}
+
+/* حاوية المحتوى - تأخذ المساحة المتبقية */
+#notificationsList .notification-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* رأس الإشعار - عنوان + وقت في نفس السطر */
+#notificationsList .notification-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+    margin-bottom: 6px !important;
+}
+
+/* عنوان الإشعار */
+#notificationsList .notification-title {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    flex: 1 !important;
+    word-break: break-word !important;
+    line-height: 1.35 !important;
+}
+
+/* وقت الإشعار */
+#notificationsList .notification-time {
+    font-size: 10px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* نص الإشعار - سطرين فقط كحد أقصى */
+#notificationsList .notification-message {
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    line-height: 1.4 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-break: break-word !important;
+}
+
+/* إشعار غير مقروء */
+#notificationsList .notification-item.unread {
+    background: linear-gradient(145deg, #23233a, #1a1a35) !important;
+    border-left: 3px solid #d4af37 !important;
+}
+
+/* للغة العربية RTL */
+body.rtl #notificationsList .notification-item.unread {
+    border-left: none !important;
+    border-right: 3px solid #d4af37 !important;
+}
+
+body.rtl #notificationsList .notification-header {
+    flex-direction: row-reverse !important;
+}
+
+/* جسم النافذة - تمرير ثابت */
+#notificationsModal .modal-body {
+    padding: 16px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* إصلاح إضافي لأزرار الإجراءات */
+.notification-actions {
+    display: flex !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+    flex-wrap: wrap !important;
+}
+
+.notif-action-btn {
+    flex: 1 !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 450px) {
+    .notification-actions {
+        flex-direction: column !important;
+    }
+    
+    .notif-action-btn {
+        white-space: normal !important;
+    }
+    
+    #notificationsList .notification-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    #notificationsList .notification-time {
+        white-space: normal !important;
+        font-size: 9px !important;
+    }
+}
