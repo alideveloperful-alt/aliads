@@ -3346,24 +3346,36 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM - نسخة احترافية متوافقة مع Telegram WebView
+// 14. 🔔 NOTIFICATIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
+
+function updateNotificationBadge() {
+    const badge = document.getElementById("notificationBadge");
+    if (badge && currentUser) {
+        const unread = currentUser.notifications?.filter(n => !n.read).length || 0;
+        badge.textContent = unread;
+        badge.style.display = unread > 0 ? "flex" : "none";
+        
+        const bellIcon = document.querySelector("#notificationBtn i");
+        if (bellIcon) {
+            if (unread > 0) {
+                bellIcon.style.color = "#d4af37";
+            } else {
+                bellIcon.style.color = "";
+            }
+        }
+    }
+}
 
 function renderNotifications() {
     const container = document.getElementById("notificationsList");
     if (!container || !currentUser) return;
-    
     const notifs = currentUser.notifications || [];
+    
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-bell-slash"></i>
-                <p>No notifications</p>
-                <span>You are all caught up!</span>
-            </div>
-        `;
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications</p><span>You are all caught up!</span></div>';
         return;
     }
     
@@ -3373,7 +3385,8 @@ function renderNotifications() {
             updateWithdrawalStatusFromNotification(n);
         }
         
-        const formattedDateTime = new Date(n.timestamp).toLocaleString(undefined, {
+        const date = new Date(n.timestamp);
+        const formattedDateTime = date.toLocaleString(undefined, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -3381,11 +3394,33 @@ function renderNotifications() {
             minute: '2-digit'
         });
         
-        const { iconClass, iconName } = getNotificationIcon(n.type);
+        let iconClass = "info";
+        let iconName = "fa-bell";
+        if (n.type === "success") {
+            iconClass = "success";
+            iconName = "fa-check-circle";
+        } else if (n.type === "error") {
+            iconClass = "error";
+            iconName = "fa-times-circle";
+        } else if (n.type === "warning") {
+            iconClass = "warning";
+            iconName = "fa-exclamation-triangle";
+        } else if (n.type === "withdraw") {
+            iconClass = "withdraw";
+            iconName = "fa-money-bill-wave";
+        } else if (n.type === "referral") {
+            iconClass = "referral";
+            iconName = "fa-user-plus";
+        } else if (n.type === "welcome") {
+            iconClass = "success";
+            iconName = "fa-gift";
+        } else if (n.type === "admin") {
+            iconClass = "info";
+            iconName = "fa-crown";
+        }
         
-        // تصميم نظيف بدون inline styles - كل التنسيق في CSS
         html += `
-            <div class="notification-item ${n.read ? "" : "unread"}" data-id="${n.id}">
+            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
                 <div class="notification-icon ${iconClass}">
                     <i class="fas ${iconName}"></i>
                 </div>
@@ -3399,33 +3434,43 @@ function renderNotifications() {
             </div>
         `;
     }
-    
     container.innerHTML = html;
-    
-    // إضافة مستمعي الأحداث
-    document.querySelectorAll('.notification-item').forEach(item => {
-        item.removeEventListener('click', handleNotificationClick);
-        item.addEventListener('click', handleNotificationClick);
-    });
 }
 
-function handleNotificationClick(event) {
-    const item = event.currentTarget;
-    const id = item.dataset.id;
-    if (id) markNotificationRead(id);
+function markNotificationRead(id) {
+    const n = currentUser.notifications?.find(n => n.id == id);
+    if (n && !n.read) {
+        n.read = true;
+        saveUserData();
+        updateNotificationBadge();
+        renderNotifications();
+    }
 }
 
-function getNotificationIcon(type) {
-    const icons = {
-        success: { iconClass: "success", iconName: "fa-check-circle" },
-        error: { iconClass: "error", iconName: "fa-times-circle" },
-        warning: { iconClass: "warning", iconName: "fa-exclamation-triangle" },
-        withdraw: { iconClass: "withdraw", iconName: "fa-money-bill-wave" },
-        referral: { iconClass: "referral", iconName: "fa-user-plus" },
-        welcome: { iconClass: "success", iconName: "fa-gift" },
-        admin: { iconClass: "info", iconName: "fa-crown" }
-    };
-    return icons[type] || { iconClass: "info", iconName: "fa-bell" };
+function clearReadNotifications() {
+    if (!currentUser.notifications) return;
+    currentUser.notifications = currentUser.notifications.filter(n => !n.read);
+    saveUserData();
+    updateNotificationBadge();
+    renderNotifications();
+    showToast("Cleared read notifications", "success");
+}
+
+function clearAllNotifications() {
+    currentUser.notifications = [];
+    saveUserData();
+    updateNotificationBadge();
+    renderNotifications();
+    showToast("All notifications cleared", "success");
+}
+
+function showNotificationsModal() {
+    renderNotifications();
+    document.getElementById("notificationsModal")?.classList.add("show");
+}
+
+function closeNotificationsModal() {
+    document.getElementById("notificationsModal")?.classList.remove("show");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
