@@ -1,6 +1,6 @@
 /* ============================================================================
-   ADNOVA NETWORK - PREMIUM MODERN STYLESHEET v13.0
-   تصميم احترافي نظيف خالي من التكرار
+   ADNOVA NETWORK - PREMIUM MODERN STYLESHEET v14.0
+   تصميم احترافي نظيف - نسخة محسنة للإشعارات
    ============================================================================ */
 
 /* ============================================================================
@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN - تم الإصلاح (جميع العناصر في المنتصف)
+   02. SPLASH SCREEN
    ============================================================================ */
 
 .splash-screen {
@@ -71,7 +71,6 @@ body.rtl {
     pointer-events: none;
 }
 
-/* حاوية المحتوى - مركزة عمودياً تماماً */
 .splash-screen .splash-content {
     position: absolute;
     top: 50%;
@@ -136,7 +135,6 @@ body.rtl {
     100% { transform: translateX(350%); }
 }
 
-/* 🌟Nova - في أسفل يسار الشاشة كما تريد */
 .splash-version {
     position: absolute;
     bottom: 20px;
@@ -1599,7 +1597,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   17. VERIFICATION MODAL - الاحترافي النهائي
+   17. VERIFICATION MODAL
    ============================================================================ */
 
 .verify-modal {
@@ -1845,124 +1843,8 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
     }
 }
 
-.notification-time {
-    font-size: 11px;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 4px;
-}
-
-.notification-actions {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.notif-action-btn {
-    flex: 1;
-    padding: 10px 14px;
-    background: rgba(212, 175, 55, 0.08);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: 40px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #b8920e;
-    text-align: center;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.notif-action-btn.danger {
-    border-color: rgba(239, 68, 68, 0.25);
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.04);
-}
-
-.notif-action-btn:hover {
-    background: rgba(212, 175, 55, 0.15);
-    transform: translateY(-1px);
-}
-
-.empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: #94a3b8;
-}
-
-.empty-state i {
-    font-size: 56px;
-    margin-bottom: 16px;
-    display: block;
-    opacity: 0.5;
-    color: #cbd5e1;
-}
-
-.empty-state p {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: #64748b;
-}
-
-.empty-state span {
-    font-size: 13px;
-    color: #94a3b8;
-}
-
-/* ===== تحسين للشاشات الصغيرة ===== */
-@media (max-width: 480px) {
-    .notification-item {
-        padding: 14px;
-        gap: 12px;
-    }
-    
-    .notification-icon {
-        width: 44px;
-        height: 44px;
-        font-size: 20px;
-    }
-    
-    .notification-title {
-        font-size: 15px;
-    }
-    
-    .notification-message {
-        font-size: 12px;
-    }
-    
-    .notification-actions {
-        gap: 8px;
-        flex-direction: row;
-    }
-    
-    .notif-action-btn {
-        padding: 8px 12px;
-        font-size: 11px;
-    }
-}
-
 /* ============================================================================
-   18.1. NOTIFICATION HEADER - إضافة مفقودة
-   ============================================================================ */
-
-.notification-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 4px;
-    width: 100%;
-}
-
-/* ============================================================================
-   19. CODE MODAL - نافذة إدخال الكود
+   18. CODE MODAL
    ============================================================================ */
 
 #codeModal {
@@ -2071,7 +1953,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   20. LANGUAGE MODAL
+   19. LANGUAGE MODAL
    ============================================================================ */
 
 .lang-modal-overlay {
@@ -2182,7 +2064,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   21. BOTTOM NAVIGATION
+   20. BOTTOM NAVIGATION
    ============================================================================ */
 
 .bottom-nav {
@@ -2246,7 +2128,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   22. ADMIN PANEL
+   21. ADMIN PANEL
    ============================================================================ */
 
 .admin-panel {
@@ -2451,7 +2333,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   23. GENERAL UTILITIES
+   22. GENERAL UTILITIES
    ============================================================================ */
 
 .refresh-btn {
@@ -2487,7 +2369,7 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   24. RESPONSIVE DESIGN
+   23. RESPONSIVE DESIGN
    ============================================================================ */
 
 @media (max-width: 480px) {
@@ -2547,21 +2429,20 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
 }
 
 /* ============================================================================
-   25. NOTIFICATIONS MODAL - تصميم احترافي كامل مع سكرول ثابت
+   24. NOTIFICATIONS MODAL - تصميم احترافي نهائي (يعمل في تليجرام)
    ============================================================================ */
 
-/* تنسيق النافذة المنبثقة نفسها */
+/* تنسيق النافذة الأساسي */
 #notificationsModal .modal-content {
     max-width: 480px !important;
     width: 90% !important;
     background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
     border-radius: 28px !important;
     border: 1px solid rgba(212, 175, 55, 0.3) !important;
-    box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 175, 55, 0.2) inset !important;
     overflow: hidden !important;
 }
 
-/* رأس النافذة - ذهبي أنيق */
+/* رأس النافذة */
 #notificationsModal .modal-header {
     background: linear-gradient(135deg, #0f0f1a, #1a1a2e) !important;
     padding: 18px 20px !important;
@@ -2591,21 +2472,15 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
     border-radius: 50% !important;
 }
 
-#notificationsModal .close-btn:hover {
-    background: rgba(239, 68, 68, 0.2) !important;
-    color: #ef4444 !important;
-}
-
-/* جسم النافذة - مع سكرول ثابت */
+/* جسم النافذة مع سكرول */
 #notificationsModal .modal-body {
     padding: 16px 20px 24px 20px !important;
     max-height: 480px !important;
-    height: auto !important;
     overflow-y: auto !important;
     background: #0f0f1a !important;
 }
 
-/* تخصيص شريط التمرير */
+/* شريط التمرير المخصص */
 #notificationsModal .modal-body::-webkit-scrollbar {
     width: 4px !important;
 }
@@ -2627,18 +2502,20 @@ body.rtl .withdrawal-item.pending { border-right-color: var(--warning); }
     gap: 12px !important;
 }
 
-/* كرت الإشعار الواحد - زوايا وحواف وظل */
+/* ===== كرت الإشعار الواحد - تنسيق محكم ===== */
 #notificationsList .notification-item {
-    background: linear-gradient(145deg, #1e1e2e, #16162a) !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    padding: 16px !important;
     display: flex !important;
+    flex-direction: row !important;
     align-items: flex-start !important;
     gap: 14px !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+    background: linear-gradient(145deg, #1e1e2e, #16162a) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
     transition: all 0.25s ease !important;
     cursor: pointer !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 #notificationsList .notification-item:hover {
@@ -2655,7 +2532,6 @@ body.rtl #notificationsList .notification-item:hover {
 #notificationsList .notification-item.unread {
     background: linear-gradient(145deg, #23233a, #1a1a35) !important;
     border-left: 4px solid #d4af37 !important;
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.15) !important;
 }
 
 body.rtl #notificationsList .notification-item.unread {
@@ -2663,18 +2539,20 @@ body.rtl #notificationsList .notification-item.unread {
     border-right: 4px solid #d4af37 !important;
 }
 
-/* أيقونة الإشعار */
+/* أيقونة الإشعار - ثابتة */
 #notificationsList .notification-icon {
     width: 44px !important;
     height: 44px !important;
+    min-width: 44px !important;
+    flex-shrink: 0 !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    flex-shrink: 0 !important;
     font-size: 20px !important;
 }
 
+/* ألوان الأيقونات حسب النوع */
 #notificationsList .notification-icon.success {
     background: rgba(16, 185, 129, 0.15) !important;
     color: #10b981 !important;
@@ -2705,32 +2583,36 @@ body.rtl #notificationsList .notification-item.unread {
     color: #d4af37 !important;
 }
 
-/* محتوى الإشعار */
+/* حاوية محتوى الإشعار */
 #notificationsList .notification-content {
     flex: 1 !important;
     min-width: 0 !important;
+    overflow: hidden !important;
 }
 
-/* رأس الإشعار (العنوان + الوقت) */
+/* رأس الإشعار (العنوان + الوقت في نفس السطر) */
 #notificationsList .notification-header {
     display: flex !important;
+    flex-direction: row !important;
     justify-content: space-between !important;
-    align-items: flex-start !important;
+    align-items: baseline !important;
+    flex-wrap: wrap !important;
     gap: 8px !important;
-    margin-bottom: 6px !important;
     width: 100% !important;
+    margin-bottom: 6px !important;
 }
 
 /* عنوان الإشعار */
 #notificationsList .notification-title {
-    font-weight: 700 !important;
     font-size: 14px !important;
+    font-weight: 700 !important;
     color: #ffffff !important;
-    line-height: 1.35 !important;
     flex: 1 !important;
+    word-break: break-word !important;
+    line-height: 1.35 !important;
 }
 
-/* الوقت */
+/* وقت الإشعار */
 #notificationsList .notification-time {
     font-size: 10px !important;
     color: rgba(255, 255, 255, 0.45) !important;
@@ -2739,26 +2621,27 @@ body.rtl #notificationsList .notification-item.unread {
     display: inline-flex !important;
     align-items: center !important;
     gap: 4px !important;
-    margin-top: 0 !important;
 }
 
-#notificationsList .notification-time i {
-    font-size: 10px !important;
-}
-
-/* نص الإشعار */
+/* نص الإشعار - مقيد بسطرين كحد أقصى */
 #notificationsList .notification-message {
     font-size: 12px !important;
     color: rgba(255, 255, 255, 0.65) !important;
     line-height: 1.45 !important;
-    margin-bottom: 0 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-break: break-word !important;
 }
 
-/* أزرار الإجراءات (Clear Read / Clear All) */
+/* أزرار الإجراءات */
 .notification-actions {
     display: flex !important;
     gap: 12px !important;
     margin-bottom: 16px !important;
+    flex-wrap: wrap !important;
 }
 
 .notif-action-btn {
@@ -2771,7 +2654,6 @@ body.rtl #notificationsList .notification-item.unread {
     font-weight: 600 !important;
     color: #d4af37 !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
     text-align: center !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -2790,7 +2672,7 @@ body.rtl #notificationsList .notification-item.unread {
     transform: translateY(-1px) !important;
 }
 
-/* حالة عدم وجود إشعارات (فارغة) */
+/* حالة عدم وجود إشعارات */
 .empty-state {
     text-align: center !important;
     padding: 48px 24px !important;
@@ -2826,139 +2708,7 @@ body.rtl .notification-actions {
     flex-direction: row-reverse !important;
 }
 
-/* ============================================================================
-   26. FIX: NOTIFICATIONS MODAL - تحسين خاص لتيليجرام WebView
-   ============================================================================ */
-
-/* قواعد خاصة لتيليجرام WebView */
-@media all and (display-mode: standalone), (display-mode: minimal-ui) {
-    #notificationsModal .modal-content {
-        width: 95% !important;
-        max-width: 460px !important;
-    }
-}
-
-/* إصلاح كرت الإشعار داخل تليجرام */
-#notificationsList .notification-item {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    padding: 14px !important;
-    margin-bottom: 10px !important;
-    border-radius: 18px !important;
-    background: linear-gradient(145deg, #1e1e2e, #16162a) !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* أيقونة الإشعار - ثابتة لا تتأثر */
-#notificationsList .notification-icon {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    flex-shrink: 0 !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 20px !important;
-}
-
-/* حاوية المحتوى - تأخذ المساحة المتبقية */
-#notificationsList .notification-content {
-    flex: 1 !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-}
-
-/* رأس الإشعار - عنوان + وقت في نفس السطر */
-#notificationsList .notification-header {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: baseline !important;
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-    width: 100% !important;
-    margin-bottom: 6px !important;
-}
-
-/* عنوان الإشعار */
-#notificationsList .notification-title {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: #ffffff !important;
-    flex: 1 !important;
-    word-break: break-word !important;
-    line-height: 1.35 !important;
-}
-
-/* وقت الإشعار */
-#notificationsList .notification-time {
-    font-size: 10px !important;
-    color: rgba(255, 255, 255, 0.45) !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-}
-
-/* نص الإشعار - سطرين فقط كحد أقصى */
-#notificationsList .notification-message {
-    font-size: 12px !important;
-    color: rgba(255, 255, 255, 0.65) !important;
-    line-height: 1.4 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    word-break: break-word !important;
-}
-
-/* إشعار غير مقروء */
-#notificationsList .notification-item.unread {
-    background: linear-gradient(145deg, #23233a, #1a1a35) !important;
-    border-left: 3px solid #d4af37 !important;
-}
-
-/* للغة العربية RTL */
-body.rtl #notificationsList .notification-item.unread {
-    border-left: none !important;
-    border-right: 3px solid #d4af37 !important;
-}
-
-body.rtl #notificationsList .notification-header {
-    flex-direction: row-reverse !important;
-}
-
-/* جسم النافذة - تمرير ثابت */
-#notificationsModal .modal-body {
-    padding: 16px !important;
-    max-height: 70vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-/* إصلاح إضافي لأزرار الإجراءات */
-.notification-actions {
-    display: flex !important;
-    gap: 10px !important;
-    margin-bottom: 16px !important;
-    flex-wrap: wrap !important;
-}
-
-.notif-action-btn {
-    flex: 1 !important;
-    padding: 10px 12px !important;
-    font-size: 12px !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-}
-
+/* تحسين للشاشات الصغيرة جداً */
 @media (max-width: 450px) {
     .notification-actions {
         flex-direction: column !important;
@@ -2976,5 +2726,27 @@ body.rtl #notificationsList .notification-header {
     #notificationsList .notification-time {
         white-space: normal !important;
         font-size: 9px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    #notificationsList .notification-item {
+        padding: 12px !important;
+        gap: 10px !important;
+    }
+    
+    #notificationsList .notification-icon {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        font-size: 16px !important;
+    }
+    
+    #notificationsList .notification-title {
+        font-size: 13px !important;
+    }
+    
+    #notificationsList .notification-message {
+        font-size: 11px !important;
     }
 }
