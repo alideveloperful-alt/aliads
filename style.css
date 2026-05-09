@@ -2849,3 +2849,18 @@ body.rtl #notificationsList .notification-icon {
     display: block !important;
     overflow: hidden !important;
 }
+
+.watch-ad-btn {
+    min-height: 130px;
+    transition: all 0.2s ease;
+}
+
+.watch-ad-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.loading-spinner-btn {
+    display: inline-block;
+    margin-right: 8px;
+}
