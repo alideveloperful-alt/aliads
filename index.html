@@ -17,7 +17,7 @@
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     
     <!-- ============================================================ -->
-    <!-- 🎬 AD PLATFORMS - مثل REFI بالضبط مع معرفات AdNova -->
+    <!-- 🎬 AD PLATFORMS -->
     <!-- ============================================================ -->
     <!-- 1. Monetag -->
     <script src='//libtl.com/sdk.js' data-zone='10950362' data-sdk='show_10950362'></script>
@@ -25,7 +25,7 @@
     <!-- 2. GigaPub -->
     <script src="https://ad.gigapub.tech/script?id=6616"></script>
     
-    <!-- 3. OnClickA (مثل REFI: يستخدم window.show) -->
+    <!-- 3. OnClickA -->
     <script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
     <script>
         if (typeof window.initCdTma === 'function') {
@@ -36,7 +36,7 @@
         }
     </script>
     
-    <!-- 4. RichAds (مثل REFI: manual mode only) -->
+    <!-- 4. RichAds -->
     <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
     <script>
         window.TelegramAdsController = new TelegramAdsController();
@@ -48,7 +48,7 @@
         console.log("✅ RichAds initialized (manual mode only)");
     </script>
     
-    <!-- 5. Adexium (مثل REFI: manual mode only, بدون autoMode) -->
+    <!-- 5. Adexium -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
         if (typeof AdexiumWidget !== 'undefined') {
@@ -62,6 +62,9 @@
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- VIP Stylesheet (جديد) -->
+    <link rel="stylesheet" href="vip.css">
 </head>
 <body>
     
@@ -515,7 +518,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 17. 🔐 CODE VERIFICATION MODAL - نافذة إدخال الكود (جديد) -->
+    <!-- 17. 🔐 CODE VERIFICATION MODAL - نافذة إدخال الكود -->
     <!-- ============================================================ -->
     
     <div id="codeModal" class="modal" style="display: none;">
@@ -550,9 +553,18 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- ============================================================ -->
-    <!-- 19. 📜 MAIN SCRIPT - ملف الجافاسكريبت الرئيسي -->
+    <!-- 19. ✨ VIP FLOATING BUTTON - زر VIP العائم (جديد) -->
+    <!-- ============================================================ -->
+    
+    <button id="vipFloatingBtn" class="vip-floating-btn" onclick="window.location.href='vip.html'">
+        <i class="fas fa-crown"></i>
+    </button>
+
+    <!-- ============================================================ -->
+    <!-- 20. 📜 MAIN SCRIPTS -->
     <!-- ============================================================ -->
     
     <script src="app.js"></script>
+    <script src="vip.js"></script>
 </body>
 </html>
