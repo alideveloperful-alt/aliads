@@ -3346,7 +3346,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM
+// 14. 🔔 NOTIFICATIONS SYSTEM - نسخة متوافقة مع Telegram WebView
 // ═══════════════════════════════════════════════════════════════════════════
 
 function updateNotificationBadge() {
@@ -3419,15 +3419,16 @@ function renderNotifications() {
             iconName = "fa-crown";
         }
         
+        // ✅ التعديل: إضافة تنسيقات مضمنة (inline styles) لتوافق Telegram
         html += `
-            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
-                <div class="notification-icon ${iconClass}">
-                    <i class="fas ${iconName}"></i>
+            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')" style="display: flex; align-items: flex-start; gap: 14px; padding: 18px; background: #ffffff; border-radius: 24px; border: 1px solid rgba(212, 175, 55, 0.12); margin-bottom: 12px;">
+                <div class="notification-icon ${iconClass}" style="flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    <i class="fas ${iconName}" style="font-size: 22px;"></i>
                 </div>
-                <div class="notification-content">
-                    <div class="notification-title">${escapeHtml(n.title)}</div>
-                    <div class="notification-message">${escapeHtml(n.message)}</div>
-                    <div class="notification-time">
+                <div class="notification-content" style="flex: 1; min-width: 0;">
+                    <div class="notification-title" style="font-weight: 700; font-size: 16px; color: #1e293b; margin-bottom: 6px; line-height: 1.35;">${escapeHtml(n.title)}</div>
+                    <div class="notification-message" style="font-size: 13px; color: #5a6a7a; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word;">${escapeHtml(n.message)}</div>
+                    <div class="notification-time" style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px;">
                         <i class="far fa-clock"></i> ${formattedDateTime}
                     </div>
                 </div>
