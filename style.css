@@ -2864,3 +2864,51 @@ body.rtl #notificationsList .notification-icon {
     display: inline-block;
     margin-right: 8px;
 }
+
+/* ============================================================================
+   26. WATCH AD BUTTON - تحسين تجربة التحميل فقط
+   ============================================================================ */
+
+/* تثبيت ارتفاع الزر لمنع الاهتزاز */
+.watch-ad-btn {
+    min-height: 130px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* تأثير بسيط أثناء التحميل */
+.watch-ad-btn:disabled {
+    opacity: 0.8;
+    cursor: wait;
+    transform: scale(0.98);
+}
+
+/* مؤشر تحميل أنيق يظهر فوق الزر أثناء التحميل */
+.watch-ad-btn:disabled::after {
+    content: "⏳";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 30px;
+    background: rgba(0,0,0,0.7);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1s infinite;
+}
+
+/* حركة نبض للمؤشر */
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* إخفاء النص الأصلي أثناء التحميل بلطف */
+.watch-ad-btn:disabled .watch-ad-inner {
+    opacity: 0.5;
+    filter: blur(1px);
+    transition: all 0.2s;
+}
