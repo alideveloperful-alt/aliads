@@ -3346,7 +3346,7 @@ function filterUsers() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 14. 🔔 NOTIFICATIONS SYSTEM - نسخة متوافقة مع Telegram WebView
+// 14. 🔔 NOTIFICATIONS SYSTEM - نسخة احترافية متوافقة مع Telegram WebView
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderNotifications() {
@@ -3374,48 +3374,28 @@ function renderNotifications() {
         }
         
         const formattedDateTime = new Date(n.timestamp).toLocaleString(undefined, {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
         
         const { iconClass, iconName } = getNotificationIcon(n.type);
         
-        // ✅ استخدام جدول (table) بدلاً من flex للتوافق مع Telegram
+        // تصميم نظيف بدون inline styles - كل التنسيق في CSS
         html += `
-            <div class="notification-item ${n.read ? "" : "unread"}" data-id="${n.id}" style="
-                display: block;
-                background: #ffffff;
-                border-radius: 20px;
-                border: 1px solid #e2e8f0;
-                margin-bottom: 12px;
-                padding: 16px;
-                cursor: pointer;
-                overflow: hidden;
-            ">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="width: 50px; vertical-align: top; padding: 0;">
-                            <div class="notification-icon ${iconClass}" style="
-                                width: 44px;
-                                height: 44px;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                background: rgba(212, 175, 55, 0.1);
-                            ">
-                                <i class="fas ${iconName}" style="font-size: 20px;"></i>
-                            </div>
-                        </td>
-                        <td style="vertical-align: top; padding: 0;">
-                            <div style="font-weight: 700; font-size: 15px; color: #1e293b; margin-bottom: 6px;">${escapeHtml(n.title)}</div>
-                            <div style="font-size: 13px; color: #5a6a7a; line-height: 1.4; margin-bottom: 8px;">${escapeHtml(n.message)}</div>
-                            <div style="font-size: 11px; color: #94a3b8;">
-                                <i class="far fa-clock"></i> ${formattedDateTime}
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <div class="notification-item ${n.read ? "" : "unread"}" data-id="${n.id}">
+                <div class="notification-icon ${iconClass}">
+                    <i class="fas ${iconName}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${escapeHtml(n.title)}</div>
+                    <div class="notification-message">${escapeHtml(n.message)}</div>
+                    <div class="notification-time">
+                        <i class="far fa-clock"></i> ${formattedDateTime}
+                    </div>
+                </div>
             </div>
         `;
     }
