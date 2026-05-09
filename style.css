@@ -2909,73 +2909,90 @@ body.rtl .verify-modal h3 {
 }
 
 /* ============================================================================
-   VERIFICATION MODAL - تصميم احترافي بالكامل
+   VERIFICATION MODAL - حل قوي 100% بدون تعديل HTML
    ============================================================================ */
 
 .verify-modal {
     max-width: 580px !important;
     width: 90% !important;
-    background: var(--white);
+    background: #ffffff !important;
     border-radius: 48px !important;
-    overflow: hidden;
-    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.2);
-    position: relative;
+    overflow: hidden !important;
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.25) !important;
+    position: relative !important;
 }
 
-/* الشريط الذهبي العلوي */
 .verify-modal::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, #b8920e, #d4af37, #f5e3a1, #d4af37, #b8920e);
-    z-index: 10;
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 6px !important;
+    background: linear-gradient(90deg, #b8920e, #d4af37, #f5e3a1, #d4af37, #b8920e) !important;
+    z-index: 20 !important;
 }
 
-/* المحتوى الداخلي */
 .verify-modal .modal-body {
-    padding: 24px 28px 32px 28px !important;
+    padding: 28px 28px 36px 28px !important;
+    background: #ffffff !important;
 }
 
-/* أيقونة القفل */
 .verify-modal-icon {
     text-align: center !important;
-    margin-bottom: 8px;
+    margin: 0 0 12px 0 !important;
 }
 
 .verify-modal-icon i {
-    font-size: 70px !important;
-    background: linear-gradient(145deg, #d4af37, #b8920e);
-    -webkit-background-clip: text;
-    background-clip: text;
+    font-size: 72px !important;
+    background: linear-gradient(145deg, #d4af37, #b8920e) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
     color: transparent !important;
-    filter: drop-shadow(0 8px 20px rgba(212, 175, 55, 0.3));
+    display: inline-block !important;
 }
 
-/* العنوان */
 .verify-modal h3 {
     text-align: center !important;
-    font-size: 26px !important;
+    font-size: 28px !important;
     font-weight: 800 !important;
     color: #1e293b !important;
-    margin: 0 0 8px 0 !important;
+    margin: 0 0 20px 0 !important;
+    letter-spacing: -0.3px !important;
 }
 
-/* ===== النص التوضيحي - الأن والجميل ===== */
-.verify-description-text {
+/* ===== إصلاح النص - الجزء الأهم ===== */
+.verify-modal .modal-body p {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     text-align: center !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
     font-weight: 500 !important;
-    color: #5a6a7a !important;
+    color: #475569 !important;
     line-height: 1.55 !important;
-    margin: 16px 0 28px 0 !important;
-    padding: 16px 20px !important;
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.03)) !important;
+    margin: 0 0 28px 0 !important;
+    padding: 18px 22px !important;
+    background: #fefce8 !important;
     border-radius: 28px !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    backdrop-filter: blur(2px);
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* إضافة الأيقونة قبل النص */
+.verify-modal .modal-body p::before {
+    content: "🔓 " !important;
+    font-size: 16px !important;
+    display: inline !important;
+    position: static !important;
+}
+
+/* إزالة أي pseudo-elements سابقة */
+.verify-modal .modal-body p::after {
+    display: none !important;
+    content: none !important;
 }
 
 /* ===== كروت الخيارات ===== */
@@ -2984,27 +3001,26 @@ body.rtl .verify-modal h3 {
     align-items: center !important;
     gap: 20px !important;
     background: #ffffff !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 32px !important;
     padding: 20px 24px !important;
     margin: 0 0 16px 0 !important;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
 }
 
 .verify-option:hover {
     border-color: #d4af37 !important;
-    background: #fffef8 !important;
+    background: #fffbeb !important;
     transform: translateY(-3px) !important;
-    box-shadow: 0 20px 30px -12px rgba(212, 175, 55, 0.25) !important;
+    box-shadow: 0 20px 30px -12px rgba(212, 175, 55, 0.2) !important;
 }
 
-/* أيقونة الكرت */
 .verify-option-icon {
-    width: 70px !important;
-    height: 70px !important;
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.05)) !important;
+    width: 68px !important;
+    height: 68px !important;
+    background: #fef3c7 !important;
     border-radius: 28px !important;
     display: flex !important;
     align-items: center !important;
@@ -3017,7 +3033,6 @@ body.rtl .verify-modal h3 {
     color: #d4af37 !important;
 }
 
-/* محتوى الكرت */
 .verify-option-content {
     flex: 1 !important;
 }
@@ -3032,15 +3047,14 @@ body.rtl .verify-modal h3 {
 .verify-option-desc {
     font-size: 13px !important;
     color: #64748b !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 12px !important;
 }
 
-/* شريط التقدم */
 .verify-progress-bar-container {
-    background: rgba(0, 0, 0, 0.06) !important;
+    background: #e2e8f0 !important;
     border-radius: 99px !important;
     height: 8px !important;
-    margin: 10px 0 !important;
+    margin: 10px 0 8px 0 !important;
     overflow: hidden !important;
 }
 
@@ -3054,32 +3068,30 @@ body.rtl .verify-modal h3 {
     font-size: 13px !important;
     font-weight: 600 !important;
     color: #b8920e !important;
-    background: rgba(212, 175, 55, 0.1);
-    display: inline-block;
-    padding: 4px 14px;
-    border-radius: 40px;
+    background: #fef3c7 !important;
+    display: inline-block !important;
+    padding: 4px 14px !important;
+    border-radius: 40px !important;
 }
 
-/* فوائد TON */
 .verify-benefits {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 12px !important;
+    gap: 10px !important;
     margin: 8px 0 !important;
 }
 
 .verify-benefits span {
     font-size: 11px !important;
     color: #10b981 !important;
-    background: rgba(16, 185, 129, 0.08);
-    padding: 5px 12px;
-    border-radius: 40px;
+    background: #ecfdf5 !important;
+    padding: 5px 12px !important;
+    border-radius: 40px !important;
     display: inline-flex !important;
     align-items: center !important;
     gap: 6px !important;
 }
 
-/* زر TON */
 .verify-ton-btn {
     display: inline-flex !important;
     align-items: center !important;
@@ -3090,75 +3102,39 @@ body.rtl .verify-modal h3 {
     font-weight: 700 !important;
     padding: 10px 28px !important;
     border-radius: 60px !important;
-    margin-top: 10px !important;
+    margin-top: 12px !important;
     cursor: pointer !important;
     border: none !important;
     transition: all 0.25s ease !important;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .verify-ton-btn:hover {
     transform: scale(1.02) !important;
-    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35) !important;
 }
 
-/* زر التذكير */
 .verify-later-btn {
     width: 100% !important;
-    margin: 24px 0 8px 0 !important;
+    margin: 28px 0 8px 0 !important;
     background: transparent !important;
-    border: 2px solid rgba(212, 175, 55, 0.35) !important;
+    border: 2px solid #e2e8f0 !important;
     border-radius: 60px !important;
     padding: 14px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
-    color: #b8920e !important;
+    color: #64748b !important;
     cursor: pointer !important;
     transition: all 0.25s ease !important;
     text-align: center !important;
-    display: block !important;
 }
 
 .verify-later-btn:hover {
-    background: rgba(212, 175, 55, 0.08) !important;
     border-color: #d4af37 !important;
-    transform: translateY(-2px) !important;
+    color: #b8920e !important;
+    background: #fefce8 !important;
 }
 
-/* تحذير/نجاح */
-.verify-warning {
-    font-size: 12px;
-    color: #e67e22;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(230, 126, 34, 0.08);
-    padding: 6px 14px;
-    border-radius: 40px;
-    width: fit-content;
-}
-
-.verify-success {
-    font-size: 12px;
-    color: #10b981;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(16, 185, 129, 0.08);
-    padding: 6px 14px;
-    border-radius: 40px;
-    width: fit-content;
-}
-
-/* للشاشات الصغيرة */
 @media (max-width: 550px) {
-    .verify-modal {
-        max-width: 95% !important;
-        border-radius: 36px !important;
-    }
-    
     .verify-modal .modal-body {
         padding: 20px 20px 28px 20px !important;
     }
@@ -3181,16 +3157,13 @@ body.rtl .verify-modal h3 {
         justify-content: center !important;
     }
     
-    .verify-warning, .verify-success {
-        margin: 8px auto 0 auto;
-    }
-    
     .verify-modal h3 {
         font-size: 24px !important;
     }
     
-    .verify-description-text {
+    .verify-modal .modal-body p {
         font-size: 13px !important;
         padding: 14px 16px !important;
+        margin-bottom: 20px !important;
     }
 }
