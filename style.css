@@ -2750,3 +2750,78 @@ body.rtl .notification-actions {
         font-size: 11px !important;
     }
 }
+
+/* ============================================================================
+   25. TELEGRAM FIX - إصلاح خاص لتطبيق تيليجرام
+   ============================================================================ */
+
+/* إصلاح النافذة المنبثقة */
+.modal.show {
+    background: rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: none !important;
+}
+
+/* إصلاح محتوى النافذة */
+#notificationsModal .modal-content {
+    background: #0f0f1a !important;
+    border: 2px solid #d4af37 !important;
+}
+
+/* إصلاح كرت الإشعار - تبسيط لتيليجرام */
+#notificationsList .notification-item {
+    display: block !important;
+    padding: 12px !important;
+    margin-bottom: 10px !important;
+    background: #1e1e2e !important;
+    border-radius: 16px !important;
+    border: 1px solid #d4af37 !important;
+}
+
+#notificationsList .notification-icon {
+    display: inline-block !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin-right: 10px !important;
+    text-align: center !important;
+    line-height: 36px !important;
+}
+
+#notificationsList .notification-content {
+    display: inline-block !important;
+    vertical-align: top !important;
+    width: calc(100% - 50px) !important;
+}
+
+#notificationsList .notification-header {
+    display: block !important;
+    margin-bottom: 4px !important;
+}
+
+#notificationsList .notification-title {
+    display: inline-block !important;
+    font-weight: bold !important;
+    color: #d4af37 !important;
+}
+
+#notificationsList .notification-time {
+    float: right !important;
+    font-size: 10px !important;
+    color: #888 !important;
+}
+
+#notificationsList .notification-message {
+    display: block !important;
+    font-size: 12px !important;
+    color: #ccc !important;
+    margin-top: 4px !important;
+}
+
+/* إصلاح RTL */
+body.rtl #notificationsList .notification-time {
+    float: left !important;
+}
+
+body.rtl #notificationsList .notification-icon {
+    margin-right: 0 !important;
+    margin-left: 10px !important;
+}
