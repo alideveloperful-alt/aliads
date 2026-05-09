@@ -3349,33 +3349,21 @@ function filterUsers() {
 // 14. 🔔 NOTIFICATIONS SYSTEM - نسخة متوافقة مع Telegram WebView
 // ═══════════════════════════════════════════════════════════════════════════
 
-function updateNotificationBadge() {
-    const badge = document.getElementById("notificationBadge");
-    if (badge && currentUser) {
-        const unread = currentUser.notifications?.filter(n => !n.read).length || 0;
-        badge.textContent = unread;
-        badge.style.display = unread > 0 ? "flex" : "none";
-        
-        const bellIcon = document.querySelector("#notificationBtn i");
-        if (bellIcon) {
-            if (unread > 0) {
-                bellIcon.style.color = "#d4af37";
-            } else {
-                bellIcon.style.color = "";
-            }
-        }
-    }
-}
-
 function renderNotifications() {
     const container = document.getElementById("notificationsList");
     if (!container || !currentUser) return;
-    const notifs = currentUser.notifications || [];
     
+    const notifs = currentUser.notifications || [];
     const sortedNotifs = [...notifs].reverse();
     
     if (sortedNotifs.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications</p><span>You are all caught up!</span></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <p>No notifications</p>
+                <span>You are all caught up!</span>
+            </div>
+        `;
         return;
     }
     
@@ -3385,93 +3373,79 @@ function renderNotifications() {
             updateWithdrawalStatusFromNotification(n);
         }
         
-        const date = new Date(n.timestamp);
-        const formattedDateTime = date.toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+        const formattedDateTime = new Date(n.timestamp).toLocaleString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
         
-        let iconClass = "info";
-        let iconName = "fa-bell";
-        if (n.type === "success") {
-            iconClass = "success";
-            iconName = "fa-check-circle";
-        } else if (n.type === "error") {
-            iconClass = "error";
-            iconName = "fa-times-circle";
-        } else if (n.type === "warning") {
-            iconClass = "warning";
-            iconName = "fa-exclamation-triangle";
-        } else if (n.type === "withdraw") {
-            iconClass = "withdraw";
-            iconName = "fa-money-bill-wave";
-        } else if (n.type === "referral") {
-            iconClass = "referral";
-            iconName = "fa-user-plus";
-        } else if (n.type === "welcome") {
-            iconClass = "success";
-            iconName = "fa-gift";
-        } else if (n.type === "admin") {
-            iconClass = "info";
-            iconName = "fa-crown";
-        }
+        const { iconClass, iconName } = getNotificationIcon(n.type);
         
-        // ✅ التعديل: إضافة تنسيقات مضمنة (inline styles) لتوافق Telegram
+        // ✅ استخدام جدول (table) بدلاً من flex للتوافق مع Telegram
         html += `
-            <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')" style="display: flex; align-items: flex-start; gap: 14px; padding: 18px; background: #ffffff; border-radius: 24px; border: 1px solid rgba(212, 175, 55, 0.12); margin-bottom: 12px;">
-                <div class="notification-icon ${iconClass}" style="flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                    <i class="fas ${iconName}" style="font-size: 22px;"></i>
-                </div>
-                <div class="notification-content" style="flex: 1; min-width: 0;">
-                    <div class="notification-title" style="font-weight: 700; font-size: 16px; color: #1e293b; margin-bottom: 6px; line-height: 1.35;">${escapeHtml(n.title)}</div>
-                    <div class="notification-message" style="font-size: 13px; color: #5a6a7a; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word;">${escapeHtml(n.message)}</div>
-                    <div class="notification-time" style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px;">
-                        <i class="far fa-clock"></i> ${formattedDateTime}
-                    </div>
-                </div>
+            <div class="notification-item ${n.read ? "" : "unread"}" data-id="${n.id}" style="
+                display: block;
+                background: #ffffff;
+                border-radius: 20px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 12px;
+                padding: 16px;
+                cursor: pointer;
+                overflow: hidden;
+            ">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50px; vertical-align: top; padding: 0;">
+                            <div class="notification-icon ${iconClass}" style="
+                                width: 44px;
+                                height: 44px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                background: rgba(212, 175, 55, 0.1);
+                            ">
+                                <i class="fas ${iconName}" style="font-size: 20px;"></i>
+                            </div>
+                        </td>
+                        <td style="vertical-align: top; padding: 0;">
+                            <div style="font-weight: 700; font-size: 15px; color: #1e293b; margin-bottom: 6px;">${escapeHtml(n.title)}</div>
+                            <div style="font-size: 13px; color: #5a6a7a; line-height: 1.4; margin-bottom: 8px;">${escapeHtml(n.message)}</div>
+                            <div style="font-size: 11px; color: #94a3b8;">
+                                <i class="far fa-clock"></i> ${formattedDateTime}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>
         `;
     }
+    
     container.innerHTML = html;
+    
+    // إضافة مستمعي الأحداث
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.removeEventListener('click', handleNotificationClick);
+        item.addEventListener('click', handleNotificationClick);
+    });
 }
 
-function markNotificationRead(id) {
-    const n = currentUser.notifications?.find(n => n.id == id);
-    if (n && !n.read) {
-        n.read = true;
-        saveUserData();
-        updateNotificationBadge();
-        renderNotifications();
-    }
+function handleNotificationClick(event) {
+    const item = event.currentTarget;
+    const id = item.dataset.id;
+    if (id) markNotificationRead(id);
 }
 
-function clearReadNotifications() {
-    if (!currentUser.notifications) return;
-    currentUser.notifications = currentUser.notifications.filter(n => !n.read);
-    saveUserData();
-    updateNotificationBadge();
-    renderNotifications();
-    showToast("Cleared read notifications", "success");
-}
-
-function clearAllNotifications() {
-    currentUser.notifications = [];
-    saveUserData();
-    updateNotificationBadge();
-    renderNotifications();
-    showToast("All notifications cleared", "success");
-}
-
-function showNotificationsModal() {
-    renderNotifications();
-    document.getElementById("notificationsModal")?.classList.add("show");
-}
-
-function closeNotificationsModal() {
-    document.getElementById("notificationsModal")?.classList.remove("show");
+function getNotificationIcon(type) {
+    const icons = {
+        success: { iconClass: "success", iconName: "fa-check-circle" },
+        error: { iconClass: "error", iconName: "fa-times-circle" },
+        warning: { iconClass: "warning", iconName: "fa-exclamation-triangle" },
+        withdraw: { iconClass: "withdraw", iconName: "fa-money-bill-wave" },
+        referral: { iconClass: "referral", iconName: "fa-user-plus" },
+        welcome: { iconClass: "success", iconName: "fa-gift" },
+        admin: { iconClass: "info", iconName: "fa-crown" }
+    };
+    return icons[type] || { iconClass: "info", iconName: "fa-bell" };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
