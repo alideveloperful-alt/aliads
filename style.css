@@ -2825,3 +2825,27 @@ body.rtl #notificationsList .notification-icon {
     margin-right: 0 !important;
     margin-left: 10px !important;
 }
+
+/* إصلاح التفاف النص في الإشعارات */
+#notificationsList .notification-message {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.5 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* إصلاح الحاوية الرئيسية */
+#notificationsList .notification-content {
+    display: block !important;
+    width: 100% !important;
+}
+
+/* إصلاح الكرت بالكامل */
+#notificationsList .notification-item {
+    display: block !important;
+    overflow: hidden !important;
+}
