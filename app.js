@@ -1676,7 +1676,7 @@ async function watchAd() {
     const btn = document.getElementById("watchAdBtn");
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        btn.querySelector('.watch-ad-title').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
     }
     
     showToast(t("loadingAd"), "info");
@@ -1705,7 +1705,7 @@ async function watchAd() {
     adPlaying = false;
     if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn");
+        btn.querySelector('.watch-ad-title').innerHTML = '<i class="fas fa-play"></i> ' + t("watchAdBtn");
     }
 }
 
