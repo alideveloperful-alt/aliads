@@ -2907,3 +2907,51 @@ body.rtl .verify-modal h3 {
         padding: 12px 16px !important;
     }
 }
+
+/* ============================================================================
+   VERIFICATION MODAL - إصلاح كامل بدون تعديل HTML
+   ============================================================================ */
+
+/* إضافة هوامش داخلية للنافذة */
+.verify-modal .modal-body {
+    padding: 20px 24px 28px 24px !important;
+}
+
+/* إصلاح النص الملتصق - جعله داخل صندوق مع هوامش */
+.verify-modal .modal-body > p {
+    visibility: visible !important;
+    height: auto !important;
+    text-align: center !important;
+    font-size: 0 !important;
+    margin: 0 0 24px 0 !important;
+    padding: 0 !important;
+    background: rgba(212, 175, 55, 0.08) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(212, 175, 55, 0.12) !important;
+}
+
+.verify-modal .modal-body > p::before {
+    content: "🔓 To withdraw funds, you must verify your account. Choose one method below:" !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #5a6a7a !important;
+    line-height: 1.5 !important;
+    display: block !important;
+    padding: 14px 18px !important;
+}
+
+/* إزالة الخط الفاصل المزعج */
+.verify-modal .modal-body > p::after {
+    display: none !important;
+}
+
+/* تحسين المسافات بين الخيارات */
+.verify-option {
+    margin: 0 0 14px 0 !important;
+}
+
+/* تحسين زر التذكير */
+.verify-later-btn {
+    width: 100% !important;
+    margin: 16px 0 0 0 !important;
+}
