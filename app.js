@@ -3419,17 +3419,20 @@ function renderNotifications() {
             iconName = "fa-crown";
         }
         
+        // ✅ التعديل: إضافة notification-header لعرض title و time في صف واحد
         html += `
             <div class="notification-item ${n.read ? "" : "unread"}" onclick="markNotificationRead('${n.id}')">
                 <div class="notification-icon ${iconClass}">
                     <i class="fas ${iconName}"></i>
                 </div>
                 <div class="notification-content">
-                    <div class="notification-title">${escapeHtml(n.title)}</div>
-                    <div class="notification-message">${escapeHtml(n.message)}</div>
-                    <div class="notification-time">
-                        <i class="far fa-clock"></i> ${formattedDateTime}
+                    <div class="notification-header">
+                        <div class="notification-title">${escapeHtml(n.title)}</div>
+                        <div class="notification-time">
+                            <i class="far fa-clock"></i> ${formattedDateTime}
+                        </div>
                     </div>
+                    <div class="notification-message">${escapeHtml(n.message)}</div>
                 </div>
             </div>
         `;
