@@ -2987,3 +2987,127 @@ body.rtl #notificationsList .notification-icon {
     display: none;
     content: none;
 }
+
+/* ============================================================================
+   28. 👑 VIP SYSTEM - تصميم احترافي متناسق
+   ============================================================================ */
+
+/* زر VIP العائم */
+.vip-floating-btn {
+    position: fixed;
+    bottom: 90px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #d4af37, #b8920e);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
+    z-index: 99;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: vipPulse 2s ease-in-out infinite;
+}
+
+.vip-floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(212, 175, 55, 0.7);
+}
+
+.vip-floating-btn:active {
+    transform: scale(0.95);
+}
+
+@keyframes vipPulse {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(212, 175, 55, 0.8);
+    }
+}
+
+/* دعم RTL للزر العائم */
+body.rtl .vip-floating-btn {
+    right: auto;
+    left: 16px;
+}
+
+/* ====== Floating Withdrawal Toast ====== */
+.floating-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
+    padding: 10px 20px;
+    border-radius: 50px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10001;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.3);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    white-space: nowrap;
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease;
+    pointer-events: none;
+    max-width: 90%;
+    font-family: monospace;
+    border-left: 3px solid #d4af37;
+}
+
+.floating-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+@media (max-width: 500px) {
+    .floating-toast {
+        bottom: 85px;
+        padding: 8px 16px;
+        font-size: 11px;
+        white-space: normal;
+        line-height: 1.4;
+        border-radius: 30px;
+    }
+}
+
+/* دعم RTL للإشعارات المنبثقة */
+body.rtl .floating-toast {
+    border-left: none;
+    border-right: 3px solid #d4af37;
+}
+
+/* ====== صفحة VIP - أنماط إضافية ====== */
+.vip-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 14px;
+    animation: vipGlow 2s ease-in-out infinite;
+}
+
+@keyframes vipGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px #d4af37);
+    }
+    50% {
+        filter: drop-shadow(0 0 6px #d4af37);
+    }
+}
+
+/* تحسين شارة VIP بجانب اسم المستخدم */
+.user-name .vip-badge {
+    margin-left: 8px;
+}
+
+body.rtl .user-name .vip-badge {
+    margin-left: 0;
+    margin-right: 8px;
+}
