@@ -95,7 +95,75 @@
 }
 
 /* ============================================================================
-   3D LOGO — FAST ROTATION + FLOAT
+   SPLASH SCREEN — CINEMATIC 3D
+   ============================================================================ */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at top, rgba(255,215,120,0.08), transparent 40%),
+        radial-gradient(circle at bottom, rgba(59,130,246,0.08), transparent 40%),
+        linear-gradient(145deg, #050816, #0b1220, #111827);
+
+    transition: opacity .6s ease, visibility .6s ease;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Glow خلفي */
+.splash-screen::before {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+
+    background:
+        radial-gradient(circle,
+        rgba(212,175,55,.18),
+        rgba(212,175,55,.05),
+        transparent 70%);
+
+    filter: blur(25px);
+
+    animation: pulseGlow 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%,100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: .7;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+    }
+}
+
+.splash-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    max-width: 340px;
+}
+
+/* ============================================================================
+   3D LOGO
    ============================================================================ */
 
 .splash-logo-wrap {
@@ -110,36 +178,52 @@
     width: 100%;
     height: 100%;
     display: block;
+
     transform-style: preserve-3d;
+
     animation:
         logoFloat 4s ease-in-out infinite,
-        logoRotate 2.5s linear infinite;
+        logoRotate 8s linear infinite;
+
     filter:
         drop-shadow(0 20px 25px rgba(0,0,0,.45))
         drop-shadow(0 0 14px rgba(212,175,55,.22));
 }
 
+/* حركة عائمة */
 @keyframes logoFloat {
     0%,100% {
-        transform: translateY(0) rotateX(6deg);
+        transform:
+            translateY(0)
+            rotateX(6deg);
     }
+
     50% {
-        transform: translateY(-10px) rotateX(10deg);
+        transform:
+            translateY(-10px)
+            rotateX(10deg);
     }
 }
 
+/* دوران احترافي بطيء */
 @keyframes logoRotate {
-    0% { rotate: y 0deg; }
-    100% { rotate: y 360deg; }
+    0% {
+        rotate: y 0deg;
+    }
+
+    100% {
+        rotate: y 360deg;
+    }
 }
 
-/* ====== METAL SHINE ====== */
+/* لمعان معدني */
 .splash-logo-img path,
 .splash-logo-img circle {
-    filter: drop-shadow(0 0 4px rgba(255,215,120,.4));
+    filter:
+        drop-shadow(0 0 4px rgba(255,215,120,.4));
 }
 
-/* ====== REFLECTION BELOW ====== */
+/* انعكاس أسفل اللوغو */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
@@ -147,14 +231,18 @@
     bottom: -20px;
     width: 80%;
     height: 20px;
+
     transform: translateX(-50%);
+
     background: rgba(212,175,55,.18);
+
     filter: blur(18px);
+
     border-radius: 50%;
 }
 
 /* ============================================================================
-   BRAND NAME (GOLD GRADIENT)
+   BRAND NAME
    ============================================================================ */
 
 .splash-sub {
@@ -162,106 +250,111 @@
     font-weight: 800;
     letter-spacing: 3px;
     margin-bottom: 28px;
-    background: linear-gradient(135deg, #fff, #f6e7b0, #d4af37);
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff,
+            #f6e7b0,
+            #d4af37
+        );
+
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 0 10px rgba(212,175,55,.15);
+
+    text-shadow:
+        0 0 10px rgba(212,175,55,.15);
 }
 
 /* ============================================================================
-   LOADER + GOLD PARTICLE
+   LOADER
    ============================================================================ */
 
 .splash-loader {
     width: 240px;
     height: 5px;
+
     margin: 0 auto 18px;
+
     border-radius: 999px;
-    overflow: visible;
+
+    overflow: hidden;
+
     background: rgba(255,255,255,.08);
+
     backdrop-filter: blur(10px);
-    position: relative;
-}
-
-/* الجسيم الذهبي المتحرك */
-.splash-loader::before {
-    content: "✦";
-    position: absolute;
-    font-size: 14px;
-    color: #d4af37;
-    top: -12px;
-    left: 0;
-    animation: goldParticle 1.5s ease-in-out infinite;
-    filter: drop-shadow(0 0 4px #d4af37);
-    z-index: 2;
-}
-
-@keyframes goldParticle {
-    0% { left: 0; opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.2); }
-    100% { left: 100%; opacity: 0; transform: scale(0.8); }
 }
 
 .splash-loader-bar {
     width: 35%;
     height: 100%;
+
     border-radius: inherit;
-    background: linear-gradient(90deg, transparent, #f6e7b0, #d4af37, #fff, #d4af37, transparent);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #f6e7b0,
+            #d4af37,
+            #fff,
+            #d4af37,
+            transparent
+        );
+
     animation: loaderMove 1.5s linear infinite;
 }
 
 @keyframes loaderMove {
-    0% { transform: translateX(-220%); }
-    100% { transform: translateX(420%); }
+    0% {
+        transform: translateX(-220%);
+    }
+
+    100% {
+        transform: translateX(420%);
+    }
 }
 
 /* ============================================================================
-   NOVA — TYPING EFFECT
+   NOVA
    ============================================================================ */
 
 .splash-nova {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 6px;
-    color: rgba(255,255,255,.85);
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid #d4af37;
-    animation: typingNova 2.5s steps(8, end) forwards, blinkCursor 0.8s step-end infinite;
-    width: 0;
-    margin: 0 auto;
+    letter-spacing: 5px;
+
+    color: rgba(255,255,255,.75);
+
+    animation: novaPulse 3s ease-in-out infinite;
 }
 
-@keyframes typingNova {
-    0% { width: 0; opacity: 1; }
-    50% { width: 100%; opacity: 1; }
-    100% { width: 100%; opacity: 1; border-right-color: transparent; }
-}
+@keyframes novaPulse {
+    0%,100% {
+        opacity: .6;
+    }
 
-@keyframes blinkCursor {
-    0%, 100% { border-color: #d4af37; }
-    50% { border-color: transparent; }
+    50% {
+        opacity: 1;
+        text-shadow:
+            0 0 12px rgba(212,175,55,.5);
+    }
 }
 
 /* ============================================================================
-   VERSION (FADE SLOW)
+   VERSION
    ============================================================================ */
 
 .splash-version {
     position: absolute;
     left: 22px;
     bottom: 22px;
+
     font-size: 11px;
     color: rgba(255,255,255,.28);
-    letter-spacing: 1px;
-    animation: versionFade 4s ease-in-out infinite;
-}
 
-@keyframes versionFade {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.6; }
+    letter-spacing: 1px;
 }
 
 /* ============================================================================
