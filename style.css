@@ -49,20 +49,21 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN - لوغو معدني يدور بسرعة، خلفية متدرجة
+   SPLASH SCREEN — CINEMATIC 3D
    ============================================================================ */
 
 .splash-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     z-index: 9999;
-    background: linear-gradient(145deg, #e8eef4, #dce3ec);
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at top, rgba(255,215,120,0.08), transparent 40%),
+        radial-gradient(circle at bottom, rgba(59,130,246,0.08), transparent 40%),
+        linear-gradient(145deg, #050816, #0b1220, #111827);
+
+    transition: opacity .6s ease, visibility .6s ease;
 }
 
 .splash-screen.hidden {
@@ -71,149 +72,243 @@ body.rtl {
     pointer-events: none;
 }
 
-.splash-screen .splash-content {
+/* Glow خلفي */
+.splash-screen::before {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+
+    background:
+        radial-gradient(circle,
+        rgba(212,175,55,.18),
+        rgba(212,175,55,.05),
+        transparent 70%);
+
+    filter: blur(25px);
+
+    animation: pulseGlow 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%,100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: .7;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+    }
+}
+
+.splash-content {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    text-align: center;
     width: 100%;
     max-width: 340px;
-    text-align: center;
 }
 
-/* ====== اللوغو المعدني - يدور بسرعة، النجم ثابت ====== */
+/* ============================================================================
+   3D LOGO
+   ============================================================================ */
+
 .splash-logo-wrap {
-    width: 130px;
-    height: 130px;
-    margin: 0 auto 20px;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 28px;
+    perspective: 1200px;
     position: relative;
-    perspective: 600px;
 }
 
 .splash-logo-img {
     width: 100%;
     height: 100%;
     display: block;
-    animation: logoFastSpin 0.6s linear infinite;
+
     transform-style: preserve-3d;
-    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.4));
+
+    animation:
+        logoFloat 4s ease-in-out infinite,
+        logoRotate 8s linear infinite;
+
+    filter:
+        drop-shadow(0 20px 25px rgba(0,0,0,.45))
+        drop-shadow(0 0 14px rgba(212,175,55,.22));
 }
 
-/* دوران سريع حول المحور Y فقط (مثل عملة معدنية) */
-@keyframes logoFastSpin {
-    0% {
-        transform: rotateY(0deg);
+/* حركة عائمة */
+@keyframes logoFloat {
+    0%,100% {
+        transform:
+            translateY(0)
+            rotateX(6deg);
     }
-    100% {
-        transform: rotateY(360deg);
-    }
-}
 
-/* النجم ثابت لا يتأثر بالدوران */
-.splash-logo-img path {
-    animation: starFixed 0s infinite;
-    transform-origin: center;
-}
-
-/* تثبيت النجم */
-@keyframes starFixed {
-    0%, 100% {
-        transform: rotateY(0deg) rotateZ(0deg);
-    }
-}
-
-/* تأثير لمعان معدني */
-.splash-logo-img circle {
-    animation: metalGlow 1.5s ease-in-out infinite;
-}
-
-@keyframes metalGlow {
-    0%, 100% {
-        filter: brightness(1) drop-shadow(0 0 3px #d4af37);
-    }
     50% {
-        filter: brightness(1.2) drop-shadow(0 0 15px #f5e3a1);
+        transform:
+            translateY(-10px)
+            rotateX(10deg);
     }
 }
 
-/* ====== الاسم ====== */
+/* دوران احترافي بطيء */
+@keyframes logoRotate {
+    0% {
+        rotate: y 0deg;
+    }
+
+    100% {
+        rotate: y 360deg;
+    }
+}
+
+/* لمعان معدني */
+.splash-logo-img path,
+.splash-logo-img circle {
+    filter:
+        drop-shadow(0 0 4px rgba(255,215,120,.4));
+}
+
+/* انعكاس أسفل اللوغو */
+.splash-logo-wrap::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    width: 80%;
+    height: 20px;
+
+    transform: translateX(-50%);
+
+    background: rgba(212,175,55,.18);
+
+    filter: blur(18px);
+
+    border-radius: 50%;
+}
+
+/* ============================================================================
+   BRAND NAME
+   ============================================================================ */
+
 .splash-sub {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #1e293b, #334155);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff,
+            #f6e7b0,
+            #d4af37
+        );
+
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    letter-spacing: 1px;
+
+    text-shadow:
+        0 0 10px rgba(212,175,55,.15);
 }
 
-.splash-deco {
-    font-size: 18px;
-    color: var(--gold);
-}
+/* ============================================================================
+   LOADER
+   ============================================================================ */
 
-/* ====== شريط التحميل ====== */
 .splash-loader {
-    width: 220px;
-    height: 4px;
-    background: rgba(212, 175, 55, 0.2);
-    border-radius: 99px;
+    width: 240px;
+    height: 5px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 999px;
+
     overflow: hidden;
-    margin: 0 auto 16px;
+
+    background: rgba(255,255,255,.08);
+
+    backdrop-filter: blur(10px);
 }
 
 .splash-loader-bar {
+    width: 35%;
     height: 100%;
-    width: 40%;
-    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-dark));
-    border-radius: 99px;
-    animation: splashShimmer 1.2s ease-in-out infinite;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #f6e7b0,
+            #d4af37,
+            #fff,
+            #d4af37,
+            transparent
+        );
+
+    animation: loaderMove 1.5s linear infinite;
 }
 
-@keyframes splashShimmer {
-    0% { transform: translateX(-250%); }
-    100% { transform: translateX(350%); }
-}
-
-/* ====== Nova تحت شريط التحميل مباشرة ====== */
-.splash-nova {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--gold-dark);
-    letter-spacing: 3px;
-    animation: novaGlow 2s ease-in-out infinite;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 5px;
-}
-
-@keyframes novaGlow {
-    0%, 100% {
-        opacity: 0.7;
-        text-shadow: 0 0 2px var(--gold);
+@keyframes loaderMove {
+    0% {
+        transform: translateX(-220%);
     }
+
+    100% {
+        transform: translateX(420%);
+    }
+}
+
+/* ============================================================================
+   NOVA
+   ============================================================================ */
+
+.splash-nova {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 5px;
+
+    color: rgba(255,255,255,.75);
+
+    animation: novaPulse 3s ease-in-out infinite;
+}
+
+@keyframes novaPulse {
+    0%,100% {
+        opacity: .6;
+    }
+
     50% {
         opacity: 1;
-        text-shadow: 0 0 8px var(--gold);
+        text-shadow:
+            0 0 12px rgba(212,175,55,.5);
     }
 }
 
-/* ====== الإصدار في الأسفل ====== */
+/* ============================================================================
+   VERSION
+   ============================================================================ */
+
 .splash-version {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
+    left: 22px;
+    bottom: 22px;
+
     font-size: 11px;
-    color: rgba(100, 80, 20, 0.5);
-    font-weight: 500;
-    margin: 0;
+    color: rgba(255,255,255,.28);
+
+    letter-spacing: 1px;
 }
 
 /* ============================================================================
