@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN — شبكة كونية أسطورية (بدون تغيير HTML)
+   02. SPLASH SCREEN — شبكة كونية أسطورية (نسخة نهائية)
    ============================================================================ */
 
 .splash-screen {
@@ -78,8 +78,8 @@ body.rtl {
 .splash-screen::before {
     content: "";
     position: absolute;
-    width: 500px;
-    height: 500px;
+    width: 600px;
+    height: 600px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
@@ -122,11 +122,11 @@ body.rtl {
     100% { transform: translateX(120px); }
 }
 
-/* ====== 🌐 اللوغو — محور الكون ====== */
+/* ====== 🌐 حاوية اللوغو — موسعة ====== */
 .splash-logo-wrap {
-    width: 220px;
-    height: 220px;
-    margin: 0 auto 25px;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto 20px;
     position: relative;
     display: flex;
     align-items: center;
@@ -134,83 +134,85 @@ body.rtl {
     perspective: 1200px;
 }
 
-/* ⭐ النجم — محور الكون الثابت (تكبير 20%) */
+/* ⭐ النجم — تكبير 50% (من 108px → 162px) */
 .splash-logo-img {
-    width: 108px;
-    height: 108px;
-    position: relative;
+    width: 162px;
+    height: 162px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 20;
     animation: starCore 4s ease-in-out infinite;
     filter: 
-        drop-shadow(0 0 30px rgba(212,175,55,.9))
-        drop-shadow(0 0 60px rgba(212,175,55,.5))
-        drop-shadow(0 0 100px rgba(246,231,176,.3))
-        drop-shadow(0 0 150px rgba(212,175,55,.15));
+        drop-shadow(0 0 40px rgba(212,175,55,.9))
+        drop-shadow(0 0 80px rgba(212,175,55,.5))
+        drop-shadow(0 0 120px rgba(246,231,176,.3))
+        drop-shadow(0 0 180px rgba(212,175,55,.15));
 }
 
 @keyframes starCore {
     0%, 100% { 
-        transform: scale(1) rotate(0deg);
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
         filter: 
-            drop-shadow(0 0 30px rgba(212,175,55,.9))
-            drop-shadow(0 0 60px rgba(212,175,55,.5));
+            drop-shadow(0 0 40px rgba(212,175,55,.9))
+            drop-shadow(0 0 80px rgba(212,175,55,.5));
     }
     50% { 
-        transform: scale(1.05) rotate(3deg);
+        transform: translate(-50%, -50%) scale(1.05) rotate(3deg);
         filter: 
-            drop-shadow(0 0 40px rgba(212,175,55,1))
-            drop-shadow(0 0 80px rgba(212,175,55,.7))
-            drop-shadow(0 0 120px rgba(246,231,176,.5));
+            drop-shadow(0 0 50px rgba(212,175,55,1))
+            drop-shadow(0 0 100px rgba(212,175,55,.7))
+            drop-shadow(0 0 150px rgba(246,231,176,.5));
     }
 }
 
-/* 🌐 المدار 1 — خارجي كبير 180° */
+/* ====== جميع المدارات تدور حول مركز النجم ====== */
+
+/* المدار 1 — خارجي كبير */
 .splash-logo-wrap::before {
     content: "";
     position: absolute;
-    width: 200px;
-    height: 200px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+    width: 260px;
+    height: 260px;
     border-radius: 50%;
     border: 2px solid rgba(212, 175, 55, 0.2);
     border-top: 3px solid #d4af37;
     border-bottom: 2px solid rgba(246, 231, 176, 0.4);
     animation: orbit1 4s linear infinite;
-    box-shadow: 
-        0 0 25px rgba(212,175,55,.1),
-        inset 0 0 25px rgba(212,175,55,.05);
+    box-shadow: 0 0 25px rgba(212,175,55,.1);
 }
 
 @keyframes orbit1 {
-    0% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(180deg) rotateY(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(180deg) rotateY(360deg); }
+    0% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); }
 }
 
-/* 🌐 المدار 2 — متوسط 200° */
+/* المدار 2 — متوسط */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
-    width: 160px;
-    height: 160px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+    width: 210px;
+    height: 210px;
     border-radius: 50%;
     border: 1.5px dashed rgba(246, 231, 176, 0.25);
     border-left: 2px solid rgba(212, 175, 55, 0.5);
     border-right: 2px solid rgba(246, 231, 176, 0.4);
     animation: orbit2 3s linear infinite reverse;
-    box-shadow: 0 0 15px rgba(212,175,55,.08);
 }
 
 @keyframes orbit2 {
-    0% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(200deg) rotateY(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(200deg) rotateY(360deg); }
+    0% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(360deg); }
 }
 
-/* ====== اسم التطبيق — تصغير 10% ====== */
+/* ====== اسم التطبيق ====== */
 .splash-sub {
     font-size: 18px;
     font-weight: 900;
@@ -247,16 +249,16 @@ body.rtl {
     }
 }
 
-/* 🌐 المدار 3 — داخلي 100° */
+/* المدار 3 — داخلي متصل بالاسم */
 .splash-sub::before {
     content: "";
     position: absolute;
-    width: 140px;
-    height: 140px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -90px;
+    width: 170px;
+    height: 170px;
+    margin-top: -80px;
     border-radius: 50%;
     border: 1px dotted rgba(212, 175, 55, 0.2);
     border-top: 2px solid rgba(148, 163, 184, 0.3);
@@ -265,11 +267,11 @@ body.rtl {
 }
 
 @keyframes orbit3 {
-    0% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(100deg) rotateY(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(100deg) rotateY(360deg); }
+    0% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(360deg); }
 }
 
-/* ✨ زخرفة النص */
+/* زخارف النص */
 .splash-deco:first-child::before {
     content: '◆';
     font-size: 10px;
@@ -277,7 +279,6 @@ body.rtl {
     margin-right: 8px;
     animation: decoPulse 2s ease-in-out infinite;
     display: inline-block;
-    text-shadow: 0 0 10px rgba(212,175,55,.5);
 }
 
 .splash-deco:last-child::after {
@@ -287,7 +288,6 @@ body.rtl {
     margin-left: 8px;
     animation: decoPulse 2s ease-in-out infinite reverse;
     display: inline-block;
-    text-shadow: 0 0 10px rgba(212,175,55,.5);
 }
 
 @keyframes decoPulse {
@@ -295,16 +295,16 @@ body.rtl {
     50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
 }
 
-/* 🌐 المدار 4 — 240° */
+/* المدار 4 */
 .splash-deco:first-child::after {
     content: "";
     position: absolute;
-    width: 100px;
-    height: 100px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -90px;
+    width: 130px;
+    height: 130px;
+    margin-top: -80px;
     border-radius: 50%;
     border: 1.5px solid rgba(148, 163, 184, 0.12);
     border-bottom: 2px solid rgba(212, 175, 55, 0.3);
@@ -313,20 +313,20 @@ body.rtl {
 }
 
 @keyframes orbit4 {
-    0% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(240deg) rotateY(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(240deg) rotateY(360deg); }
+    0% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(360deg); }
 }
 
-/* 🌐 المدار 5 — 300° */
+/* المدار 5 */
 .splash-deco:last-child::before {
     content: "";
     position: absolute;
-    width: 70px;
-    height: 70px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -90px;
+    width: 90px;
+    height: 90px;
+    margin-top: -80px;
     border-radius: 50%;
     border: 2px dashed rgba(212, 175, 55, 0.15);
     border-left: 2px solid rgba(246, 231, 176, 0.4);
@@ -335,17 +335,17 @@ body.rtl {
 }
 
 @keyframes orbit5 {
-    0% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(300deg) rotateY(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(300deg) rotateY(360deg); }
+    0% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(360deg); }
 }
 
-/* ✨ لمعان النجم */
+/* لمعان النجم */
 .splash-logo-img path,
 .splash-logo-img circle {
-    filter: drop-shadow(0 0 10px rgba(255,215,120,.7));
+    filter: drop-shadow(0 0 15px rgba(255,215,120,.8));
 }
 
-/* ====== شريط التحميل — وسط الشاشة ====== */
+/* ====== شريط التحميل ====== */
 .splash-loader {
     width: 180px;
     height: 5px;
@@ -357,7 +357,6 @@ body.rtl {
     box-shadow: 0 0 15px rgba(212,175,55,.1);
 }
 
-/* جسيم ذهبي */
 .splash-loader::before {
     content: "✦";
     position: absolute;
@@ -390,12 +389,7 @@ body.rtl {
     100% { transform: translateX(350%); }
 }
 
-/* المتباعدة بين شريط التحميل و Nova */
-.splash-loader + .splash-nova {
-    margin-top: 8px;
-}
-
-/* ====== 🌟 Nova — أكثر لمعاناً ====== */
+/* ====== 🌟 Nova ====== */
 .splash-nova {
     font-size: 16px;
     font-weight: 900;
