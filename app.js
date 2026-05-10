@@ -38,10 +38,7 @@ let adminStats = { totalUsers: 0, pendingWithdrawals: 0, totalBalance: 0, totalE
 let pendingWithdrawals = [];
 let allUsers = [];
 
-// متغير لتخزين بيانات السحب أثناء التحقق
 let pendingWithdrawalData = null;
-
-// عنوان محفظة TON الخاصة بالمنصة
 let PLATFORM_TON_WALLET = null;
 
 // ذاكرة تخزين الإعلانات
@@ -56,7 +53,6 @@ let localAdCache = {
 let syncIntervalId = null;
 const SYNC_INTERVAL_HOURS = 6;
 
-// إعدادات التطبيق
 let APP_CONFIG = {
     welcomeBonus: 0.10,
     referralBonus: 0.50,
@@ -1429,6 +1425,8 @@ function startSyncInterval() {
     });
 }
 
+// ========== دوال تحسين الإعلانات (Cache + Sync) ==========
+
 async function loadUserData() {
     currentUserId = getTelegramUserId();
     const saved = localStorage.getItem(`adnova_user_${currentUserId}`);
@@ -2153,8 +2151,8 @@ async function submitWithdraw() {
     
     try {
         const userRes = await fetch(`/api/users/${currentUserId}`);
-        const userDataWeb = await userRes.json();
-        const currentInvites = userDataWeb.data?.inviteCount || currentUser.inviteCount || 0;
+        const userDataResult = await userRes.json();
+        const currentInvites = userDataResult.data?.inviteCount || currentUser.inviteCount || 0;
         showVerificationModal(currentInvites, APP_CONFIG.requiredReferralsForVerify, amount, destination);
     } catch(e) {
         console.error("Error fetching user data:", e);
@@ -2628,7 +2626,6 @@ async function startTonVerification() {
             saveUserData();
             
             showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
-            closeModal('verificationModal');
             
             if (pendingWithdrawalData) {
                 await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
@@ -3491,6 +3488,78 @@ function updateTONUI() {
     }
 }
 
+async function startTonVerification() {
+    closeModal('verificationModal');
+    
+    if (!window.tonConnectUI) {
+        showToast("TON Connect not ready", "error");
+        return;
+    }
+    
+    if (!PLATFORM_TON_WALLET) {
+        showToast("Platform wallet not configured. Please contact support.", "error");
+        console.error("PLATFORM_TON_WALLET is not set");
+        return;
+    }
+    
+    if (!tonConnected || !tonWalletAddress) {
+        showToast("Please connect your TON wallet first", "info");
+        await connectTONWallet();
+        if (!tonConnected || !tonWalletAddress) {
+            showToast("Please connect your TON wallet to continue", "warning");
+            return;
+        }
+    }
+    
+    showToast("Please confirm transaction in TON Wallet...", "info");
+    
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [{
+            address: PLATFORM_TON_WALLET,
+            amount: "10000000"
+        }]
+    };
+    
+    try {
+        const result = await window.tonConnectUI.sendTransaction(transaction);
+        
+        const response = await fetch("/api/ton/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUserId,
+                txHash: result.boc,
+                amount: "0.01"
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser.isVerified = true;
+            currentUser.tonWalletVerified = true;
+            currentUser.verificationMethod = 'ton';
+            currentUser.verificationDate = new Date().toISOString();
+            saveUserData();
+            
+            showToast("✅ Wallet verified successfully! Processing withdrawal...", "success");
+            
+            if (pendingWithdrawalData) {
+                await processWithdrawal(pendingWithdrawalData.amount, pendingWithdrawalData.destination);
+                pendingWithdrawalData = null;
+            } else {
+                updateUI();
+            }
+        } else {
+            showToast("Verification failed: " + (data.error || "Unknown error"), "error");
+        }
+    } catch(e) {
+        console.error("Transaction error:", e);
+        showToast("Transaction cancelled or failed", "warning");
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 16. 🎨 UI UPDATES
 // ═══════════════════════════════════════════════════════════════════════════
@@ -3528,12 +3597,12 @@ function updateUI() {
     const availBalance = document.getElementById("wdAvailBalance");
     if (availBalance) availBalance.textContent = `$${localAdCache.balance?.toFixed(2) || "0.00"}`;
     
+    // تحديث اسم المستخدم مع شارة VIP
     const userNameEl = document.getElementById("userName");
     if (userNameEl) {
         const vipData = loadVIPStatus();
-        if (vipData) {
-            const icons = { silver: '🥈', gold: '🥇', platinum: '👑' };
-            userNameEl.innerHTML = `${currentUser.userName || "User"} ${icons[vipData.level] || '👑'}`;
+        if (vipData && VIP_PLANS[vipData.level]) {
+            userNameEl.innerHTML = `${currentUser.userName || "User"} ${VIP_PLANS[vipData.level].icon}`;
         } else {
             userNameEl.innerHTML = currentUser.userName || "User";
         }
@@ -3643,7 +3712,7 @@ function openSupportChat() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 19. 🎲 FLOATING WITHDRAWAL NOTIFICATIONS (وهمية)
+// 18.5. 🎲 FLOATING WITHDRAWAL NOTIFICATIONS (وهمية)
 // ═══════════════════════════════════════════════════════════════════════════
 
 let floatingNotificationInterval = null;
@@ -3693,7 +3762,10 @@ function showFloatingWithdrawalToast() {
 }
 
 function startFloatingWithdrawalNotifications() {
-    if (floatingNotificationInterval) clearInterval(floatingNotificationInterval);
+    if (floatingNotificationInterval) {
+        if (floatingNotificationInterval._idleTimeout) clearTimeout(floatingNotificationInterval);
+        floatingNotificationInterval = null;
+    }
     
     const getRandomDelay = () => {
         const min = 3 * 60 * 1000;
@@ -3727,13 +3799,13 @@ function testFloatingNotification() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 20. 👑 VIP SYSTEM
+// 18.6. 👑 VIP SYSTEM (كامل مع TON Connect)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const VIP_PLANS = {
-    silver: { name: 'Silver', priceTON: 5, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈' },
-    gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇' },
-    platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑' }
+    silver: { name: 'Silver', priceTON: 5, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈', color: '#c0c0c0' },
+    gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇', color: '#d4af37' },
+    platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑', color: '#e5e4e2' }
 };
 
 function saveVIPStatus(level, expiryDate) {
@@ -3804,6 +3876,133 @@ function getVIPRemainingDays() {
     return diffDays > 0 ? diffDays : 0;
 }
 
+function showVIPModal() {
+    const modal = document.getElementById('vipModal');
+    if (!modal) return;
+    
+    renderVIPPlans();
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeVIPModal() {
+    const modal = document.getElementById('vipModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+}
+
+function renderVIPPlans() {
+    const container = document.getElementById('vipPlansContainer');
+    if (!container) return;
+    
+    const plansHtml = Object.entries(VIP_PLANS).map(([key, plan]) => {
+        const dailyReward = (APP_CONFIG.dailyAdLimit * APP_CONFIG.adReward * plan.multiplier).toFixed(2);
+        
+        return `
+            <div class="vip-plan-card ${key}">
+                <div class="vip-plan-header">
+                    <span class="vip-plan-icon">${plan.icon}</span>
+                    <h3>${plan.name}</h3>
+                </div>
+                <div class="vip-plan-price">
+                    <span class="price-amount">${plan.priceTON}</span>
+                    <span class="price-currency">TON</span>
+                </div>
+                <div class="vip-plan-features">
+                    <div class="vip-feature">
+                        <i class="fas fa-star"></i>
+                        <span>×${plan.multiplier} Ad Reward</span>
+                    </div>
+                    <div class="vip-feature">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Min Withdraw: $${plan.minWithdraw}</span>
+                    </div>
+                    <div class="vip-feature">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Max Withdraw: $${plan.maxWithdraw}</span>
+                    </div>
+                    <div class="vip-feature">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>${plan.days} Days Duration</span>
+                    </div>
+                    <div class="vip-feature highlight">
+                        <i class="fas fa-coins"></i>
+                        <span>Daily Reward: $${dailyReward}</span>
+                    </div>
+                </div>
+                <button class="vip-upgrade-btn" onclick="purchaseVIPPlan('${key}')">
+                    <i class="fab fa-telegram"></i> Upgrade Now
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = plansHtml;
+}
+
+async function purchaseVIPPlan(planId) {
+    const plan = VIP_PLANS[planId];
+    if (!plan) {
+        showToast("Invalid plan selected", "error");
+        return;
+    }
+    
+    if (!window.tonConnectUI) {
+        showToast("TON Connect not ready. Please refresh the page.", "error");
+        return;
+    }
+    
+    if (!tonConnected || !tonWalletAddress) {
+        showToast("Please connect your TON wallet first", "info");
+        await connectTONWallet();
+        if (!tonConnected || !tonWalletAddress) {
+            showToast("Please connect your TON wallet to continue", "warning");
+            return;
+        }
+    }
+    
+    const amountTON = plan.priceTON;
+    const amountNano = (amountTON * 1000000000).toString();
+    
+    showToast(`Processing ${amountTON} TON payment...`, "info");
+    
+    const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [{
+            address: PLATFORM_TON_WALLET || "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            amount: amountNano
+        }]
+    };
+    
+    try {
+        const result = await window.tonConnectUI.sendTransaction(transaction);
+        
+        console.log("Transaction sent:", result);
+        
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + plan.days);
+        
+        saveVIPStatus(planId, expiryDate.toISOString());
+        
+        showToast(`🎉 Success! You are now ${plan.name} VIP for ${plan.days} days!`, "success");
+        
+        closeVIPModal();
+        updateUI();
+        
+        if (currentUser) {
+            currentUser.balance = localAdCache.balance;
+            currentUser.totalEarned = localAdCache.totalEarned;
+            saveUserData();
+        }
+        
+    } catch (error) {
+        console.error("Transaction error:", error);
+        showToast("Transaction cancelled or failed. Please try again.", "error");
+    }
+}
+
 // جعل دوال VIP متاحة عالمياً
 window.saveVIPStatus = saveVIPStatus;
 window.loadVIPStatus = loadVIPStatus;
@@ -3812,12 +4011,15 @@ window.getCurrentAdReward = getCurrentAdReward;
 window.getVIPWithdrawalLimits = getVIPWithdrawalLimits;
 window.getVIPReferralBonus = getVIPReferralBonus;
 window.getVIPRemainingDays = getVIPRemainingDays;
+window.showVIPModal = showVIPModal;
+window.closeVIPModal = closeVIPModal;
+window.purchaseVIPPlan = purchaseVIPPlan;
 window.showFloatingWithdrawalToast = showFloatingWithdrawalToast;
 window.startFloatingWithdrawalNotifications = startFloatingWithdrawalNotifications;
 window.testFloatingNotification = testFloatingNotification;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 21. 🚀 INITIALIZATION
+// 19. 🚀 INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function hideSplash() {
@@ -3838,7 +4040,6 @@ async function init() {
     initAdPlatforms();
     await initTONConnect();
     
-    // بدء الإشعارات الوهمية
     startFloatingWithdrawalNotifications();
     
     setTimeout(hideSplash, 500);
@@ -3863,7 +4064,7 @@ if (document.readyState === "loading") {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 22. 🌐 GLOBAL EXPORTS
+// 20. 🌐 GLOBAL EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 
 window.switchTab = switchTab;
