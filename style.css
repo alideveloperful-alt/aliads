@@ -124,20 +124,20 @@ body.rtl {
 
 /* ====== 🌐 اللوغو — محور الكون ====== */
 .splash-logo-wrap {
-    width: 200px;
-    height: 200px;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 25px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 40px;
     perspective: 1200px;
 }
 
-/* ⭐ النجم — محور الكون الثابت */
+/* ⭐ النجم — محور الكون الثابت (تكبير 20%) */
 .splash-logo-img {
-    width: 90px;
-    height: 90px;
+    width: 108px;
+    height: 108px;
     position: relative;
     z-index: 20;
     animation: starCore 4s ease-in-out infinite;
@@ -156,7 +156,7 @@ body.rtl {
             drop-shadow(0 0 60px rgba(212,175,55,.5));
     }
     50% { 
-        transform: scale(1.08) rotate(5deg);
+        transform: scale(1.05) rotate(3deg);
         filter: 
             drop-shadow(0 0 40px rgba(212,175,55,1))
             drop-shadow(0 0 80px rgba(212,175,55,.7))
@@ -181,7 +181,6 @@ body.rtl {
     box-shadow: 
         0 0 25px rgba(212,175,55,.1),
         inset 0 0 25px rgba(212,175,55,.05);
-    transform-origin: center;
 }
 
 @keyframes orbit1 {
@@ -211,9 +210,9 @@ body.rtl {
     100% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(200deg) rotateY(360deg); }
 }
 
-/* ====== اسم التطبيق — ذهبي أسطوري ====== */
+/* ====== اسم التطبيق — تصغير 10% ====== */
 .splash-sub {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     letter-spacing: 6px;
     text-transform: uppercase;
@@ -230,11 +229,11 @@ body.rtl {
     -webkit-background-clip: text;
     background-clip: text;
     text-shadow: 0 0 30px rgba(212,175,55,.4);
-    margin-bottom: 32px;
+    margin-bottom: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 12px;
     position: relative;
     animation: titleShine 3s ease-in-out infinite;
 }
@@ -252,12 +251,12 @@ body.rtl {
 .splash-sub::before {
     content: "";
     position: absolute;
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -120px;
+    margin-top: -90px;
     border-radius: 50%;
     border: 1px dotted rgba(212, 175, 55, 0.2);
     border-top: 2px solid rgba(148, 163, 184, 0.3);
@@ -273,9 +272,9 @@ body.rtl {
 /* ✨ زخرفة النص */
 .splash-deco:first-child::before {
     content: '◆';
-    font-size: 12px;
+    font-size: 10px;
     color: #d4af37;
-    margin-right: 10px;
+    margin-right: 8px;
     animation: decoPulse 2s ease-in-out infinite;
     display: inline-block;
     text-shadow: 0 0 10px rgba(212,175,55,.5);
@@ -283,9 +282,9 @@ body.rtl {
 
 .splash-deco:last-child::after {
     content: '◆';
-    font-size: 12px;
+    font-size: 10px;
     color: #d4af37;
-    margin-left: 10px;
+    margin-left: 8px;
     animation: decoPulse 2s ease-in-out infinite reverse;
     display: inline-block;
     text-shadow: 0 0 10px rgba(212,175,55,.5);
@@ -293,7 +292,7 @@ body.rtl {
 
 @keyframes decoPulse {
     0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
-    50% { transform: scale(1.3) rotate(45deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
 }
 
 /* 🌐 المدار 4 — 240° */
@@ -305,7 +304,7 @@ body.rtl {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -120px;
+    margin-top: -90px;
     border-radius: 50%;
     border: 1.5px solid rgba(148, 163, 184, 0.12);
     border-bottom: 2px solid rgba(212, 175, 55, 0.3);
@@ -327,7 +326,7 @@ body.rtl {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -120px;
+    margin-top: -90px;
     border-radius: 50%;
     border: 2px dashed rgba(212, 175, 55, 0.15);
     border-left: 2px solid rgba(246, 231, 176, 0.4);
@@ -346,15 +345,15 @@ body.rtl {
     filter: drop-shadow(0 0 10px rgba(255,215,120,.7));
 }
 
-/* ====== شريط التحميل — ذهبي ====== */
+/* ====== شريط التحميل — وسط الشاشة ====== */
 .splash-loader {
-    width: 200px;
+    width: 180px;
     height: 5px;
+    margin: 0 auto;
     background: rgba(212, 175, 55, 0.08);
     border-radius: 99px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 18px;
     box-shadow: 0 0 15px rgba(212,175,55,.1);
 }
 
@@ -373,7 +372,7 @@ body.rtl {
 
 @keyframes goldParticle {
     0% { left: 0; opacity: 1; transform: scale(1) rotate(0deg); }
-    50% { opacity: 0.9; transform: scale(1.5) rotate(180deg); }
+    50% { opacity: 0.9; transform: scale(1.3) rotate(180deg); }
     100% { left: 100%; opacity: 0; transform: scale(0.7) rotate(360deg); }
 }
 
@@ -391,19 +390,24 @@ body.rtl {
     100% { transform: translateX(350%); }
 }
 
-/* ====== 🌟 Nova — أسطورية ====== */
+/* المتباعدة بين شريط التحميل و Nova */
+.splash-loader + .splash-nova {
+    margin-top: 8px;
+}
+
+/* ====== 🌟 Nova — أكثر لمعاناً ====== */
 .splash-nova {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
-    letter-spacing: 12px;
+    letter-spacing: 10px;
     text-transform: uppercase;
     color: transparent;
     background: linear-gradient(
         135deg,
         #ffffff 0%,
-        #f6e7b0 30%,
+        #f6e7b0 25%,
         #d4af37 50%,
-        #f6e7b0 70%,
+        #f6e7b0 75%,
         #ffffff 100%
     );
     -webkit-background-clip: text;
@@ -411,28 +415,28 @@ body.rtl {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    margin-top: 6px;
+    gap: 10px;
+    margin-top: 12px;
     overflow: hidden;
     white-space: nowrap;
     border-right: 2px solid #d4af37;
     animation: typingNova 2.5s steps(5, end) forwards, 
                blinkCursor 0.8s step-end infinite,
-               novaGlow 3s ease-in-out infinite alternate;
+               novaGlow 1.5s ease-in-out infinite alternate;
     width: 0;
-    text-shadow: 0 0 20px rgba(212,175,55,.3);
+    text-shadow: 0 0 30px rgba(212,175,55,.6);
 }
 
 .splash-nova::before {
     content: '🌟';
-    font-size: 20px;
+    font-size: 18px;
     animation: starIconSpin 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 15px rgba(212,175,55,.7));
+    filter: drop-shadow(0 0 20px rgba(212,175,55,.9));
 }
 
 @keyframes typingNova {
     0% { width: 0; opacity: 1; }
-    100% { width: 160px; opacity: 1; }
+    100% { width: 158px; opacity: 1; }
 }
 
 @keyframes blinkCursor {
@@ -441,21 +445,23 @@ body.rtl {
 }
 
 @keyframes novaGlow {
-    0% { filter: brightness(1) drop-shadow(0 0 5px rgba(212,175,55,.2)); }
-    100% { filter: brightness(1.3) drop-shadow(0 0 20px rgba(212,175,55,.5)); }
+    0% { filter: brightness(1) drop-shadow(0 0 8px rgba(212,175,55,.3)); }
+    100% { filter: brightness(1.4) drop-shadow(0 0 30px rgba(212,175,55,.8)); }
 }
 
 @keyframes starIconSpin {
-    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 10px #d4af37); }
-    50% { transform: scale(1.4) rotate(180deg); filter: drop-shadow(0 0 25px #f6e7b0); }
+    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #d4af37); }
+    50% { transform: scale(1.2) rotate(180deg); filter: drop-shadow(0 0 35px #f6e7b0); }
 }
 
 /* ====== الإصدار ====== */
 .splash-version {
+    position: absolute;
+    left: 22px;
+    bottom: 22px;
     font-size: 11px;
     color: rgba(148, 163, 184, 0.35);
     font-weight: 500;
-    margin-top: 24px;
     letter-spacing: 4px;
     animation: versionPulse 5s ease-in-out infinite;
 }
@@ -464,7 +470,6 @@ body.rtl {
     0%, 100% { opacity: 0.2; }
     50% { opacity: 0.5; }
 }
-
 
 /* ============================================================================
    03. HEADER
