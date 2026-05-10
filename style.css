@@ -61,9 +61,10 @@ body.rtl {
     align-items: center;
     justify-content: center;
     background: 
-        radial-gradient(circle at 30% 20%, rgba(212,175,55,0.05) 0%, transparent 50%),
-        radial-gradient(circle at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%),
-        linear-gradient(145deg, #02040a, #0a0f1e, #111827);
+        radial-gradient(circle at 20% 30%, rgba(212,175,55,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(100,116,139,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(30,41,59,0.5) 0%, transparent 70%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 30%, #334155 60%, #1e293b 100%);
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
@@ -73,132 +74,140 @@ body.rtl {
     pointer-events: none;
 }
 
-/* ✨ Glow خلفي متحرك */
+/* ✨ Glow خلفي ذهبي فضي */
 .splash-screen::before {
     content: "";
     position: absolute;
-    width: 500px;
-    height: 500px;
+    width: 600px;
+    height: 600px;
     left: 50%;
-    top: 50%;
+    top: 45%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background:
-        radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 60%),
-        radial-gradient(circle, rgba(246,231,176,0.04) 0%, transparent 40%);
-    filter: blur(40px);
-    animation: cosmicGlow 6s ease-in-out infinite;
+        radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 50%),
+        radial-gradient(circle, rgba(148,163,184,0.08) 0%, transparent 40%),
+        radial-gradient(circle, rgba(246,231,176,0.05) 0%, transparent 30%);
+    filter: blur(50px);
+    animation: cosmicGlow 8s ease-in-out infinite;
     pointer-events: none;
 }
 
 @keyframes cosmicGlow {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.5; }
+    33% { transform: translate(-50%, -50%) scale(1.2) rotate(120deg); opacity: 0.8; }
+    66% { transform: translate(-50%, -50%) scale(1.1) rotate(240deg); opacity: 0.6; }
 }
 
-/* 🌊 موجات خلفية */
+/* 🌊 موجات خلفية فضية */
 .splash-screen::after {
     content: "";
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 200px;
+    height: 250px;
     background: repeating-linear-gradient(
         90deg,
         transparent,
-        transparent 40px,
-        rgba(212, 175, 55, 0.03) 40px,
-        rgba(212, 175, 55, 0.03) 80px
+        transparent 50px,
+        rgba(148, 163, 184, 0.04) 50px,
+        rgba(148, 163, 184, 0.04) 100px
     );
-    animation: cosmicWave 20s linear infinite;
+    animation: cosmicWave 25s linear infinite;
     pointer-events: none;
 }
 
 @keyframes cosmicWave {
     0% { transform: translateX(0); }
-    100% { transform: translateX(80px); }
+    100% { transform: translateX(100px); }
 }
 
 /* ====== 🌐 اللوغو — شبكة فضائية متكاملة ====== */
 .splash-logo-wrap {
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 220px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 28px;
-    perspective: 1200px;
+    margin-bottom: 32px;
+    perspective: 1500px;
 }
 
-/* ⭐ النجم الثابت — معلق بالمغناطيس */
+/* ⭐ النجم الكبير — معلق بالمغناطيس */
 .splash-logo-img {
-    width: 55px;
-    height: 55px;
+    width: 85px;
+    height: 85px;
     position: relative;
     z-index: 10;
-    animation: magnetFloat 3s ease-in-out infinite;
+    animation: magnetFloat 3.5s ease-in-out infinite;
     filter: 
-        drop-shadow(0 0 20px rgba(212,175,55,.7))
-        drop-shadow(0 0 40px rgba(212,175,55,.3))
-        drop-shadow(0 0 60px rgba(212,175,55,.1));
+        drop-shadow(0 0 25px rgba(212,175,55,.8))
+        drop-shadow(0 0 50px rgba(212,175,55,.4))
+        drop-shadow(0 0 80px rgba(246,231,176,.2))
+        drop-shadow(0 0 120px rgba(212,175,55,.1));
 }
 
 @keyframes magnetFloat {
     0%, 100% { 
-        transform: translateY(0) scale(1) rotateY(0deg); 
+        transform: translateY(0) scale(1) rotateY(0deg) rotateX(0deg); 
     }
-    25% { 
-        transform: translateY(-4px) scale(1.03) rotateY(5deg); 
+    20% { 
+        transform: translateY(-3px) scale(1.02) rotateY(8deg) rotateX(3deg); 
     }
-    50% { 
-        transform: translateY(-8px) scale(1.06) rotateY(0deg); 
+    40% { 
+        transform: translateY(-7px) scale(1.05) rotateY(0deg) rotateX(0deg); 
     }
-    75% { 
-        transform: translateY(-4px) scale(1.03) rotateY(-5deg); 
+    60% { 
+        transform: translateY(-5px) scale(1.03) rotateY(-6deg) rotateX(-2deg); 
+    }
+    80% { 
+        transform: translateY(-2px) scale(1.01) rotateY(3deg) rotateX(1deg); 
     }
 }
 
-/* 🔄 الدائرة O الخارجية — تدور سريع */
+/* 🔄 الدائرة 1 — خارجية كبيرة 180° */
 .splash-logo-wrap::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: -10px;
     border-radius: 50%;
-    border: 2px dashed rgba(212, 175, 55, 0.3);
-    border-top: 2px solid #d4af37;
-    border-bottom: 2px solid #f6e7b0;
-    animation: orbitO 1.5s linear infinite;
+    border: 2px solid rgba(212, 175, 55, 0.25);
+    border-top: 3px solid #d4af37;
+    border-bottom: 3px solid #f6e7b0;
+    animation: orbit1 3s linear infinite;
     box-shadow: 
-        0 0 20px rgba(212,175,55,.15),
-        inset 0 0 20px rgba(212,175,55,.05);
+        0 0 30px rgba(212,175,55,.15),
+        inset 0 0 30px rgba(212,175,55,.05);
+    transform: rotateX(75deg) rotateZ(180deg);
 }
 
-@keyframes orbitO {
-    0% { transform: rotateZ(0deg); }
-    100% { transform: rotateZ(360deg); }
+@keyframes orbit1 {
+    0% { transform: rotateX(75deg) rotateZ(180deg) rotateY(0deg); }
+    100% { transform: rotateX(75deg) rotateZ(180deg) rotateY(360deg); }
 }
 
-/* ❌ الشكل X المتقاطع — يدور بزاوية معاكسة */
+/* ❌ الدائرة 2 — متوسطة 200° */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
-    inset: 12px;
+    inset: 15px;
     border-radius: 50%;
-    background:
-        linear-gradient(45deg, transparent 47%, rgba(212,175,55,.25) 48%, rgba(212,175,55,.25) 52%, transparent 53%),
-        linear-gradient(-45deg, transparent 47%, rgba(212,175,55,.25) 48%, rgba(212,175,55,.25) 52%, transparent 53%);
-    animation: orbitX 2s linear infinite reverse;
-    filter: drop-shadow(0 0 8px rgba(212,175,55,.2));
+    border: 1.5px dashed rgba(246, 231, 176, 0.3);
+    border-left: 2px solid rgba(212, 175, 55, 0.6);
+    border-right: 2px solid rgba(246, 231, 176, 0.6);
+    animation: orbit2 2.5s linear infinite reverse;
+    box-shadow: 0 0 20px rgba(212,175,55,.1);
+    transform: rotateX(60deg) rotateZ(200deg);
 }
 
-@keyframes orbitX {
-    0% { transform: rotateZ(0deg); }
-    100% { transform: rotateZ(360deg); }
+@keyframes orbit2 {
+    0% { transform: rotateX(60deg) rotateZ(200deg) rotateY(0deg); }
+    100% { transform: rotateX(60deg) rotateZ(200deg) rotateY(360deg); }
 }
 
-/* 🔢 الشكل 8 — Infinity (باستخدام splash-sub) */
+/* 🌐 الدائرة 3 — داخلية 100° (باستخدام splash-sub) */
 .splash-sub {
     font-size: 15px;
     color: rgba(255,255,255,.7);
@@ -212,76 +221,152 @@ body.rtl {
     position: relative;
 }
 
-/* 🌐 الشبكة الكروية — باستخدام splash-deco */
-.splash-deco:first-child::before {
-    content: '';
+.splash-sub::before {
+    content: "";
     position: absolute;
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -115px; /* فوق الشريط */
+    margin-top: -140px;
     border-radius: 50%;
     border: 1px dotted rgba(212, 175, 55, 0.2);
-    animation: orbitGrid 4s linear infinite;
+    border-top: 2px solid rgba(148, 163, 184, 0.4);
+    animation: orbit3 4s linear infinite;
     pointer-events: none;
+    transform: translate(-50%, -50%) rotateX(45deg) rotateZ(100deg);
 }
 
-.splash-deco:last-child::after {
-    content: '';
+@keyframes orbit3 {
+    0% { transform: translate(-50%, -50%) rotateX(45deg) rotateZ(100deg) rotateY(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(45deg) rotateZ(100deg) rotateY(360deg); }
+}
+
+/* 🔵 الدائرة 4 — 240° (باستخدام splash-deco) */
+.splash-deco:first-child::before {
+    content: "";
     position: absolute;
-    width: 110px;
-    height: 110px;
+    width: 130px;
+    height: 130px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin-top: -115px;
+    margin-top: -140px;
     border-radius: 50%;
-    border: 1.5px dashed rgba(246, 231, 176, 0.15);
-    animation: orbitGrid 3s linear infinite reverse;
+    border: 1.5px solid rgba(148, 163, 184, 0.15);
+    border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+    animation: orbit4 3.5s linear infinite reverse;
     pointer-events: none;
+    transform: translate(-50%, -50%) rotateX(80deg) rotateZ(240deg);
 }
 
-@keyframes orbitGrid {
-    0% { transform: translate(-50%, -50%) rotateZ(0deg) rotateX(60deg); }
-    100% { transform: translate(-50%, -50%) rotateZ(360deg) rotateX(60deg); }
+@keyframes orbit4 {
+    0% { transform: translate(-50%, -50%) rotateX(80deg) rotateZ(240deg) rotateY(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(80deg) rotateZ(240deg) rotateY(360deg); }
+}
+
+/* 🟡 الدائرة 5 — 300° (باستخدام splash-deco:last-child) */
+.splash-deco:last-child::after {
+    content: "";
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -140px;
+    border-radius: 50%;
+    border: 2px dashed rgba(212, 175, 55, 0.2);
+    border-left: 2px solid rgba(246, 231, 176, 0.5);
+    animation: orbit5 2s linear infinite;
+    pointer-events: none;
+    transform: translate(-50%, -50%) rotateX(30deg) rotateZ(300deg);
+}
+
+@keyframes orbit5 {
+    0% { transform: translate(-50%, -50%) rotateX(30deg) rotateZ(300deg) rotateY(0deg); }
+    100% { transform: translate(-50%, -50%) rotateX(30deg) rotateZ(300deg) rotateY(360deg); }
 }
 
 /* ✨ لمعان معدني على النجم */
 .splash-logo-img path,
 .splash-logo-img circle {
-    filter: drop-shadow(0 0 6px rgba(255,215,120,.5));
+    filter: drop-shadow(0 0 8px rgba(255,215,120,.6));
+}
+
+/* ====== اسم التطبيق — بارز وذهبي ====== */
+.splash-sub {
+    font-size: 18px;
+    color: transparent;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #ffffff 0%, #f6e7b0 30%, #d4af37 60%, #f6e7b0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(212,175,55,.3);
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    0% { filter: drop-shadow(0 0 5px rgba(212,175,55,.2)); }
+    100% { filter: drop-shadow(0 0 20px rgba(212,175,55,.5)); }
+}
+
+.splash-deco:first-child::before {
+    content: '✦';
+    font-size: 14px;
+    color: #d4af37;
+    margin-right: 8px;
+    animation: decoSpin 4s linear infinite;
+    display: inline-block;
+}
+
+.splash-deco:last-child::after {
+    content: '✦';
+    font-size: 14px;
+    color: #d4af37;
+    margin-left: 8px;
+    animation: decoSpin 4s linear infinite reverse;
+    display: inline-block;
+}
+
+@keyframes decoSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
 }
 
 /* ====== شريط التحميل — احترافي ====== */
 .splash-loader {
-    width: 180px;
-    height: 4px;
-    background: rgba(212, 175, 55, 0.12);
+    width: 200px;
+    height: 5px;
+    background: rgba(212, 175, 55, 0.1);
     border-radius: 99px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 10px rgba(212,175,55,.1);
 }
 
 /* جسيم ذهبي يتحرك */
 .splash-loader::before {
     content: "✦";
     position: absolute;
-    font-size: 10px;
+    font-size: 12px;
     color: #d4af37;
-    top: -10px;
+    top: -12px;
     left: 0;
-    animation: goldParticle 1.5s ease-in-out infinite;
-    filter: drop-shadow(0 0 6px #d4af37);
+    animation: goldParticle 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px #d4af37);
     z-index: 2;
 }
 
 @keyframes goldParticle {
-    0% { left: 0; opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.3); }
-    100% { left: 100%; opacity: 0; transform: scale(0.8); }
+    0% { left: 0; opacity: 1; transform: scale(1) rotate(0deg); }
+    50% { opacity: 0.9; transform: scale(1.4) rotate(180deg); }
+    100% { left: 100%; opacity: 0; transform: scale(0.8) rotate(360deg); }
 }
 
 .splash-loader-bar {
@@ -290,7 +375,7 @@ body.rtl {
     background: linear-gradient(90deg, #b8941f, #d4af37, #f6e7b0, #d4af37, #b8941f);
     border-radius: 99px;
     animation: splashShimmer 1.2s ease-in-out infinite;
-    box-shadow: 0 0 10px rgba(212,175,55,.3);
+    box-shadow: 0 0 15px rgba(212,175,55,.4);
 }
 
 @keyframes splashShimmer {
@@ -298,35 +383,39 @@ body.rtl {
     100% { transform: translateX(350%); }
 }
 
-/* ====== 🌟 Nova أسفل شريط التحميل — تأثير كتابة ====== */
+/* ====== 🌟 Nova أسفل الشريط — بارزة ====== */
 .splash-nova {
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 8px;
-    color: rgba(255,255,255,.85);
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 10px;
+    color: transparent;
     text-transform: uppercase;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 2px;
+    gap: 12px;
+    margin-top: 4px;
     overflow: hidden;
     white-space: nowrap;
     border-right: 2px solid #d4af37;
-    animation: typingNova 2s steps(5, end) forwards, blinkCursor 0.8s step-end infinite;
+    animation: typingNova 2.5s steps(5, end) forwards, blinkCursor 0.8s step-end infinite;
     width: 0;
-    text-shadow: 0 0 10px rgba(212,175,55,.3);
+    background: linear-gradient(135deg, #ffffff 0%, #f6e7b0 50%, #d4af37 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 15px rgba(212,175,55,.3);
 }
 
 .splash-nova::before {
     content: '🌟';
-    font-size: 16px;
+    font-size: 18px;
     animation: starPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(212,175,55,.5));
 }
 
 @keyframes typingNova {
     0% { width: 0; opacity: 1; }
-    100% { width: 120px; opacity: 1; }
+    100% { width: 140px; opacity: 1; }
 }
 
 @keyframes blinkCursor {
@@ -335,17 +424,17 @@ body.rtl {
 }
 
 @keyframes starPulse {
-    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px #d4af37); }
-    50% { transform: scale(1.2) rotate(180deg); filter: drop-shadow(0 0 15px #f6e7b0); }
+    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px #d4af37); }
+    50% { transform: scale(1.3) rotate(180deg); filter: drop-shadow(0 0 20px #f6e7b0); }
 }
 
 /* ====== الإصدار ====== */
 .splash-version {
     font-size: 11px;
-    color: rgba(255,255,255,.25);
+    color: rgba(148, 163, 184, 0.4);
     font-weight: 500;
-    margin-top: 16px;
-    letter-spacing: 2px;
+    margin-top: 20px;
+    letter-spacing: 3px;
     animation: versionPulse 4s ease-in-out infinite;
 }
 
@@ -353,6 +442,7 @@ body.rtl {
     0%, 100% { opacity: 0.2; }
     50% { opacity: 0.5; }
 }
+
 
 
 
