@@ -2,57 +2,8 @@
    ADNOVA NETWORK - PREMIUM MODERN STYLESHEET v14.0
    تصميم احترافي نظيف - نسخة محسنة للإشعارات
    ============================================================================ */
-
 /* ============================================================================
-   01. RESET & BASE STYLES
-   ============================================================================ */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
-
-:root {
-    --gold: #d4af37;
-    --gold-dark: #b8920e;
-    --gold-light: #f5e3a1;
-    --dark: #1e293b;
-    --dark-soft: #334155;
-    --gray: #64748b;
-    --gray-light: #f1f5f9;
-    --white: #ffffff;
-    --success: #10b981;
-    --error: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
-    --border-radius-card: 24px;
-    --border-radius-btn: 40px;
-    --shadow-soft: 0 8px 20px -6px rgba(0, 0, 0, 0.08);
-    --shadow-medium: 0 12px 28px -8px rgba(0, 0, 0, 0.12);
-    --shadow-heavy: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
-    --transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
-    min-height: 100vh;
-    color: var(--dark);
-    padding-bottom: 80px;
-}
-
-body.rtl {
-    direction: rtl;
-    text-align: right;
-}
-
-/* ============================================================================
-   SPLASH SCREEN — CINEMATIC 3D 2
-   ============================================================================ */
-/* ============================================================================
-   SPLASH SCREEN — CINEMATIC 3D
+   SPLASH SCREEN — CINEMATIC 3D + WAVES + TYPING NOVA
    ============================================================================ */
 
 .splash-screen {
@@ -75,7 +26,7 @@ body.rtl {
     pointer-events: none;
 }
 
-/* Glow خلفي */
+/* ====== GLOW BACKGROUND ====== */
 .splash-screen::before {
     content: "";
     position: absolute;
@@ -102,13 +53,37 @@ body.rtl {
         transform: translate(-50%, -50%) scale(1);
         opacity: .7;
     }
-
     50% {
         transform: translate(-50%, -50%) scale(1.08);
         opacity: 1;
     }
 }
 
+/* ====== WAVES MOVEMENT (RAYYEQ) ====== */
+.splash-screen::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 30px,
+        rgba(212, 175, 55, 0.04) 30px,
+        rgba(212, 175, 55, 0.04) 60px
+    );
+    animation: waveMove 18s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes waveMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(60px); }
+}
+
+/* ====== CONTENT ====== */
 .splash-content {
     position: absolute;
     top: 50%;
@@ -120,7 +95,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   3D LOGO
+   3D LOGO — FAST ROTATION + FLOAT
    ============================================================================ */
 
 .splash-logo-wrap {
@@ -135,52 +110,36 @@ body.rtl {
     width: 100%;
     height: 100%;
     display: block;
-
     transform-style: preserve-3d;
-
     animation:
         logoFloat 4s ease-in-out infinite,
-        logoRotate 8s linear infinite;
-
+        logoRotate 2.5s linear infinite;
     filter:
         drop-shadow(0 20px 25px rgba(0,0,0,.45))
         drop-shadow(0 0 14px rgba(212,175,55,.22));
 }
 
-/* حركة عائمة */
 @keyframes logoFloat {
     0%,100% {
-        transform:
-            translateY(0)
-            rotateX(6deg);
+        transform: translateY(0) rotateX(6deg);
     }
-
     50% {
-        transform:
-            translateY(-10px)
-            rotateX(10deg);
+        transform: translateY(-10px) rotateX(10deg);
     }
 }
 
-/* دوران احترافي بطيء */
 @keyframes logoRotate {
-    0% {
-        rotate: y 0deg;
-    }
-
-    100% {
-        rotate: y 360deg;
-    }
+    0% { rotate: y 0deg; }
+    100% { rotate: y 360deg; }
 }
 
-/* لمعان معدني */
+/* ====== METAL SHINE ====== */
 .splash-logo-img path,
 .splash-logo-img circle {
-    filter:
-        drop-shadow(0 0 4px rgba(255,215,120,.4));
+    filter: drop-shadow(0 0 4px rgba(255,215,120,.4));
 }
 
-/* انعكاس أسفل اللوغو */
+/* ====== REFLECTION BELOW ====== */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
@@ -188,18 +147,14 @@ body.rtl {
     bottom: -20px;
     width: 80%;
     height: 20px;
-
     transform: translateX(-50%);
-
     background: rgba(212,175,55,.18);
-
     filter: blur(18px);
-
     border-radius: 50%;
 }
 
 /* ============================================================================
-   BRAND NAME
+   BRAND NAME (GOLD GRADIENT)
    ============================================================================ */
 
 .splash-sub {
@@ -207,111 +162,106 @@ body.rtl {
     font-weight: 800;
     letter-spacing: 3px;
     margin-bottom: 28px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #fff,
-            #f6e7b0,
-            #d4af37
-        );
-
+    background: linear-gradient(135deg, #fff, #f6e7b0, #d4af37);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-
-    text-shadow:
-        0 0 10px rgba(212,175,55,.15);
+    text-shadow: 0 0 10px rgba(212,175,55,.15);
 }
 
 /* ============================================================================
-   LOADER
+   LOADER + GOLD PARTICLE
    ============================================================================ */
 
 .splash-loader {
     width: 240px;
     height: 5px;
-
     margin: 0 auto 18px;
-
     border-radius: 999px;
-
-    overflow: hidden;
-
+    overflow: visible;
     background: rgba(255,255,255,.08);
-
     backdrop-filter: blur(10px);
+    position: relative;
+}
+
+/* الجسيم الذهبي المتحرك */
+.splash-loader::before {
+    content: "✦";
+    position: absolute;
+    font-size: 14px;
+    color: #d4af37;
+    top: -12px;
+    left: 0;
+    animation: goldParticle 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px #d4af37);
+    z-index: 2;
+}
+
+@keyframes goldParticle {
+    0% { left: 0; opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+    100% { left: 100%; opacity: 0; transform: scale(0.8); }
 }
 
 .splash-loader-bar {
     width: 35%;
     height: 100%;
-
     border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            #f6e7b0,
-            #d4af37,
-            #fff,
-            #d4af37,
-            transparent
-        );
-
+    background: linear-gradient(90deg, transparent, #f6e7b0, #d4af37, #fff, #d4af37, transparent);
     animation: loaderMove 1.5s linear infinite;
 }
 
 @keyframes loaderMove {
-    0% {
-        transform: translateX(-220%);
-    }
-
-    100% {
-        transform: translateX(420%);
-    }
+    0% { transform: translateX(-220%); }
+    100% { transform: translateX(420%); }
 }
 
 /* ============================================================================
-   NOVA
+   NOVA — TYPING EFFECT
    ============================================================================ */
 
 .splash-nova {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 5px;
-
-    color: rgba(255,255,255,.75);
-
-    animation: novaPulse 3s ease-in-out infinite;
+    letter-spacing: 6px;
+    color: rgba(255,255,255,.85);
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid #d4af37;
+    animation: typingNova 2.5s steps(8, end) forwards, blinkCursor 0.8s step-end infinite;
+    width: 0;
+    margin: 0 auto;
 }
 
-@keyframes novaPulse {
-    0%,100% {
-        opacity: .6;
-    }
+@keyframes typingNova {
+    0% { width: 0; opacity: 1; }
+    50% { width: 100%; opacity: 1; }
+    100% { width: 100%; opacity: 1; border-right-color: transparent; }
+}
 
-    50% {
-        opacity: 1;
-        text-shadow:
-            0 0 12px rgba(212,175,55,.5);
-    }
+@keyframes blinkCursor {
+    0%, 100% { border-color: #d4af37; }
+    50% { border-color: transparent; }
 }
 
 /* ============================================================================
-   VERSION
+   VERSION (FADE SLOW)
    ============================================================================ */
 
 .splash-version {
     position: absolute;
     left: 22px;
     bottom: 22px;
-
     font-size: 11px;
     color: rgba(255,255,255,.28);
-
     letter-spacing: 1px;
+    animation: versionFade 4s ease-in-out infinite;
+}
+
+@keyframes versionFade {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
 }
 
 /* ============================================================================
