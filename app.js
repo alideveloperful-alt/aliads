@@ -3662,12 +3662,26 @@ function switchTab(page) {
     } else if (page === "ads") {
         renderWithdrawalHistory();
     }
+    
+    // ✅ أضف هذا الكود هنا
+    const vipBtn = document.getElementById('vipFloatingBtn');
+    if (vipBtn) {
+        if (page === 'ads') {
+            vipBtn.style.display = 'flex';
+            if (window._vipTimeout) clearTimeout(window._vipTimeout);
+            window._vipTimeout = setTimeout(() => {
+                if (vipBtn) vipBtn.style.display = 'none';
+            }, 10000);
+        } else {
+            vipBtn.style.display = 'none';
+            if (window._vipTimeout) clearTimeout(window._vipTimeout);
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 17. 🍞 TOAST MESSAGES & MODALS
 // ═══════════════════════════════════════════════════════════════════════════
-
 function showToast(message, type = "success") {
     const container = document.getElementById("toastContainer");
     if (!container) return;
@@ -3799,13 +3813,13 @@ function testFloatingNotification() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 18.6. 👑 VIP SYSTEM (كامل مع TON Connect)
+// 18.6. 👑 VIP SYSTEM (كامل مع TON Connect - محفظة المنصة)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const VIP_PLANS = {
-    silver: { name: 'Silver', priceTON: 5, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈', color: '#c0c0c0' },
-    gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇', color: '#d4af37' },
-    platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑', color: '#e5e4e2' }
+    silver: { name: 'Silver', priceTON: 0.001, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈', color: '#c0c0c0', freeTasks: 2 },
+    gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇', color: '#d4af37', freeTasks: 5 },
+    platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑', color: '#e5e4e2', freeTasks: 15 }
 };
 
 function saveVIPStatus(level, expiryDate) {
@@ -3927,6 +3941,10 @@ function renderVIPPlans() {
                         <i class="fas fa-calendar-week"></i>
                         <span>${plan.days} Days Duration</span>
                     </div>
+                    <div class="vip-feature">
+                        <i class="fas fa-tasks"></i>
+                        <span>📢 Post up to ${plan.freeTasks} free tasks</span>
+                    </div>
                     <div class="vip-feature highlight">
                         <i class="fas fa-coins"></i>
                         <span>Daily Reward: $${dailyReward}</span>
@@ -3949,11 +3967,20 @@ async function purchaseVIPPlan(planId) {
         return;
     }
     
+    // ✅ التحقق من وجود محفظة المنصة (التي تم جلبها من Render)
+    if (!PLATFORM_TON_WALLET) {
+        showToast("Platform wallet not configured. Please contact support.", "error");
+        console.error("❌ PLATFORM_TON_WALLET is not set. Check /api/config");
+        return;
+    }
+    
+    // ✅ التحقق من TON Connect
     if (!window.tonConnectUI) {
         showToast("TON Connect not ready. Please refresh the page.", "error");
         return;
     }
     
+    // ✅ التحقق من اتصال محفظة المستخدم
     if (!tonConnected || !tonWalletAddress) {
         showToast("Please connect your TON wallet first", "info");
         await connectTONWallet();
@@ -3963,42 +3990,63 @@ async function purchaseVIPPlan(planId) {
         }
     }
     
-    const amountTON = plan.priceTON;
-    const amountNano = (amountTON * 1000000000).toString();
+    // ✅ حساب المبلغ بـ Nano
+    const amountNano = (plan.priceTON * 1000000000).toString();
     
-    showToast(`Processing ${amountTON} TON payment...`, "info");
+    showToast(`Processing ${plan.priceTON} TON payment...`, "info");
     
+    // ✅ إنشاء معاملة TON - المال يذهب إلى محفظة المنصة المخزنة في Render
     const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600,
         messages: [{
-            address: PLATFORM_TON_WALLET || "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            address: PLATFORM_TON_WALLET,  // ✅ مباشرة إلى محفظة المنصة
             amount: amountNano
         }]
     };
     
     try {
+        // ✅ إرسال المعاملة
         const result = await window.tonConnectUI.sendTransaction(transaction);
         
-        console.log("Transaction sent:", result);
+        console.log("✅ Transaction sent successfully:", result);
         
+        // ✅ حساب تاريخ انتهاء VIP (بعد 7 أيام)
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + plan.days);
         
+        // ✅ حفظ حالة VIP في localStorage
         saveVIPStatus(planId, expiryDate.toISOString());
         
+        // ✅ إشعار نجاح
         showToast(`🎉 Success! You are now ${plan.name} VIP for ${plan.days} days!`, "success");
         
+        // ✅ إغلاق النافذة وتحديث الواجهة
         closeVIPModal();
         updateUI();
         
+        // ✅ تحديث بيانات المستخدم المحلية
         if (currentUser) {
             currentUser.balance = localAdCache.balance;
             currentUser.totalEarned = localAdCache.totalEarned;
             saveUserData();
         }
         
+        // ✅ إضافة إشعار في قائمة الإشعارات
+        if (currentUser && currentUser.notifications) {
+            currentUser.notifications.unshift({
+                id: Date.now(),
+                title: "👑 VIP Activated!",
+                message: `You are now ${plan.name} VIP member! Enjoy ${plan.multiplier}x ad rewards for ${plan.days} days.`,
+                type: "success",
+                read: false,
+                timestamp: new Date().toISOString()
+            });
+            saveUserData();
+            updateNotificationBadge();
+        }
+        
     } catch (error) {
-        console.error("Transaction error:", error);
+        console.error("❌ Transaction error:", error);
         showToast("Transaction cancelled or failed. Please try again.", "error");
     }
 }
@@ -4014,9 +4062,6 @@ window.getVIPRemainingDays = getVIPRemainingDays;
 window.showVIPModal = showVIPModal;
 window.closeVIPModal = closeVIPModal;
 window.purchaseVIPPlan = purchaseVIPPlan;
-window.showFloatingWithdrawalToast = showFloatingWithdrawalToast;
-window.startFloatingWithdrawalNotifications = startFloatingWithdrawalNotifications;
-window.testFloatingNotification = testFloatingNotification;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 19. 🚀 INITIALIZATION
