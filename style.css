@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN
+   02. SPLASH SCREEN - نسخة أسطورية مع تحسينات بسيطة
    ============================================================================ */
 
 .splash-screen {
@@ -77,10 +77,11 @@ body.rtl {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 100%;
-    max-width: 300px;
+    max-width: 340px;
     text-align: center;
 }
 
+/* اللوغو - تكبير 10% */
 .splash-logo-wrap {
     margin-bottom: 20px;
     animation: splashLogoPop 0.6s cubic-bezier(0.34, 1.4, 0.64, 1);
@@ -93,28 +94,36 @@ body.rtl {
 }
 
 .splash-logo-img {
-    width: 120px;
+    width: 132px;
     height: auto;
 }
 
+/* الاسم - أكثر بروزاً واحترافية */
 .splash-sub {
-    font-size: 14px;
-    color: var(--gray);
-    font-weight: 500;
-    margin-bottom: 32px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .splash-deco {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--gold);
+    font-weight: normal;
 }
 
+/* شريط التحميل */
 .splash-loader {
-    width: 200px;
+    width: 220px;
     height: 4px;
     background: rgba(212, 175, 55, 0.15);
     border-radius: 99px;
@@ -135,6 +144,32 @@ body.rtl {
     100% { transform: translateX(350%); }
 }
 
+/* 🌟 Nova - جديدة أسفل شريط التحميل */
+.splash-nova {
+    margin-top: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold-dark);
+    letter-spacing: 2px;
+    animation: novaGlow 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+@keyframes novaGlow {
+    0%, 100% {
+        opacity: 0.7;
+        text-shadow: 0 0 2px var(--gold);
+    }
+    50% {
+        opacity: 1;
+        text-shadow: 0 0 8px var(--gold);
+    }
+}
+
+/* الإصدار في الأسفل */
 .splash-version {
     position: absolute;
     bottom: 20px;
