@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN — شبكة كونية أسطورية (نسخة نهائية)
+   02. SPLASH SCREEN — شبكة كونية أسطورية (النسخة النهائية)
    ============================================================================ */
 
 .splash-screen {
@@ -85,10 +85,10 @@ body.rtl {
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background:
-        radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 45%),
-        radial-gradient(circle, rgba(148,163,184,0.06) 0%, transparent 35%),
-        radial-gradient(circle, rgba(246,231,176,0.04) 0%, transparent 25%);
-    filter: blur(60px);
+        radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 50%),
+        radial-gradient(circle, rgba(148,163,184,0.06) 0%, transparent 40%),
+        radial-gradient(circle, rgba(246,231,176,0.04) 0%, transparent 30%);
+    filter: blur(70px);
     animation: cosmicGlow 10s ease-in-out infinite;
     pointer-events: none;
 }
@@ -122,52 +122,39 @@ body.rtl {
     100% { transform: translateX(120px); }
 }
 
-/* ====== 🌐 حاوية اللوغو — موسعة ====== */
+/* ====== حاوية اللوغو ====== */
 .splash-logo-wrap {
-    width: 280px;
-    height: 280px;
-    margin: 0 auto 20px;
+    width: 320px;
+    height: 320px;
+    margin: 0 auto 15px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    perspective: 1200px;
 }
 
-/* ⭐ النجم — تكبير 50% (من 108px → 162px) */
+/* ⭐ النجم — ثابت تماماً (لا يتحرك، لا يدور) */
 .splash-logo-img {
-    width: 162px;
-    height: 162px;
+    width: 130px;
+    height: 130px;
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 20;
-    animation: starCore 4s ease-in-out infinite;
     filter: 
         drop-shadow(0 0 40px rgba(212,175,55,.9))
         drop-shadow(0 0 80px rgba(212,175,55,.5))
-        drop-shadow(0 0 120px rgba(246,231,176,.3))
-        drop-shadow(0 0 180px rgba(212,175,55,.15));
+        drop-shadow(0 0 120px rgba(246,231,176,.3));
 }
 
-@keyframes starCore {
-    0%, 100% { 
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
-        filter: 
-            drop-shadow(0 0 40px rgba(212,175,55,.9))
-            drop-shadow(0 0 80px rgba(212,175,55,.5));
-    }
-    50% { 
-        transform: translate(-50%, -50%) scale(1.05) rotate(3deg);
-        filter: 
-            drop-shadow(0 0 50px rgba(212,175,55,1))
-            drop-shadow(0 0 100px rgba(212,175,55,.7))
-            drop-shadow(0 0 150px rgba(246,231,176,.5));
-    }
+/* النجم ثابت — لا حركة له */
+.splash-logo-img path,
+.splash-logo-img circle {
+    filter: drop-shadow(0 0 15px rgba(255,215,120,.8));
 }
 
-/* ====== جميع المدارات تدور حول مركز النجم ====== */
+/* ====== المدارات — كلها أكبر من النجم وتدور حول مركزه ====== */
 
 /* المدار 1 — خارجي كبير */
 .splash-logo-wrap::before {
@@ -176,40 +163,89 @@ body.rtl {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 260px;
-    height: 260px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    border: 2px solid rgba(212, 175, 55, 0.2);
+    border: 2px solid rgba(212, 175, 55, 0.25);
     border-top: 3px solid #d4af37;
-    border-bottom: 2px solid rgba(246, 231, 176, 0.4);
-    animation: orbit1 4s linear infinite;
-    box-shadow: 0 0 25px rgba(212,175,55,.1);
+    border-right: 2px solid rgba(246, 231, 176, 0.5);
+    animation: orbitSpin 4s linear infinite;
+    box-shadow: 0 0 25px rgba(212,175,55,.15);
 }
 
-@keyframes orbit1 {
-    0% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); }
-}
-
-/* المدار 2 — متوسط */
+/* المدار 2 */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 210px;
-    height: 210px;
+    width: 250px;
+    height: 250px;
     border-radius: 50%;
-    border: 1.5px dashed rgba(246, 231, 176, 0.25);
-    border-left: 2px solid rgba(212, 175, 55, 0.5);
-    border-right: 2px solid rgba(246, 231, 176, 0.4);
-    animation: orbit2 3s linear infinite reverse;
+    border: 1.5px dashed rgba(246, 231, 176, 0.3);
+    border-left: 2px solid rgba(212, 175, 55, 0.6);
+    border-right: 2px solid rgba(246, 231, 176, 0.5);
+    animation: orbitSpinReverse 3.5s linear infinite reverse;
 }
 
-@keyframes orbit2 {
-    0% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(360deg); }
+/* المدار 3 */
+.splash-sub::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 1px dotted rgba(212, 175, 55, 0.25);
+    border-top: 2px solid rgba(148, 163, 184, 0.4);
+    animation: orbitSpin 5s linear infinite;
+    pointer-events: none;
+}
+
+/* المدار 4 */
+.splash-deco:first-child::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(148, 163, 184, 0.15);
+    border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+    animation: orbitSpinReverse 3s linear infinite reverse;
+    pointer-events: none;
+}
+
+/* المدار 5 */
+.splash-deco:last-child::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px dashed rgba(212, 175, 55, 0.2);
+    border-left: 2px solid rgba(246, 231, 176, 0.5);
+    animation: orbitSpin 2.5s linear infinite;
+    pointer-events: none;
+}
+
+/* حركة الدوران حول المحور */
+@keyframes orbitSpin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes orbitSpinReverse {
+    0% { transform: translate(-50%, -50%) rotate(360deg); }
+    100% { transform: translate(-50%, -50%) rotate(0deg); }
 }
 
 /* ====== اسم التطبيق ====== */
@@ -230,8 +266,7 @@ body.rtl {
     );
     -webkit-background-clip: text;
     background-clip: text;
-    text-shadow: 0 0 30px rgba(212,175,55,.4);
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -241,34 +276,8 @@ body.rtl {
 }
 
 @keyframes titleShine {
-    0%, 100% { 
-        filter: brightness(1) drop-shadow(0 0 10px rgba(212,175,55,.3));
-    }
-    50% { 
-        filter: brightness(1.2) drop-shadow(0 0 25px rgba(212,175,55,.6));
-    }
-}
-
-/* المدار 3 — داخلي متصل بالاسم */
-.splash-sub::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 170px;
-    height: 170px;
-    margin-top: -80px;
-    border-radius: 50%;
-    border: 1px dotted rgba(212, 175, 55, 0.2);
-    border-top: 2px solid rgba(148, 163, 184, 0.3);
-    animation: orbit3 5s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes orbit3 {
-    0% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(40deg) rotateZ(360deg); }
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(212,175,55,.3)); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 25px rgba(212,175,55,.6)); }
 }
 
 /* زخارف النص */
@@ -295,64 +304,14 @@ body.rtl {
     50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
 }
 
-/* المدار 4 */
-.splash-deco:first-child::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 130px;
-    height: 130px;
-    margin-top: -80px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(148, 163, 184, 0.12);
-    border-bottom: 2px solid rgba(212, 175, 55, 0.3);
-    animation: orbit4 3.5s linear infinite reverse;
-    pointer-events: none;
-}
-
-@keyframes orbit4 {
-    0% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(85deg) rotateZ(360deg); }
-}
-
-/* المدار 5 */
-.splash-deco:last-child::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 90px;
-    height: 90px;
-    margin-top: -80px;
-    border-radius: 50%;
-    border: 2px dashed rgba(212, 175, 55, 0.15);
-    border-left: 2px solid rgba(246, 231, 176, 0.4);
-    animation: orbit5 2.5s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes orbit5 {
-    0% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(0deg); }
-    100% { transform: translate(-50%, -50%) rotateX(25deg) rotateZ(360deg); }
-}
-
-/* لمعان النجم */
-.splash-logo-img path,
-.splash-logo-img circle {
-    filter: drop-shadow(0 0 15px rgba(255,215,120,.8));
-}
-
 /* ====== شريط التحميل ====== */
 .splash-loader {
-    width: 180px;
+    width: 200px;
     height: 5px;
     margin: 0 auto;
     background: rgba(212, 175, 55, 0.08);
     border-radius: 99px;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     box-shadow: 0 0 15px rgba(212,175,55,.1);
 }
@@ -410,7 +369,7 @@ body.rtl {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 12px;
+    margin-top: 10px;
     overflow: hidden;
     white-space: nowrap;
     border-right: 2px solid #d4af37;
@@ -444,8 +403,8 @@ body.rtl {
 }
 
 @keyframes starIconSpin {
-    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #d4af37); }
-    50% { transform: scale(1.2) rotate(180deg); filter: drop-shadow(0 0 35px #f6e7b0); }
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(180deg); }
 }
 
 /* ====== الإصدار ====== */
