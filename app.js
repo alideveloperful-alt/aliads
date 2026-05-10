@@ -3817,7 +3817,7 @@ function testFloatingNotification() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const VIP_PLANS = {
-    silver: { name: 'Silver', priceTON: 0.001, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈', color: '#c0c0c0', freeTasks: 2 },
+    silver: { name: 'Silver', priceTON: 5, multiplier: 3, minWithdraw: 1, maxWithdraw: 500, referralBonus: 1.00, days: 7, icon: '🥈', color: '#c0c0c0', freeTasks: 2 },
     gold: { name: 'Gold', priceTON: 25, multiplier: 6, minWithdraw: 1, maxWithdraw: 750, referralBonus: 1.00, days: 7, icon: '🥇', color: '#d4af37', freeTasks: 5 },
     platinum: { name: 'Platinum', priceTON: 50, multiplier: 10, minWithdraw: 1, maxWithdraw: 1000, referralBonus: 1.00, days: 7, icon: '👑', color: '#e5e4e2', freeTasks: 15 }
 };
