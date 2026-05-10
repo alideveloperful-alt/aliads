@@ -49,7 +49,7 @@ body.rtl {
 }
 
 /* ============================================================================
-   02. SPLASH SCREEN — CINEMATIC 3D + WAVES + TYPING NOVA
+   02. SPLASH SCREEN — 3D MAGNETIC STAR + NOVA LEFT
    ============================================================================ */
 
 .splash-screen {
@@ -62,71 +62,6 @@ body.rtl {
         radial-gradient(circle at top, rgba(255,215,120,0.08), transparent 40%),
         radial-gradient(circle at bottom, rgba(59,130,246,0.08), transparent 40%),
         linear-gradient(145deg, #050816, #0b1220, #111827);
-
-    transition: opacity .6s ease, visibility .6s ease;
-}
-
-.splash-screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Glow خلفي */
-.splash-screen::before {
-    content: "";
-    position: absolute;
-    width: 420px;
-    height: 420px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-
-    background:
-        radial-gradient(circle,
-        rgba(212,175,55,.18),
-        rgba(212,175,55,.05),
-        transparent 70%);
-
-    filter: blur(25px);
-
-    animation: pulseGlow 4s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-    0%,100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: .7;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.08);
-        opacity: 1;
-    }
-}
-
-/* موجات خلفية رايقة */
-.splash-screen::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 180px;
-    background: repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 30px,
-        rgba(212, 175, 55, 0.04) 30px,
-        rgba(212, 175, 55, 0.04) 60px
-    );
-    animation: waveMove 18s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes waveMove {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(60px); }
 }
 
 .splash-content {
@@ -136,16 +71,35 @@ body.rtl {
     transform: translate(-50%, -50%);
     text-align: center;
     width: 100%;
-    max-width: 340px;
+    max-width: 360px;
 }
 
-/* ====== اللوغو ثلاثي الأبعاد ====== */
+/* ====================== 3D LOGO + ROTATING RING ====================== */
 .splash-logo-wrap {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto 28px;
-    perspective: 1200px;
+    width: 170px;
+    height: 170px;
+    margin: 0 auto 35px;
+    perspective: 1400px;
     position: relative;
+}
+
+/* الإطار الدوار (بدون إضافة عنصر جديد) */
+.splash-logo-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -28px;
+    border: 3px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+    animation: ringRotate 7s linear infinite;
+    box-shadow: 
+        0 0 40px rgba(212,175,55,0.45),
+        inset 0 0 30px rgba(212,175,55,0.2);
+    z-index: 1;
+}
+
+@keyframes ringRotate {
+    from { transform: rotateY(0deg) rotateX(18deg); }
+    to   { transform: rotateY(360deg) rotateX(18deg); }
 }
 
 .splash-logo-img {
@@ -153,144 +107,125 @@ body.rtl {
     height: 100%;
     display: block;
     transform-style: preserve-3d;
-    animation:
-        logoFloat 4s ease-in-out infinite,
-        logoRotate 2.5s linear infinite;
-    filter:
-        drop-shadow(0 20px 25px rgba(0,0,0,.45))
-        drop-shadow(0 0 14px rgba(212,175,55,.22));
+    animation: 
+        magneticFloat 4s ease-in-out infinite,
+        logoRotateY 28s linear infinite;
+    filter: 
+        drop-shadow(0 28px 35px rgba(0,0,0,0.55))
+        drop-shadow(0 0 25px rgba(212,175,55,0.4));
+    position: relative;
+    z-index: 2;
 }
 
-@keyframes logoFloat {
-    0%,100% {
-        transform: translateY(0) rotateX(6deg);
+@keyframes magneticFloat {
+    0%, 100% {
+        transform: translateY(0) rotateX(8deg) rotateY(6deg);
     }
     50% {
-        transform: translateY(-10px) rotateX(10deg);
+        transform: translateY(-20px) rotateX(16deg) rotateY(-6deg);
     }
 }
 
-@keyframes logoRotate {
-    0% { rotate: y 0deg; }
-    100% { rotate: y 360deg; }
+@keyframes logoRotateY {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(360deg); }
 }
 
-/* لمعان معدني */
-.splash-logo-img path,
-.splash-logo-img circle {
-    filter: drop-shadow(0 0 4px rgba(255,215,120,.4));
-}
-
-/* انعكاس أسفل اللوغو */
+/* انعكاس تحت النجم */
 .splash-logo-wrap::after {
     content: "";
     position: absolute;
     left: 50%;
-    bottom: -20px;
-    width: 80%;
-    height: 20px;
+    bottom: -30px;
+    width: 90%;
+    height: 25px;
     transform: translateX(-50%);
-    background: rgba(212,175,55,.18);
-    filter: blur(18px);
+    background: radial-gradient(circle, rgba(212,175,55,0.28), transparent 75%);
+    filter: blur(22px);
     border-radius: 50%;
+    z-index: 0;
 }
 
-/* ====== اسم التطبيق ====== */
+/* ====================== NOVA + LOADER ====================== */
 .splash-sub {
     font-size: 22px;
     font-weight: 800;
     letter-spacing: 3px;
-    margin-bottom: 28px;
+    margin-bottom: 22px;
     background: linear-gradient(135deg, #fff, #f6e7b0, #d4af37);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 0 10px rgba(212,175,55,.15);
+    text-shadow: 0 0 12px rgba(212,175,55,.2);
 }
 
-/* ====== شريط التحميل مع جسيم ذهبي ====== */
+/* شريط التحميل + Nova على اليسار */
 .splash-loader {
-    width: 240px;
-    height: 5px;
-    margin: 0 auto 18px;
+    width: 260px;
+    height: 6px;
+    margin: 0 auto;
     border-radius: 999px;
-    overflow: visible;
-    background: rgba(255,255,255,.08);
-    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,.09);
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
 }
 
-.splash-loader::before {
-    content: "✦";
+/* كلمة Nova على اليسار */
+.splash-nova {
     position: absolute;
-    font-size: 14px;
-    color: #d4af37;
-    top: -12px;
-    left: 0;
-    animation: goldParticle 1.5s ease-in-out infinite;
-    filter: drop-shadow(0 0 4px #d4af37);
-    z-index: 2;
+    left: -105px;           /* تعديل حسب الحاجة */
+    font-size: 15.5px;
+    font-weight: 800;
+    letter-spacing: 4.5px;
+    color: #f6e7b0;
+    white-space: nowrap;
+    text-shadow: 0 0 15px rgba(212,175,55,0.7);
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-@keyframes goldParticle {
-    0% { left: 0; opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.2); }
-    100% { left: 100%; opacity: 0; transform: scale(0.8); }
-}
-
+/* شريط التحميل المتحرك */
 .splash-loader-bar {
-    width: 35%;
+    width: 36%;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, transparent, #f6e7b0, #d4af37, #fff, #d4af37, transparent);
-    animation: loaderMove 1.5s linear infinite;
+    background: linear-gradient(90deg, transparent, #f6e7b0, #d4af37, #fff, #d4af37);
+    animation: loaderMove 1.45s linear infinite;
 }
 
 @keyframes loaderMove {
-    0% { transform: translateX(-220%); }
-    100% { transform: translateX(420%); }
+    0%   { transform: translateX(-260%); }
+    100% { transform: translateX(450%); }
 }
 
-/* ====== NOVA تحت شريط التحميل (تأثير كتابة) ====== */
-.splash-nova {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    color: rgba(255,255,255,.85);
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid #d4af37;
-    animation: typingNova 2.5s steps(8, end) forwards, blinkCursor 0.8s step-end infinite;
-    width: 0;
-    margin: 0 auto;
+/* الجسيم الذهبي */
+.splash-loader::before {
+    content: "✦";
+    position: absolute;
+    font-size: 15px;
+    color: #d4af37;
+    top: -13px;
+    left: 0;
+    animation: goldParticle 1.6s linear infinite;
+    filter: drop-shadow(0 0 6px #d4af37);
 }
 
-@keyframes typingNova {
-    0% { width: 0; opacity: 1; }
-    50% { width: 100%; opacity: 1; }
-    100% { width: 100%; opacity: 1; border-right-color: transparent; }
+@keyframes goldParticle {
+    0%   { left: 0; opacity: 1; }
+    100% { left: 100%; opacity: 0; }
 }
 
-@keyframes blinkCursor {
-    0%, 100% { border-color: #d4af37; }
-    50% { border-color: transparent; }
-}
-
-/* ====== الإصدار في أسفل اليسار ====== */
+/* الإصدار */
 .splash-version {
     position: absolute;
     left: 22px;
     bottom: 22px;
     font-size: 11px;
     color: rgba(255,255,255,.28);
-    letter-spacing: 1px;
-    animation: versionFade 4s ease-in-out infinite;
-}
-
-@keyframes versionFade {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.6; }
 }
 
 /* ============================================================================
