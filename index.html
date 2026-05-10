@@ -62,14 +62,11 @@
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- VIP Stylesheet (جديد) -->
-    <link rel="stylesheet" href="vip.css">
 </head>
 <body>
     
     <!-- ============================================================ -->
-    <!-- 1. 🚀 SPLASH SCREEN - شاشة التحميل -->
+    <!-- 1. 🚀 SPLASH SCREEN -->
     <!-- ============================================================ -->
     
     <div id="splash-screen" class="splash-screen">
@@ -93,13 +90,13 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 2. 📱 MAIN APP CONTENT - المحتوى الرئيسي -->
+    <!-- 2. 📱 MAIN APP CONTENT -->
     <!-- ============================================================ -->
     
     <div id="mainContent" style="display: none;">
         
         <!-- ======================================================== -->
-        <!-- 3. 🎨 HEADER - رأس الصفحة -->
+        <!-- 3. 🎨 HEADER -->
         <!-- ======================================================== -->
         
         <header>
@@ -129,7 +126,7 @@
         </header>
 
         <!-- ======================================================== -->
-        <!-- 4. 💰 BALANCE CARD - بطاقة الرصيد -->
+        <!-- 4. 💰 BALANCE CARD -->
         <!-- ======================================================== -->
         
         <div class="balance-card">
@@ -170,7 +167,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- 5. 📺 PAGE: ADS - صفحة الإعلانات -->
+        <!-- 5. 📺 PAGE: ADS -->
         <!-- ======================================================== -->
         
         <div id="page-ads" class="page active">
@@ -233,7 +230,6 @@
                 </div>
             </div>
 
-            <!-- Withdrawal History Card -->
             <div class="card withdrawal-history-card">
                 <div class="card-header">
                     <div class="card-icon withdraw">
@@ -255,7 +251,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- 6. 📋 PAGE: TASKS - صفحة المهام -->
+        <!-- 6. 📋 PAGE: TASKS -->
         <!-- ======================================================== -->
         
         <div id="page-tasks" class="page">
@@ -272,7 +268,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- 7. 👥 PAGE: INVITE - صفحة الإحالات -->
+        <!-- 7. 👥 PAGE: INVITE -->
         <!-- ======================================================== -->
         
         <div id="page-invite" class="page">
@@ -315,7 +311,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- 8. 💸 PAGE: WITHDRAW - صفحة السحب -->
+        <!-- 8. 💸 PAGE: WITHDRAW -->
         <!-- ======================================================== -->
         
         <div id="page-withdraw" class="page">
@@ -347,7 +343,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- 9. 🧭 BOTTOM NAVIGATION - القائمة السفلية -->
+        <!-- 9. 🧭 BOTTOM NAVIGATION -->
         <!-- ======================================================== -->
         
         <nav class="bottom-nav">
@@ -371,7 +367,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 10. 🌍 LANGUAGE MODAL - نافذة اختيار اللغة -->
+    <!-- 10. 🌍 LANGUAGE MODAL -->
     <!-- ============================================================ -->
     
     <div id="langModal" class="lang-modal-overlay" onclick="closeLanguageModal(event)">
@@ -383,7 +379,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 11. 🔔 NOTIFICATIONS MODAL - نافذة الإشعارات -->
+    <!-- 11. 🔔 NOTIFICATIONS MODAL -->
     <!-- ============================================================ -->
     
     <div id="notificationsModal" class="modal">
@@ -403,7 +399,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 12. ✅ CONFIRM MODAL - نافذة التأكيد -->
+    <!-- 12. ✅ CONFIRM MODAL -->
     <!-- ============================================================ -->
     
     <div id="confirmModal" class="modal" style="display: none;">
@@ -419,7 +415,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 13. 👑 ADMIN AUTH MODAL - نافذة دخول المشرف -->
+    <!-- 13. 👑 ADMIN AUTH MODAL -->
     <!-- ============================================================ -->
     
     <div id="adminAuthModal" class="modal">
@@ -438,7 +434,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 14. 🎛️ ADMIN PANEL - لوحة المشرف -->
+    <!-- 14. 🎛️ ADMIN PANEL -->
     <!-- ============================================================ -->
     
     <div id="adminPanel" class="admin-panel hidden">
@@ -450,7 +446,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 15. 🔒 VERIFICATION MODAL - نافذة التحقق من المستخدم -->
+    <!-- 15. 🔒 VERIFICATION MODAL -->
     <!-- ============================================================ -->
     
     <div id="verificationModal" class="modal">
@@ -502,7 +498,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 16. 📜 ALL WITHDRAWALS MODAL - نافذة جميع السحوبات -->
+    <!-- 16. 📜 ALL WITHDRAWALS MODAL -->
     <!-- ============================================================ -->
     
     <div id="allWithdrawalsModal" class="modal">
@@ -518,7 +514,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 17. 🔐 CODE VERIFICATION MODAL - نافذة إدخال الكود -->
+    <!-- 17. 🔐 CODE VERIFICATION MODAL -->
     <!-- ============================================================ -->
     
     <div id="codeModal" class="modal" style="display: none;">
@@ -547,24 +543,47 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- 18. 🍞 TOAST CONTAINER - حاوية الإشعارات المنبثقة -->
+    <!-- 18. 🍞 TOAST CONTAINER -->
     <!-- ============================================================ -->
     
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- ============================================================ -->
-    <!-- 19. ✨ VIP FLOATING BUTTON - زر VIP العائم (جديد) -->
+    <!-- 19. ✨ VIP FLOATING BUTTON (جديد) -->
     <!-- ============================================================ -->
     
-    <button id="vipFloatingBtn" class="vip-floating-btn" onclick="window.location.href='vip.html'">
+    <button id="vipFloatingBtn" class="vip-floating-btn" onclick="showVIPModal()">
         <i class="fas fa-crown"></i>
     </button>
 
     <!-- ============================================================ -->
-    <!-- 20. 📜 MAIN SCRIPTS -->
+    <!-- 20. 👑 VIP MEMBERSHIP MODAL (جديد - نافذة VIP المنبثقة) -->
+    <!-- ============================================================ -->
+    
+    <div id="vipModal" class="modal">
+        <div class="modal-content vip-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-crown" style="color: #d4af37;"></i> VIP Membership</h3>
+                <button class="close-btn" onclick="closeVIPModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body vip-modal-body">
+                <div class="vip-plans-container" id="vipPlansContainer">
+                    <!-- سيتم ملء البطاقات بواسطة JavaScript -->
+                </div>
+                <div class="vip-footer-note">
+                    <p>⚡ Upgrade once, enjoy benefits for <strong>7 days</strong></p>
+                    <p>💰 Higher rewards, lower withdrawal limits, and exclusive benefits!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 21. 📜 MAIN SCRIPTS -->
     <!-- ============================================================ -->
     
     <script src="app.js"></script>
-    <script src="vip.js"></script>
 </body>
 </html>
