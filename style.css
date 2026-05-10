@@ -52,355 +52,268 @@ body.rtl {
    SPLASH SCREEN — CINEMATIC 3D 2
    ============================================================================ */
 /* ============================================================================
-   GODLIKE QUANTUM LOGO
+   SPLASH SCREEN — CINEMATIC 3D
+   ============================================================================ */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at top, rgba(255,215,120,0.08), transparent 40%),
+        radial-gradient(circle at bottom, rgba(59,130,246,0.08), transparent 40%),
+        linear-gradient(145deg, #050816, #0b1220, #111827);
+
+    transition: opacity .6s ease, visibility .6s ease;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Glow خلفي */
+.splash-screen::before {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+
+    background:
+        radial-gradient(circle,
+        rgba(212,175,55,.18),
+        rgba(212,175,55,.05),
+        transparent 70%);
+
+    filter: blur(25px);
+
+    animation: pulseGlow 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%,100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: .7;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+    }
+}
+
+.splash-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    max-width: 340px;
+}
+
+/* ============================================================================
+   3D LOGO
    ============================================================================ */
 
 .splash-logo-wrap {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 28px;
+    perspective: 1200px;
     position: relative;
-    width: 210px;
-    height: 210px;
-    margin: 0 auto 40px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    perspective: 1800px;
-
-    isolation: isolate;
 }
 
-/* =========================================================
-   QUANTUM FIELD
-   ========================================================= */
-
-.splash-logo-wrap::before {
-    content: "";
-
-    position: absolute;
-    inset: -30px;
-
-    border-radius: 50%;
-
-    background:
-        radial-gradient(circle,
-        rgba(255,255,255,.14) 0%,
-        rgba(212,175,55,.12) 22%,
-        rgba(59,130,246,.08) 45%,
-        transparent 72%);
-
-    filter:
-        blur(28px);
-
-    animation:
-        quantumPulse 4s ease-in-out infinite;
-
-    z-index: 0;
-}
-
-/* =========================================================
-   CORE REACTOR
-   ========================================================= */
-
-.logo-core {
-    position: absolute;
-
-    width: 68px;
-    height: 68px;
-
-    z-index: 10;
-
-    border-radius: 50%;
-
-    background:
-        radial-gradient(circle at 30% 30%,
-        #ffffff 0%,
-        #fff6d5 18%,
-        #f6e7b0 32%,
-        #d4af37 60%,
-        #5f4508 100%);
-
-    box-shadow:
-        0 0 18px rgba(255,255,255,.95),
-        0 0 45px rgba(255,215,120,.9),
-        0 0 90px rgba(212,175,55,.55),
-        inset 0 0 20px rgba(255,255,255,.45);
-
-    animation:
-        reactorFloat 4s ease-in-out infinite,
-        reactorPulse 2s ease-in-out infinite;
-
-    backdrop-filter: blur(12px);
-}
-
-/* النجم */
-.logo-core svg {
-    width: 28px;
-    height: 28px;
-
-    fill: white;
-
-    filter:
-        drop-shadow(0 0 10px rgba(255,255,255,.95))
-        drop-shadow(0 0 25px rgba(255,215,120,.9));
-
-    animation:
-        starEnergy 2.5s ease-in-out infinite;
-}
-
-/* =========================================================
-   PLASMA RING
-   ========================================================= */
-
-.network-ring {
-    position: absolute;
-
-    width: 190px;
-    height: 190px;
-
-    border-radius: 50%;
-
-    animation:
-        plasmaSpin 1.3s linear infinite;
-
-    filter:
-        drop-shadow(0 0 18px rgba(255,215,120,.6))
-        drop-shadow(0 0 45px rgba(212,175,55,.3));
+.splash-logo-img {
+    width: 100%;
+    height: 100%;
+    display: block;
 
     transform-style: preserve-3d;
-}
-
-/* الحلقة الرئيسية */
-.network-ring::before {
-
-    content: "";
-
-    position: absolute;
-    inset: 0;
-
-    border-radius: 50%;
-
-    border:
-        2px solid rgba(255,215,120,.22);
-
-    border-top-color: rgba(255,255,255,.95);
-    border-right-color: rgba(212,175,55,.9);
-
-    border-left-color: transparent;
-    border-bottom-color: transparent;
 
     animation:
-        energyTrail .7s linear infinite;
+        logoFloat 4s ease-in-out infinite,
+        logoRotate 8s linear infinite;
 
-    box-shadow:
-        0 0 12px rgba(255,215,120,.8),
-        inset 0 0 12px rgba(255,215,120,.3);
+    filter:
+        drop-shadow(0 20px 25px rgba(0,0,0,.45))
+        drop-shadow(0 0 14px rgba(212,175,55,.22));
 }
 
-/* الحلقة الثانوية */
-.network-ring::after {
+/* حركة عائمة */
+@keyframes logoFloat {
+    0%,100% {
+        transform:
+            translateY(0)
+            rotateX(6deg);
+    }
 
+    50% {
+        transform:
+            translateY(-10px)
+            rotateX(10deg);
+    }
+}
+
+/* دوران احترافي بطيء */
+@keyframes logoRotate {
+    0% {
+        rotate: y 0deg;
+    }
+
+    100% {
+        rotate: y 360deg;
+    }
+}
+
+/* لمعان معدني */
+.splash-logo-img path,
+.splash-logo-img circle {
+    filter:
+        drop-shadow(0 0 4px rgba(255,215,120,.4));
+}
+
+/* انعكاس أسفل اللوغو */
+.splash-logo-wrap::after {
     content: "";
-
     position: absolute;
+    left: 50%;
+    bottom: -20px;
+    width: 80%;
+    height: 20px;
 
-    inset: 12px;
+    transform: translateX(-50%);
+
+    background: rgba(212,175,55,.18);
+
+    filter: blur(18px);
 
     border-radius: 50%;
-
-    border:
-        1px solid rgba(255,255,255,.08);
-
-    border-top-color: rgba(255,255,255,.75);
-    border-right-color: rgba(59,130,246,.7);
-
-    border-left-color: transparent;
-    border-bottom-color: transparent;
-
-    filter: blur(.3px);
-
-    animation:
-        energyTrailReverse .45s linear infinite;
 }
 
-/* =========================================================
-   ENERGY ORBS
-   ========================================================= */
+/* ============================================================================
+   BRAND NAME
+   ============================================================================ */
 
-.energy-particle {
-    position: absolute;
-
-    width: 8px;
-    height: 8px;
-
-    border-radius: 50%;
+.splash-sub {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
 
     background:
-        radial-gradient(circle,
-        #fff,
-        #f6e7b0,
-        #d4af37);
+        linear-gradient(
+            135deg,
+            #fff,
+            #f6e7b0,
+            #d4af37
+        );
 
-    box-shadow:
-        0 0 12px rgba(255,255,255,.95),
-        0 0 28px rgba(255,215,120,.9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 
-    z-index: 6;
-
-    animation:
-        particleOrbit 1.6s linear infinite;
+    text-shadow:
+        0 0 10px rgba(212,175,55,.15);
 }
 
-/* ذيول الطاقة */
-.energy-particle::after {
+/* ============================================================================
+   LOADER
+   ============================================================================ */
 
-    content: "";
+.splash-loader {
+    width: 240px;
+    height: 5px;
 
-    position: absolute;
+    margin: 0 auto 18px;
 
-    width: 26px;
-    height: 4px;
+    border-radius: 999px;
 
-    right: 100%;
-    top: 50%;
+    overflow: hidden;
 
-    transform:
-        translateY(-50%);
+    background: rgba(255,255,255,.08);
+
+    backdrop-filter: blur(10px);
+}
+
+.splash-loader-bar {
+    width: 35%;
+    height: 100%;
+
+    border-radius: inherit;
 
     background:
         linear-gradient(
             90deg,
-            rgba(255,255,255,.9),
-            rgba(212,175,55,.45),
+            transparent,
+            #f6e7b0,
+            #d4af37,
+            #fff,
+            #d4af37,
             transparent
         );
 
-    filter: blur(2px);
+    animation: loaderMove 1.5s linear infinite;
 }
 
-/* =========================================================
-   PARTICLE DELAYS
-   ========================================================= */
-
-.energy-particle:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.energy-particle:nth-child(2) {
-    animation-delay: -.5s;
-}
-
-.energy-particle:nth-child(3) {
-    animation-delay: -1s;
-}
-
-/* =========================================================
-   ANIMATIONS
-   ========================================================= */
-
-@keyframes plasmaSpin {
-
-    from {
-        transform:
-            rotateZ(0deg)
-            rotateX(78deg);
+@keyframes loaderMove {
+    0% {
+        transform: translateX(-220%);
     }
 
-    to {
-        transform:
-            rotateZ(360deg)
-            rotateX(78deg);
+    100% {
+        transform: translateX(420%);
     }
 }
 
-@keyframes energyTrail {
+/* ============================================================================
+   NOVA
+   ============================================================================ */
 
-    from {
-        transform: rotate(0deg);
-    }
+.splash-nova {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 5px;
 
-    to {
-        transform: rotate(360deg);
-    }
+    color: rgba(255,255,255,.75);
+
+    animation: novaPulse 3s ease-in-out infinite;
 }
 
-@keyframes energyTrailReverse {
-
-    from {
-        transform: rotate(360deg);
-    }
-
-    to {
-        transform: rotate(0deg);
-    }
-}
-
-@keyframes particleOrbit {
-
-    from {
-        transform:
-            rotate(0deg)
-            translateX(95px)
-            rotate(0deg);
-    }
-
-    to {
-        transform:
-            rotate(360deg)
-            translateX(95px)
-            rotate(-360deg);
-    }
-}
-
-@keyframes reactorFloat {
-
+@keyframes novaPulse {
     0%,100% {
-        transform:
-            translateY(0px)
-            scale(1);
-    }
-
-    50% {
-        transform:
-            translateY(-8px)
-            scale(1.05);
-    }
-}
-
-@keyframes reactorPulse {
-
-    0%,100% {
-        opacity: .92;
+        opacity: .6;
     }
 
     50% {
         opacity: 1;
+        text-shadow:
+            0 0 12px rgba(212,175,55,.5);
     }
 }
 
-@keyframes quantumPulse {
+/* ============================================================================
+   VERSION
+   ============================================================================ */
 
-    0%,100% {
-        transform: scale(.92);
-        opacity: .5;
-    }
+.splash-version {
+    position: absolute;
+    left: 22px;
+    bottom: 22px;
 
-    50% {
-        transform: scale(1.12);
-        opacity: 1;
-    }
+    font-size: 11px;
+    color: rgba(255,255,255,.28);
+
+    letter-spacing: 1px;
 }
 
-@keyframes starEnergy {
-
-    0%,100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.12);
-    }
-}
 /* ============================================================================
    03. HEADER
    ============================================================================ */
