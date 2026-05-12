@@ -197,6 +197,21 @@ async function broadcastToAllUsers(message) {
     }
 }
 
+// ====== إشعار المشرف بمستخدم جديد ======
+async function notifyAdminNewUser(userId, userName) {
+    if (!ADMIN_ID || !db) return;
+    try {
+        const counterRef = db.collection('system').doc('newUserCounter');
+        const doc = await counterRef.get();
+        const newCount = (doc.data()?.count || 0) + 1;
+        await counterRef.set({ count: newCount });
+        await bot.telegram.sendMessage(ADMIN_ID, `New user: ${userName}\nID: ${userId}\nNew #: ${newCount}`);
+        console.log(`📤 Admin notified: New user #${newCount}`);
+    } catch (error) {
+        console.error('❌ Failed to notify admin:', error.message);
+    }
+}
+
 function createNewUser(userId, userName, userUsername, refCode) {
     const now = new Date().toISOString();
     const today = now.split('T')[0];
@@ -649,6 +664,7 @@ bot.start(async (ctx) => {
             const userData = createNewUser(userId, userName, userUsername, refCode);
             await userRef.set(userData);
             console.log(`✅ New user created: ${userId}`);
+            await notifyAdminNewUser(userId, userName);
             if (refCode && refCode !== userId) {
                 await processReferralFromBot(refCode, userId, userName);
             }
@@ -1904,6 +1920,8 @@ app.post('/api/init-user', async (req, res) => {
             userData = createNewUser(userId, userName, userUsername, null);
             await userRef.set(userData);
             console.log('✅ New user created:', userId);
+
+            await notifyAdminNewUser(userId, userName);
         }
         res.json({ success: true, userId: userId, userData: userData });
     } catch (error) {
