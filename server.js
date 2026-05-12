@@ -324,6 +324,7 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 • 🎥 Subscribe to YouTube
 • 🎵 Follow on TikTok
 • 🐦 Follow on Twitter
+• 📘 Like/Follow Facebook Pages
 • 💰 Earn *$0.05 - $50* per task
 
 💳 *WITHDRAWAL METHODS*
@@ -332,6 +333,15 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
 • ₿ USDT (BEP20 & TRC20)
 • 📱 TON / SBP (Russia)
 • 🎮 PUBG UC / Free Fire
+
+📢 *PUBLISH YOUR TASKS ON ADNOVA*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Starting at just *$0.05* per task
+✅ Get real user engagement
+✅ Simple & fast setup
+✅ Target active audience
+
+💬 *Contact admin through the app*
 
 🚀 *READY TO START?*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
