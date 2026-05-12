@@ -197,6 +197,20 @@ async function broadcastToAllUsers(message) {
     }
 }
 
+// ====== تحديث عداد المستخدمين الجدد ======
+async function updateNewUserCounter(userId, userName) {
+    if (!ADMIN_ID || !db) return;
+    try {
+        const counterRef = db.collection('system').doc('newUserCounter');
+        const doc = await counterRef.get();
+        const newCount = (doc.data()?.count || 0) + 1;
+        await counterRef.set({ count: newCount });
+        console.log(`📊 User counter updated: #${newCount} (${userName} - ${userId})`);
+    } catch (error) {
+        console.error('❌ Error updating user counter:', error.message);
+    }
+}
+
 function createNewUser(userId, userName, userUsername, refCode) {
     const now = new Date().toISOString();
     const today = now.split('T')[0];
@@ -649,6 +663,7 @@ bot.start(async (ctx) => {
             const userData = createNewUser(userId, userName, userUsername, refCode);
             await userRef.set(userData);
             console.log(`✅ New user created: ${userId}`);
+            await updateNewUserCounter(userId, userName);
             if (refCode && refCode !== userId) {
                 await processReferralFromBot(refCode, userId, userName);
             }
@@ -1904,6 +1919,7 @@ app.post('/api/init-user', async (req, res) => {
             userData = createNewUser(userId, userName, userUsername, null);
             await userRef.set(userData);
             console.log('✅ New user created:', userId);
+            await updateNewUserCounter(userId, userName);
         }
         res.json({ success: true, userId: userId, userData: userData });
     } catch (error) {
