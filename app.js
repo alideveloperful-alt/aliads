@@ -1750,6 +1750,9 @@ function renderTasks() {
         } else if (task.type === "twitter") {
             icon = "fab fa-twitter";
             actionText = "Follow";
+        } else if (task.type === "facebook") {
+            icon = "fab fa-facebook";
+            actionText = "Like/Follow";
         } else if (task.type === "code") {
             icon = "fas fa-key";
             actionText = "Enter Code";
@@ -1807,6 +1810,8 @@ async function verifyTask(taskId, type, identifier, reward) {
         url = identifier.startsWith("http") ? identifier : `https://tiktok.com/@${identifier.replace('@', '')}`;
     } else if (type === "twitter") {
         url = identifier.startsWith("http") ? identifier : `https://twitter.com/${identifier.replace('@', '')}`;
+    } else if (type === "facebook") {
+        url = identifier;
     }
     
     if (!url) {
@@ -1865,7 +1870,6 @@ async function verifyTask(taskId, type, identifier, reward) {
 }
 
 // ====== Code Modal Functions ======
-
 let currentCodeTask = null;
 
 function openCodeModal(taskId, taskName, reward, hint) {
