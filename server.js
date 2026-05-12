@@ -1196,56 +1196,58 @@ bot.on('text', async (ctx) => {
     }
     
     // ========== إضافة مهمة جديدة ==========
-    const taskSession = taskCreationSessions.get(userId);
-    if (taskSession) {
-        // الخطوة 1: اسم المهمة
-        if (taskSession.step === 'name') {
-            taskSession.name = message;
-            taskSession.step = 'type';
+const taskSession = taskCreationSessions.get(userId);
+if (taskSession) {
+    // الخطوة 1: اسم المهمة
+    if (taskSession.step === 'name') {
+        taskSession.name = message;
+        taskSession.step = 'type';
+        ctx.reply(
+            `📝 Task Name: ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `🏷️ Step 2: Choose task type:\n` +
+            `• channel - Telegram Channel / Group\n` +
+            `• bot - Telegram Bot\n` +
+            `• youtube - YouTube Channel\n` +
+            `• tiktok - TikTok Account\n` +
+            `• twitter - Twitter / X Account\n` +
+            `• facebook - Facebook Page/Group/Profile\n` +
+            `• code - Verification Code Task (NEW!)\n\n` +
+            `📝 Type the type:`
+        );
+    }
+    // الخطوة 2: نوع المهمة
+    else if (taskSession.step === 'type') {
+        const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter', 'facebook', 'code'];
+        if (!validTypes.includes(message.toLowerCase())) {
+            return ctx.reply(`❌ Invalid type! Please choose: channel, bot, youtube, tiktok, twitter, facebook, or code`);
+        }
+        taskSession.type = message.toLowerCase();
+        taskSession.step = 'identifier';
+        
+        // رسالة مختلفة قليلاً لـ code
+        if (taskSession.type === 'code') {
             ctx.reply(
-                `📝 Task Name: ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `🏷️ Step 2: Choose task type:\n` +
-                `• channel - Telegram Channel / Group\n` +
-                `• bot - Telegram Bot\n` +
-                `• youtube - YouTube Channel\n` +
-                `• tiktok - TikTok Account\n` +
-                `• twitter - Twitter / X Account\n` +
-                `• code - Verification Code Task (NEW!)\n\n` +
-                `📝 Type the type:`
+                `📝 Task Name: ${taskSession.name}\n` +
+                `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🔗 Step 3: Enter the link or URL where users can find the secret code:\n` +
+                `• Example: https://mywebsite.com/secret-page\n\n` +
+                `📝 Type the link:`
+            );
+        } else {
+            ctx.reply(
+                `📝 Task Name: ${taskSession.name}\n` +
+                `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🔗 Step 3: Enter username or link:\n` +
+                `• For Telegram: @username\n` +
+                `• For YouTube: @channel or full URL\n` +
+                `• For TikTok: @username\n` +
+                `• For Twitter: @username\n` +
+                `• For Facebook: full URL (https://facebook.com/...)\n\n` +
+                `📝 Type the identifier:`
             );
         }
-        // الخطوة 2: نوع المهمة
-        else if (taskSession.step === 'type') {
-            const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter', 'code'];
-            if (!validTypes.includes(message.toLowerCase())) {
-                return ctx.reply(`❌ Invalid type! Please choose: channel, bot, youtube, tiktok, twitter, or code`);
-            }
-            taskSession.type = message.toLowerCase();
-            taskSession.step = 'identifier';
-            
-            // رسالة مختلفة قليلاً لـ code
-            if (taskSession.type === 'code') {
-                ctx.reply(
-                    `📝 Task Name: ${taskSession.name}\n` +
-                    `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                    `🔗 Step 3: Enter the link or URL where users can find the secret code:\n` +
-                    `• Example: https://mywebsite.com/secret-page\n\n` +
-                    `📝 Type the link:`
-                );
-            } else {
-                ctx.reply(
-                    `📝 Task Name: ${taskSession.name}\n` +
-                    `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                    `🔗 Step 3: Enter username or link:\n` +
-                    `• For Telegram: @username\n` +
-                    `• For YouTube: @channel or full URL\n` +
-                    `• For TikTok: @username\n` +
-                    `• For Twitter: @username\n\n` +
-                    `📝 Type the identifier:`
-                );
-            }
-        }
-        // الخطوة 3: identifier (الرابط أو المعرف)
+    }
+    // الخطوة 3: identifier (الرابط أو المعرف) - باقي الكود كما هو
         else if (taskSession.step === 'identifier') {
             taskSession.identifier = message;
             taskSession.step = 'reward';
