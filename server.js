@@ -199,15 +199,32 @@ async function broadcastToAllUsers(message) {
 
 // ====== تحديث عداد المستخدمين الجدد ======
 async function updateNewUserCounter(userId, userName) {
-    if (!db) return;
+    console.log("🔥 updateNewUserCounter START for:", userId);
+    
+    if (!db) {
+        console.log("❌ db not connected");
+        return;
+    }
+    
     try {
         const counterRef = db.collection('system').doc('newUserCounter');
+        console.log("📁 Counter reference created");
+        
         const doc = await counterRef.get();
-        const newCount = (doc.data()?.count || 0) + 1;
+        console.log("📖 Counter read, exists:", doc.exists);
+        
+        const currentCount = doc.data()?.count || 0;
+        console.log("🔢 Current count:", currentCount);
+        
+        const newCount = currentCount + 1;
+        console.log("🔢 New count:", newCount);
+        
         await counterRef.set({ count: newCount });
-        console.log(`📊 User counter updated: #${newCount} (${userName} - ${userId})`);
+        console.log(`✅ User counter updated: #${newCount} (${userName} - ${userId})`);
+        
     } catch (error) {
-        console.error('❌ Error updating user counter:', error.message);
+        console.error("❌ Error:", error.message);
+        console.error(error);
     }
 }
 
