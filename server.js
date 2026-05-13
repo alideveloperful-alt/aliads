@@ -199,7 +199,7 @@ async function broadcastToAllUsers(message) {
 
 // ====== تحديث عداد المستخدمين الجدد ======
 async function updateNewUserCounter(userId, userName) {
-    if (!ADMIN_ID || !db) return;
+    if (!db) return;
     try {
         const counterRef = db.collection('system').doc('newUserCounter');
         const doc = await counterRef.get();
