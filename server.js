@@ -109,6 +109,7 @@ if (serviceAccount) {
         console.error('❌ Firebase init error:', error.message);
     }
 }
+
 // ============================================================================
 // 4. 🤖 Telegram Bot - جلسات المشرف والمهام
 // ============================================================================
@@ -125,6 +126,7 @@ let withdrawalsCache = [];
 // ============================================================================
 // 4.1 دوال مساعدة عامة
 // ============================================================================
+
 async function addNotification(targetUserId, notification) {
     if (!db) return false;
     try {
@@ -197,34 +199,15 @@ async function broadcastToAllUsers(message) {
     }
 }
 
-// ====== تحديث عداد المستخدمين الجدد ======
+// ====== تحديث عداد المستخدمين الجدد (مُحسّن باستخدام FieldValue.increment) ======
 async function updateNewUserCounter(userId, userName) {
-    console.log("🔥 updateNewUserCounter START for:", userId);
-    
-    if (!db) {
-        console.log("❌ db not connected");
-        return;
-    }
-    
+    if (!db) return;
     try {
         const counterRef = db.collection('system').doc('newUserCounter');
-        console.log("📁 Counter reference created");
-        
-        const doc = await counterRef.get();
-        console.log("📖 Counter read, exists:", doc.exists);
-        
-        const currentCount = doc.data()?.count || 0;
-        console.log("🔢 Current count:", currentCount);
-        
-        const newCount = currentCount + 1;
-        console.log("🔢 New count:", newCount);
-        
-        await counterRef.set({ count: newCount });
-        console.log(`✅ User counter updated: #${newCount} (${userName} - ${userId})`);
-        
+        await counterRef.set({ count: admin.firestore.FieldValue.increment(1) }, { merge: true });
+        console.log(`📊 User counter incremented for: ${userName} (${userId})`);
     } catch (error) {
-        console.error("❌ Error:", error.message);
-        console.error(error);
+        console.error('❌ Error updating user counter:', error.message);
     }
 }
 
@@ -372,30 +355,6 @@ ${isNewUser ? `🎁 *WELCOME BONUS CLAIMED!* 🎁
         ]
     };
     await ctx.reply(welcomeText, { parse_mode: 'Markdown', reply_markup: keyboard });
-}
-
-// ✅ دالة مساعدة جديدة لإنشاء المهام (عادية أو محدودة)
-async function createNewTask(taskData, ctx) {
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    const newTask = {
-        id: taskId,
-        type: taskData.type,
-        name: taskData.name,
-        identifier: taskData.identifier,
-        username: taskData.identifier,
-        link: taskData.identifier,
-        reward: taskData.reward,
-        resetPeriod: taskData.resetPeriod,
-        active: true,
-        isLimited: taskData.isLimited || false,
-        maxCompletions: taskData.maxCompletions || 0,
-        completedCount: 0,
-        createdAt: new Date().toISOString(),
-        createdBy: ADMIN_ID
-    };
-    
-    await db.collection('tasks').doc(taskId).set(newTask);
-    return taskId;
 }
 
 // ============================================================================
@@ -1147,7 +1106,157 @@ bot.command('users', async (ctx) => {
 });
 
 // ============================================================================
-// 4.6 معالجة الرسائل النصية للمشرف (المصادقة، البث، رفض السحب، إضافة/تعديل المهام)
+// 4.6 دوال مساعدة لإنشاء المهام (تم نقلها قبل bot.on('text') لتجنب ReferenceError)
+// ============================================================================
+
+async function createNormalTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: taskSession.type,
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: false,
+        maxCompletions: 0,
+        completedCount: 0,
+        needsCode: false,
+        verificationCode: null,
+        hint: null,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: ${taskSession.type}\n` +
+        `🔗 Identifier: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Task created: ${taskId} - ${taskSession.name}`);
+}
+
+async function createLimitedTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: taskSession.type,
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: true,
+        maxCompletions: taskSession.maxCompletions,
+        completedCount: 0,
+        needsCode: false,
+        verificationCode: null,
+        hint: null,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Limited Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: ${taskSession.type}\n` +
+        `🔗 Identifier: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Limited task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions})`);
+}
+
+async function createCodeTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: 'code',
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: false,
+        maxCompletions: 0,
+        completedCount: 0,
+        needsCode: true,
+        verificationCode: taskSession.verificationCode,
+        hint: taskSession.hint,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: Code Verification\n` +
+        `🔗 Link: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🔑 Code: ${taskSession.verificationCode}\n` +
+        `💡 Hint: ${taskSession.hint}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Code task created: ${taskId} - ${taskSession.name} (code: ${taskSession.verificationCode})`);
+}
+
+async function createLimitedCodeTask(ctx, taskSession) {
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const newTask = {
+        id: taskId,
+        type: 'code',
+        name: taskSession.name,
+        identifier: taskSession.identifier,
+        username: taskSession.identifier,
+        link: taskSession.identifier,
+        reward: taskSession.reward,
+        resetPeriod: taskSession.resetPeriod,
+        active: true,
+        isLimited: true,
+        maxCompletions: taskSession.maxCompletions,
+        completedCount: 0,
+        needsCode: true,
+        verificationCode: taskSession.verificationCode,
+        hint: taskSession.hint,
+        createdAt: new Date().toISOString(),
+        createdBy: ADMIN_ID
+    };
+    await db.collection('tasks').doc(taskId).set(newTask);
+    ctx.reply(
+        `✅ Limited Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📌 Name: ${taskSession.name}\n` +
+        `🏷️ Type: Code Verification (Limited)\n` +
+        `🔗 Link: ${taskSession.identifier}\n` +
+        `💰 Reward: $${taskSession.reward}\n` +
+        `🔄 Reset: ${taskSession.resetPeriod}\n` +
+        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
+        `🔑 Code: ${taskSession.verificationCode}\n` +
+        `💡 Hint: ${taskSession.hint}\n` +
+        `🆔 ID: ${taskId}\n\n` +
+        `📋 Use /listtasks to see all tasks.`
+    );
+    console.log(`✅ Limited code task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions}, code: ${taskSession.verificationCode})`);
+}
+
+// ============================================================================
+// 4.7 معالجة الرسائل النصية للمشرف (المصادقة، البث، رفض السحب، إضافة/تعديل المهام)
 // ============================================================================
 
 bot.on('text', async (ctx) => {
@@ -1223,58 +1332,58 @@ bot.on('text', async (ctx) => {
     }
     
     // ========== إضافة مهمة جديدة ==========
-const taskSession = taskCreationSessions.get(userId);
-if (taskSession) {
-    // الخطوة 1: اسم المهمة
-    if (taskSession.step === 'name') {
-        taskSession.name = message;
-        taskSession.step = 'type';
-        ctx.reply(
-            `📝 Task Name: ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-            `🏷️ Step 2: Choose task type:\n` +
-            `• channel - Telegram Channel / Group\n` +
-            `• bot - Telegram Bot\n` +
-            `• youtube - YouTube Channel\n` +
-            `• tiktok - TikTok Account\n` +
-            `• twitter - Twitter / X Account\n` +
-            `• facebook - Facebook Page/Group/Profile\n` +
-            `• code - Verification Code Task (NEW!)\n\n` +
-            `📝 Type the type:`
-        );
-    }
-    // الخطوة 2: نوع المهمة
-    else if (taskSession.step === 'type') {
-        const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter', 'facebook', 'code'];
-        if (!validTypes.includes(message.toLowerCase())) {
-            return ctx.reply(`❌ Invalid type! Please choose: channel, bot, youtube, tiktok, twitter, facebook, or code`);
-        }
-        taskSession.type = message.toLowerCase();
-        taskSession.step = 'identifier';
-        
-        // رسالة مختلفة قليلاً لـ code
-        if (taskSession.type === 'code') {
+    const taskSession = taskCreationSessions.get(userId);
+    if (taskSession) {
+        // الخطوة 1: اسم المهمة
+        if (taskSession.step === 'name') {
+            taskSession.name = message;
+            taskSession.step = 'type';
             ctx.reply(
-                `📝 Task Name: ${taskSession.name}\n` +
-                `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `🔗 Step 3: Enter the link or URL where users can find the secret code:\n` +
-                `• Example: https://mywebsite.com/secret-page\n\n` +
-                `📝 Type the link:`
-            );
-        } else {
-            ctx.reply(
-                `📝 Task Name: ${taskSession.name}\n` +
-                `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `🔗 Step 3: Enter username or link:\n` +
-                `• For Telegram: @username\n` +
-                `• For YouTube: @channel or full URL\n` +
-                `• For TikTok: @username\n` +
-                `• For Twitter: @username\n` +
-                `• For Facebook: full URL (https://facebook.com/...)\n\n` +
-                `📝 Type the identifier:`
+                `📝 Task Name: ${message}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `🏷️ Step 2: Choose task type:\n` +
+                `• channel - Telegram Channel / Group\n` +
+                `• bot - Telegram Bot\n` +
+                `• youtube - YouTube Channel\n` +
+                `• tiktok - TikTok Account\n` +
+                `• twitter - Twitter / X Account\n` +
+                `• facebook - Facebook Page/Group/Profile\n` +
+                `• code - Verification Code Task (NEW!)\n\n` +
+                `📝 Type the type:`
             );
         }
-    }
-    // الخطوة 3: identifier (الرابط أو المعرف) - باقي الكود كما هو
+        // الخطوة 2: نوع المهمة
+        else if (taskSession.step === 'type') {
+            const validTypes = ['channel', 'bot', 'youtube', 'tiktok', 'twitter', 'facebook', 'code'];
+            if (!validTypes.includes(message.toLowerCase())) {
+                return ctx.reply(`❌ Invalid type! Please choose: channel, bot, youtube, tiktok, twitter, facebook, or code`);
+            }
+            taskSession.type = message.toLowerCase();
+            taskSession.step = 'identifier';
+            
+            // رسالة مختلفة قليلاً لـ code
+            if (taskSession.type === 'code') {
+                ctx.reply(
+                    `📝 Task Name: ${taskSession.name}\n` +
+                    `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `🔗 Step 3: Enter the link or URL where users can find the secret code:\n` +
+                    `• Example: https://mywebsite.com/secret-page\n\n` +
+                    `📝 Type the link:`
+                );
+            } else {
+                ctx.reply(
+                    `📝 Task Name: ${taskSession.name}\n` +
+                    `🏷️ Type: ${taskSession.type}\n━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `🔗 Step 3: Enter username or link:\n` +
+                    `• For Telegram: @username\n` +
+                    `• For YouTube: @channel or full URL\n` +
+                    `• For TikTok: @username\n` +
+                    `• For Twitter: @username\n` +
+                    `• For Facebook: full URL (https://facebook.com/...)\n\n` +
+                    `📝 Type the identifier:`
+                );
+            }
+        }
+        // الخطوة 3: identifier (الرابط أو المعرف)
         else if (taskSession.step === 'identifier') {
             taskSession.identifier = message;
             taskSession.step = 'reward';
@@ -1503,157 +1612,7 @@ if (taskSession) {
 });
 
 // ============================================================================
-// دوال مساعدة لإنشاء المهام (قسم 4.6)
-// ============================================================================
-
-async function createNormalTask(ctx, taskSession) {
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    const newTask = {
-        id: taskId,
-        type: taskSession.type,
-        name: taskSession.name,
-        identifier: taskSession.identifier,
-        username: taskSession.identifier,
-        link: taskSession.identifier,
-        reward: taskSession.reward,
-        resetPeriod: taskSession.resetPeriod,
-        active: true,
-        isLimited: false,
-        maxCompletions: 0,
-        completedCount: 0,
-        needsCode: false,
-        verificationCode: null,
-        hint: null,
-        createdAt: new Date().toISOString(),
-        createdBy: ADMIN_ID
-    };
-    await db.collection('tasks').doc(taskId).set(newTask);
-    ctx.reply(
-        `✅ Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📌 Name: ${taskSession.name}\n` +
-        `🏷️ Type: ${taskSession.type}\n` +
-        `🔗 Identifier: ${taskSession.identifier}\n` +
-        `💰 Reward: $${taskSession.reward}\n` +
-        `🔄 Reset: ${taskSession.resetPeriod}\n` +
-        `🆔 ID: ${taskId}\n\n` +
-        `📋 Use /listtasks to see all tasks.`
-    );
-    console.log(`✅ Task created: ${taskId} - ${taskSession.name}`);
-}
-
-async function createLimitedTask(ctx, taskSession) {
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    const newTask = {
-        id: taskId,
-        type: taskSession.type,
-        name: taskSession.name,
-        identifier: taskSession.identifier,
-        username: taskSession.identifier,
-        link: taskSession.identifier,
-        reward: taskSession.reward,
-        resetPeriod: taskSession.resetPeriod,
-        active: true,
-        isLimited: true,
-        maxCompletions: taskSession.maxCompletions,
-        completedCount: 0,
-        needsCode: false,
-        verificationCode: null,
-        hint: null,
-        createdAt: new Date().toISOString(),
-        createdBy: ADMIN_ID
-    };
-    await db.collection('tasks').doc(taskId).set(newTask);
-    ctx.reply(
-        `✅ Limited Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📌 Name: ${taskSession.name}\n` +
-        `🏷️ Type: ${taskSession.type}\n` +
-        `🔗 Identifier: ${taskSession.identifier}\n` +
-        `💰 Reward: $${taskSession.reward}\n` +
-        `🔄 Reset: ${taskSession.resetPeriod}\n` +
-        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
-        `🆔 ID: ${taskId}\n\n` +
-        `📋 Use /listtasks to see all tasks.`
-    );
-    console.log(`✅ Limited task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions})`);
-}
-
-async function createCodeTask(ctx, taskSession) {
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    const newTask = {
-        id: taskId,
-        type: 'code',
-        name: taskSession.name,
-        identifier: taskSession.identifier,
-        username: taskSession.identifier,
-        link: taskSession.identifier,
-        reward: taskSession.reward,
-        resetPeriod: taskSession.resetPeriod,
-        active: true,
-        isLimited: false,
-        maxCompletions: 0,
-        completedCount: 0,
-        needsCode: true,
-        verificationCode: taskSession.verificationCode,
-        hint: taskSession.hint,
-        createdAt: new Date().toISOString(),
-        createdBy: ADMIN_ID
-    };
-    await db.collection('tasks').doc(taskId).set(newTask);
-    ctx.reply(
-        `✅ Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📌 Name: ${taskSession.name}\n` +
-        `🏷️ Type: Code Verification\n` +
-        `🔗 Link: ${taskSession.identifier}\n` +
-        `💰 Reward: $${taskSession.reward}\n` +
-        `🔄 Reset: ${taskSession.resetPeriod}\n` +
-        `🔑 Code: ${taskSession.verificationCode}\n` +
-        `💡 Hint: ${taskSession.hint}\n` +
-        `🆔 ID: ${taskId}\n\n` +
-        `📋 Use /listtasks to see all tasks.`
-    );
-    console.log(`✅ Code task created: ${taskId} - ${taskSession.name} (code: ${taskSession.verificationCode})`);
-}
-
-async function createLimitedCodeTask(ctx, taskSession) {
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    const newTask = {
-        id: taskId,
-        type: 'code',
-        name: taskSession.name,
-        identifier: taskSession.identifier,
-        username: taskSession.identifier,
-        link: taskSession.identifier,
-        reward: taskSession.reward,
-        resetPeriod: taskSession.resetPeriod,
-        active: true,
-        isLimited: true,
-        maxCompletions: taskSession.maxCompletions,
-        completedCount: 0,
-        needsCode: true,
-        verificationCode: taskSession.verificationCode,
-        hint: taskSession.hint,
-        createdAt: new Date().toISOString(),
-        createdBy: ADMIN_ID
-    };
-    await db.collection('tasks').doc(taskId).set(newTask);
-    ctx.reply(
-        `✅ Limited Code Task Created Successfully!\n━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📌 Name: ${taskSession.name}\n` +
-        `🏷️ Type: Code Verification (Limited)\n` +
-        `🔗 Link: ${taskSession.identifier}\n` +
-        `💰 Reward: $${taskSession.reward}\n` +
-        `🔄 Reset: ${taskSession.resetPeriod}\n` +
-        `🏆 Limited: ${taskSession.maxCompletions} users max\n` +
-        `🔑 Code: ${taskSession.verificationCode}\n` +
-        `💡 Hint: ${taskSession.hint}\n` +
-        `🆔 ID: ${taskId}\n\n` +
-        `📋 Use /listtasks to see all tasks.`
-    );
-    console.log(`✅ Limited code task created: ${taskId} - ${taskSession.name} (max: ${taskSession.maxCompletions}, code: ${taskSession.verificationCode})`);
-}
-
-// ============================================================================
-// 4.7 معالجة أزرار الـ Callback Query
+// 4.8 معالجة أزرار الـ Callback Query
 // ============================================================================
 
 bot.action('my_stats', async (ctx) => {
@@ -1926,6 +1885,7 @@ app.post('/api/ad-watched', async (req, res) => {
 // ============================================================================
 // 7. 👤 APIs المستخدمين
 // ============================================================================
+
 app.post('/api/init-user', async (req, res) => {
     try {
         const { initData } = req.body;
@@ -2064,7 +2024,7 @@ app.post('/api/reward', async (req, res) => {
 });
 
 // ============================================================================
-// 10. ✅ API التحقق من انضمام القنوات
+// 10. ✅ API التحقق من انضمام القنوات (مع Lazy Reset للمهام اليومية)
 // ============================================================================
 
 app.post('/api/verify-channel', async (req, res) => {
@@ -2114,6 +2074,75 @@ app.post('/api/verify-channel', async (req, res) => {
                 const userData = userDoc.data();
                 const completedTasks = userData.completedTasks || [];
                 
+                // ✅ LAZY RESET: التحقق من إعادة تعيين المهام اليومية/الأسبوعية
+                const lastCompletion = userData.taskLastCompletions?.[taskId];
+                const resetPeriod = taskData.resetPeriod;
+                
+                if (resetPeriod !== 'once' && lastCompletion) {
+                    const lastDate = new Date(lastCompletion);
+                    const now = new Date();
+                    let canReset = false;
+                    let requiredHours = 0;
+                    
+                    if (resetPeriod === 'daily') {
+                        const hoursSince = (now - lastDate) / (1000 * 60 * 60);
+                        if (hoursSince >= 24) {
+                            canReset = true;
+                        } else {
+                            requiredHours = Math.ceil(24 - hoursSince);
+                        }
+                    } else if (resetPeriod === 'weekly') {
+                        const daysSince = (now - lastDate) / (1000 * 60 * 60 * 24);
+                        if (daysSince >= 7) {
+                            canReset = true;
+                        } else {
+                            const hoursSince = (now - lastDate) / (1000 * 60 * 60);
+                            requiredHours = Math.ceil((7 * 24) - hoursSince);
+                        }
+                    }
+                    
+                    if (canReset && completedTasks.includes(taskId)) {
+                        // إزالة المهمة من completedTasks للسماح بإعادة إكمالها
+                        await userRef.update({
+                            completedTasks: admin.firestore.FieldValue.arrayRemove(taskId)
+                        });
+                        // تحديث المتغير المحلي
+                        const updatedCompletedTasks = completedTasks.filter(id => id !== taskId);
+                        console.log(`🔄 Task ${taskId} reset for user ${userId} (${resetPeriod})`);
+                        
+                        // الاستمرار في منح المكافأة
+                        const finalReward = reward;
+                        await userRef.update({
+                            balance: admin.firestore.FieldValue.increment(finalReward),
+                            totalEarned: admin.firestore.FieldValue.increment(finalReward),
+                            completedTasks: admin.firestore.FieldValue.arrayUnion(taskId),
+                            [`taskLastCompletions.${taskId}`]: new Date().toISOString()
+                        });
+                        
+                        if (taskData && taskData.isLimited) {
+                            await taskRef.update({
+                                completedCount: admin.firestore.FieldValue.increment(1)
+                            });
+                        }
+                        
+                        await addNotification(userId, {
+                            type: 'success',
+                            title: '✅ Task Completed!',
+                            message: `+$${finalReward.toFixed(2)} added from ${taskData.name}`
+                        });
+                        
+                        return res.json({ success: true, message: 'Task completed successfully!' });
+                    } else if (!canReset && completedTasks.includes(taskId)) {
+                        const hoursLeft = requiredHours;
+                        return res.json({ 
+                            success: false, 
+                            error: resetPeriod === 'daily' 
+                                ? `⏳ Come back in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''} to complete this task again!` 
+                                : `⏳ Come back in ${Math.ceil(requiredHours / 24)} day(s) to complete this task again!`
+                        });
+                    }
+                }
+                
                 if (!completedTasks.includes(taskId)) {
                     // ✅ زيادة عداد المهمة المحدودة إذا كانت محدودة
                     if (taskData && taskData.isLimited) {
@@ -2144,7 +2173,7 @@ app.post('/api/verify-channel', async (req, res) => {
                     
                     return res.json({ success: true, message: 'Task completed successfully!' });
                 } else {
-                    return res.json({ success: false, error: 'Task already completed!' });
+                    return res.json({ success: false, error: 'Task already completed! Come back later.' });
                 }
             } else {
                 return res.json({ success: false, error: 'User not found' });
@@ -2264,7 +2293,6 @@ app.get('/api/user/verification-status/:userId', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
-// ----------------------
 
 // ============================================================================
 // 11.6. 🔐 API التحقق من كود المهمة (Code Verification)
@@ -2368,45 +2396,10 @@ app.get('/api/tasks', async (req, res) => {
 });
 
 // ============================================================================
-// 13. 🕐 مهمة مجدولة لإعادة تعيين المهام اليومية (Cron Job)
+// 13. 🕐 مهمة مجدولة (تم حذفها - استبدلت بـ Lazy Reset)
 // ============================================================================
 
-cron.schedule('0 0 * * *', async () => {
-    console.log('🔄 Running daily task reset...');
-    if (!db) return;
-    try {
-        const tasksSnapshot = await db.collection('tasks').where('resetPeriod', 'in', ['daily', 'weekly']).get();
-        const usersSnapshot = await db.collection('users').get();
-        let resetCount = 0;
-        const today = new Date().toISOString().split('T')[0];
-        for (const taskDoc of tasksSnapshot.docs) {
-            const task = taskDoc.data();
-            for (const userDoc of usersSnapshot.docs) {
-                const user = userDoc.data();
-                const lastCompletion = user.taskLastCompletions?.[task.id];
-                if (lastCompletion) {
-                    const lastDate = lastCompletion.split('T')[0];
-                    let shouldReset = false;
-                    if (task.resetPeriod === 'daily') {
-                        shouldReset = lastDate !== today;
-                    } else if (task.resetPeriod === 'weekly') {
-                        const daysDiff = (new Date() - new Date(lastCompletion)) / (1000 * 60 * 60 * 24);
-                        shouldReset = daysDiff >= 7;
-                    }
-                    if (shouldReset && user.completedTasks?.includes(task.id)) {
-                        await db.collection('users').doc(userDoc.id).update({
-                            completedTasks: admin.firestore.FieldValue.arrayRemove(task.id)
-                        });
-                        resetCount++;
-                    }
-                }
-            }
-        }
-        console.log(`✅ Reset ${resetCount} task completions`);
-    } catch (error) {
-        console.error('Cron job error:', error);
-    }
-}, { timezone: "UTC" });
+// تم حذف Cron Job نهائياً واستبداله بـ Lazy Reset في /api/verify-channel
 
 // ============================================================================
 // 14. 🚀 تشغيل الخادم
@@ -2442,7 +2435,7 @@ app.listen(PORT, () => {
     console.log(`👥 Required Referrals (basic): ${APP_CONFIG.requiredReferrals}`);
     console.log(`🔐 Required Referrals (verification): ${APP_CONFIG.requiredReferralsForVerify}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`📋 Task Types: channel, bot, youtube, tiktok, twitter`);
+    console.log(`📋 Task Types: channel, bot, youtube, tiktok, twitter, facebook, code`);
     console.log(`📋 Task Management via Bot: ✅ Ready`);
     console.log(`📋 Withdrawal Management via Bot: ✅ Ready`);
     console.log(`   • /pending - View pending withdrawals`);
@@ -2458,6 +2451,7 @@ app.listen(PORT, () => {
     console.log(`   • /userstats [id] - Detailed user statistics`);
     console.log(`   • /verifyuser [id] - Manually verify a user`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`🔄 Lazy Reset: Tasks with daily/weekly reset are checked on completion`);
     console.log(`✅ Server ready for production!`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 });
