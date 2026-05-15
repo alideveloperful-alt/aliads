@@ -199,52 +199,6 @@ async function broadcastToAllUsers(message) {
     }
 }
 
-// ============================================================================
-// عداد المستخدمين الجدد - محسن وآمن باستخدام Transaction
-// ============================================================================
-async function updateNewUserCounter(userId, userName = "Unknown") {
-    console.log(`🔥🔥🔥 updateNewUserCounter EXECUTED for: ${userId} (${userName})`);
-
-    if (!db) {
-        console.log("❌ db not connected");
-        return { success: false, error: "Database not connected" };
-    }
-
-    try {
-        const counterRef = db.collection('system').doc('newUserCounter');
-
-        const finalCount = await db.runTransaction(async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
-            let currentCount = 0;
-
-            if (counterDoc.exists) {
-                currentCount = counterDoc.data().count || 0;
-                console.log(`📊 Current count read: ${currentCount}`);
-            } else {
-                console.log(`📁 Counter document does not exist, initializing...`);
-            }
-
-            const newCount = currentCount + 1;
-
-            transaction.set(counterRef, {
-                count: newCount,
-                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-                lastUserId: userId,
-                lastUserName: userName
-            }, { merge: true });
-
-            return newCount;
-        });
-
-        console.log(`✅ Counter updated successfully: ${finalCount}`);
-        return { success: true, count: finalCount };
-
-    } catch (error) {
-        console.error('❌ Error in updateNewUserCounter:', error.message);
-        return { success: false, error: error.message };
-    }
-}
-
 
 function createNewUser(userId, userName, userUsername, refCode) {
     const now = new Date().toISOString();
@@ -675,21 +629,39 @@ bot.start(async (ctx) => {
     const userName = ctx.from.first_name || 'AdNova User';
     const userUsername = ctx.from.username || '';
     console.log(`🚀 /start from ${userId}, ref: ${refCode || 'none'}`);
+    
     let isNewUser = false;
+    
     if (db) {
         const userRef = db.collection('users').doc(userId);
-        const userDoc = await userRef.get();
-        if (!userDoc.exists) {
-            isNewUser = true;
-            const userData = createNewUser(userId, userName, userUsername, refCode);
-            await userRef.set(userData);
-            console.log(`✅ New user created: ${userId}`);
-            await updateNewUserCounter(userId, userName);
-            if (refCode && refCode !== userId) {
-                await processReferralFromBot(refCode, userId, userName);
+        const counterRef = db.collection('system').doc('newUserCounter');
+        
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const counterDoc = await transaction.get(counterRef);
+            
+            if (!userDoc.exists) {
+                isNewUser = true;
+                const userData = createNewUser(userId, userName, userUsername, refCode);
+                const currentCount = counterDoc.exists ? (counterDoc.data().count || 0) : 0;
+                
+                transaction.set(userRef, userData);
+                transaction.set(counterRef, {
+                    count: currentCount + 1,
+                    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                    lastUserId: userId,
+                    lastUserName: userName
+                }, { merge: true });
+                
+                console.log(`✅ New user via bot.start: ${userId} → ${currentCount + 1}`);
             }
+        });
+        
+        if (isNewUser && refCode && refCode !== userId) {
+            await processReferralFromBot(refCode, userId, userName);
         }
     }
+    
     await sendWelcomeMessage(ctx, userId, userName, isNewUser);
 });
 
@@ -1944,16 +1916,17 @@ app.post('/api/init-user', async (req, res) => {
         let isNewUser = false;
         
         await db.runTransaction(async (transaction) => {
+            // ✅ جميع القراءات أولاً
             const userDoc = await transaction.get(userRef);
+            const counterDoc = await transaction.get(counterRef);
             
             if (!userDoc.exists) {
                 isNewUser = true;
                 userData = createNewUser(userId, userName, userUsername, null);
-                transaction.set(userRef, userData);
-                
-                const counterDoc = await transaction.get(counterRef);
                 const currentCount = counterDoc.exists ? (counterDoc.data().count || 0) : 0;
                 
+                // ✅ جميع الكتابات في النهاية
+                transaction.set(userRef, userData);
                 transaction.set(counterRef, {
                     count: currentCount + 1,
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
@@ -1994,14 +1967,15 @@ app.post('/api/users/:userId', async (req, res) => {
         const counterRef = db.collection('system').doc('newUserCounter');
         
         await db.runTransaction(async (transaction) => {
+            // ✅ جميع القراءات أولاً
             const userDoc = await transaction.get(userRef);
+            const counterDoc = await transaction.get(counterRef);
             
             if (!userDoc.exists) {
-                transaction.set(userRef, userData);
-                
-                const counterDoc = await transaction.get(counterRef);
                 const currentCount = counterDoc.exists ? (counterDoc.data().count || 0) : 0;
                 
+                // ✅ جميع الكتابات في النهاية
+                transaction.set(userRef, userData);
                 transaction.set(counterRef, {
                     count: currentCount + 1,
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
