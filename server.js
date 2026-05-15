@@ -199,21 +199,52 @@ async function broadcastToAllUsers(message) {
     }
 }
 
-// ====== تحديث عداد المستخدمين الجدد ======
-async function updateNewUserCounter(userId, userName) {
-    console.log("🔥🔥🔥 updateNewUserCounter EXECUTED for:", userId);
+// ============================================================================
+// عداد المستخدمين الجدد - محسن وآمن باستخدام Transaction
+// ============================================================================
+async function updateNewUserCounter(userId, userName = "Unknown") {
+    console.log(`🔥🔥🔥 updateNewUserCounter EXECUTED for: ${userId} (${userName})`);
+
     if (!db) {
         console.log("❌ db not connected");
-        return;
+        return { success: false, error: "Database not connected" };
     }
+
     try {
         const counterRef = db.collection('system').doc('newUserCounter');
-        await counterRef.set({ count: admin.firestore.FieldValue.increment(1) }, { merge: true });
-        console.log(`📊 User counter incremented for: ${userName} (${userId})`);
+
+        const finalCount = await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            let currentCount = 0;
+
+            if (counterDoc.exists) {
+                currentCount = counterDoc.data().count || 0;
+                console.log(`📊 Current count read: ${currentCount}`);
+            } else {
+                console.log(`📁 Counter document does not exist, initializing...`);
+            }
+
+            const newCount = currentCount + 1;
+
+            transaction.set(counterRef, {
+                count: newCount,
+                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                lastUserId: userId,
+                lastUserName: userName
+            }, { merge: true });
+
+            return newCount;
+        });
+
+        console.log(`✅ Counter updated successfully: ${finalCount}`);
+        return { success: true, count: finalCount };
+
     } catch (error) {
-        console.error('❌ Error updating user counter:', error.message);
+        console.error('❌ Error in updateNewUserCounter:', error.message);
+        return { success: false, error: error.message };
     }
 }
+
 
 function createNewUser(userId, userName, userUsername, refCode) {
     const now = new Date().toISOString();
