@@ -1925,27 +1925,50 @@ app.post('/api/init-user', async (req, res) => {
     try {
         const { initData } = req.body;
         if (!initData) return res.json({ success: false, error: 'No initData' });
+        
         const params = new URLSearchParams(initData);
         const userJson = params.get('user');
         if (!userJson) return res.json({ success: false, error: 'No user data' });
+        
         const user = JSON.parse(decodeURIComponent(userJson));
         const userId = user.id.toString();
         const userName = user.first_name || 'AdNova User';
         const userUsername = user.username || '';
+        
         if (!db) return res.json({ success: false, error: 'Database not connected' });
+        
         const userRef = db.collection('users').doc(userId);
-        const userDoc = await userRef.get();
+        const counterRef = db.collection('system').doc('newUserCounter');
+        
         let userData;
-        if (userDoc.exists) {
-            userData = userDoc.data();
-            console.log('✅ Existing user:', userId);
-        } else {
-            userData = createNewUser(userId, userName, userUsername, null);
-            await userRef.set(userData);
-            console.log('✅ New user created:', userId);
-            await updateNewUserCounter(userId, userName);
-        }
-        res.json({ success: true, userId: userId, userData: userData });
+        let isNewUser = false;
+        
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            
+            if (!userDoc.exists) {
+                isNewUser = true;
+                userData = createNewUser(userId, userName, userUsername, null);
+                transaction.set(userRef, userData);
+                
+                const counterDoc = await transaction.get(counterRef);
+                const currentCount = counterDoc.exists ? (counterDoc.data().count || 0) : 0;
+                
+                transaction.set(counterRef, {
+                    count: currentCount + 1,
+                    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                    lastUserId: userId,
+                    lastUserName: userName
+                }, { merge: true });
+                
+                console.log(`✅ New user via init-user: ${userId} → ${currentCount + 1}`);
+            } else {
+                userData = userDoc.data();
+                console.log('✅ Existing user:', userId);
+            }
+        });
+        
+        res.json({ success: true, userId: userId, userData: userData, isNew: isNewUser });
     } catch (error) {
         console.error('Init user error:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -1964,17 +1987,37 @@ app.get('/api/users/:userId', async (req, res) => {
 
 app.post('/api/users/:userId', async (req, res) => {
     if (!db) return res.json({ success: true, mock: true });
+    
     try {
         const { userId, userData } = req.body;
         const userRef = db.collection('users').doc(userId);
-        const userDoc = await userRef.get();
-        if (!userDoc.exists) {
-            await userRef.set(userData);
-        } else {
-            await userRef.update(userData);
-        }
+        const counterRef = db.collection('system').doc('newUserCounter');
+        
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            
+            if (!userDoc.exists) {
+                transaction.set(userRef, userData);
+                
+                const counterDoc = await transaction.get(counterRef);
+                const currentCount = counterDoc.exists ? (counterDoc.data().count || 0) : 0;
+                
+                transaction.set(counterRef, {
+                    count: currentCount + 1,
+                    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                    lastUserId: userId,
+                    lastUserName: userData.userName || "User"
+                }, { merge: true });
+                
+                console.log(`✅ New user + counter via API: ${userId} → ${currentCount + 1}`);
+            } else {
+                transaction.update(userRef, userData);
+            }
+        });
+        
         res.json({ success: true });
     } catch (error) {
+        console.error('Sync error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -1982,7 +2025,6 @@ app.post('/api/users/:userId', async (req, res) => {
 // ============================================================================
 // 8. 🔗 API الإحالة
 // ============================================================================
-
 app.post('/api/referral', async (req, res) => {
     if (!db) return res.json({ success: false, error: 'Database not connected' });
     try {
