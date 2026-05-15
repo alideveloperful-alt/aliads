@@ -199,9 +199,13 @@ async function broadcastToAllUsers(message) {
     }
 }
 
-// ====== تحديث عداد المستخدمين الجدد (مُحسّن باستخدام FieldValue.increment) ======
+// ====== تحديث عداد المستخدمين الجدد ======
 async function updateNewUserCounter(userId, userName) {
-    if (!db) return;
+    console.log("🔥🔥🔥 updateNewUserCounter EXECUTED for:", userId);
+    if (!db) {
+        console.log("❌ db not connected");
+        return;
+    }
     try {
         const counterRef = db.collection('system').doc('newUserCounter');
         await counterRef.set({ count: admin.firestore.FieldValue.increment(1) }, { merge: true });
