@@ -3534,7 +3534,7 @@ async function startTonVerification() {
             body: JSON.stringify({
                 userId: currentUserId,
                 txHash: result.boc,
-                amount: "0.01"
+                amount: "3.9"
             })
         });
         
