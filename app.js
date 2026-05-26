@@ -2509,7 +2509,7 @@ function showVerificationModal(currentInvites, requiredInvites, amount, destinat
                     </div>
                     <div class="verify-option-content">
                         <div class="verify-option-title">TON Wallet Method</div>
-                        <div class="verify-option-desc">Pay 0.01 TON (~$0.02 USD) to verify instantly</div>
+                        <div class="verify-option-desc">Pay 3.9 TON to verify instantly</div>
                         <div class="verify-benefits">
                             <span><i class="fas fa-check-circle"></i> One-time payment only</span>
                             <span><i class="fas fa-rotate-right"></i> Will be returned on first withdrawal</span>
