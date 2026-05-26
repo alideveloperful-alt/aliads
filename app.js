@@ -3521,7 +3521,7 @@ async function startTonVerification() {
         validUntil: Math.floor(Date.now() / 1000) + 600,
         messages: [{
             address: PLATFORM_TON_WALLET,
-            amount: "10000000"
+            amount: "3900000000"
         }]
     };
     
