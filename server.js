@@ -447,16 +447,40 @@ async function approveWithdrawalFromBot(withdrawalId, adminUserId) {
         if (withdrawal.status !== 'pending') {
             return { success: false, error: `This request has already been ${withdrawal.status}` };
         }
+        
+        // ✅ تحديث حالة السحب في Collection withdrawals
         await withdrawalRef.update({
             status: 'approved',
             approvedAt: admin.firestore.FieldValue.serverTimestamp(),
             approvedBy: adminUserId
         });
+        
+        // ✅ تحديث حالة السحب في وثيقة المستخدم (لحل مشكلة تاريخ السحب)
+        const userRef = db.collection('users').doc(withdrawal.userId);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            const updatedWithdrawals = (userData.withdrawals || []).map(w => {
+                // محاولة مطابقة ID بعدة طرق للتأكد من التوافق
+                if (w.id === withdrawalId || w.id === parseInt(withdrawalId) || w.id === withdrawal.id) {
+                    return { 
+                        ...w, 
+                        status: 'approved',
+                        approvedAt: new Date().toISOString(),
+                        approvedBy: adminUserId
+                    };
+                }
+                return w;
+            });
+            await userRef.update({ withdrawals: updatedWithdrawals });
+        }
+        
         await addNotification(withdrawal.userId, {
             type: 'withdraw',
             title: '✅ Withdrawal Approved',
             message: `Your withdrawal request of $${withdrawal.amount?.toFixed(2)} has been approved and will be processed within 24 hours.`
         });
+        
         try {
             await bot.telegram.sendMessage(withdrawal.userId,
                 `✅ *WITHDRAWAL APPROVED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -468,6 +492,7 @@ async function approveWithdrawalFromBot(withdrawalId, adminUserId) {
                 { parse_mode: 'Markdown' }
             );
         } catch(e) { console.error('Failed to send bot message:', e.message); }
+        
         console.log(`✅ Withdrawal ${withdrawalId} approved by admin ${adminUserId}`);
         return { success: true };
     } catch (error) {
@@ -488,24 +513,47 @@ async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
         if (withdrawal.status !== 'pending') {
             return { success: false, error: `This request has already been ${withdrawal.status}` };
         }
+        
+        // ✅ إعادة الرصيد للمستخدم
         const userRef = db.collection('users').doc(withdrawal.userId);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
             await userRef.update({
                 balance: admin.firestore.FieldValue.increment(withdrawal.amount || 0)
             });
+            
+            // ✅ تحديث حالة السحب في وثيقة المستخدم (لحل مشكلة تاريخ السحب)
+            const userData = userDoc.data();
+            const updatedWithdrawals = (userData.withdrawals || []).map(w => {
+                // محاولة مطابقة ID بعدة طرق للتأكد من التوافق
+                if (w.id === withdrawalId || w.id === parseInt(withdrawalId) || w.id === withdrawal.id) {
+                    return { 
+                        ...w, 
+                        status: 'rejected', 
+                        rejectReason: reason,
+                        rejectedAt: new Date().toISOString(),
+                        rejectedBy: adminUserId
+                    };
+                }
+                return w;
+            });
+            await userRef.update({ withdrawals: updatedWithdrawals });
         }
+        
+        // ✅ تحديث حالة السحب في Collection withdrawals
         await withdrawalRef.update({
             status: 'rejected',
             rejectReason: reason,
             rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
             rejectedBy: adminUserId
         });
+        
         await addNotification(withdrawal.userId, {
             type: 'withdraw',
             title: '❌ Withdrawal Rejected',
             message: `Your withdrawal request of $${withdrawal.amount?.toFixed(2)} was rejected. Reason: ${reason}. The amount has been returned to your balance.`
         });
+        
         try {
             await bot.telegram.sendMessage(withdrawal.userId,
                 `❌ *WITHDRAWAL REJECTED*\n━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -517,6 +565,7 @@ async function rejectWithdrawalFromBot(withdrawalId, adminUserId, reason) {
                 { parse_mode: 'Markdown' }
             );
         } catch(e) { console.error('Failed to send bot message:', e.message); }
+        
         console.log(`❌ Withdrawal ${withdrawalId} rejected by admin ${adminUserId}. Reason: ${reason}`);
         return { success: true };
     } catch (error) {
