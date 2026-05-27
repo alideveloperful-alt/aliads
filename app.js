@@ -1803,7 +1803,12 @@ async function verifyTask(taskId, type, identifier, reward) {
     let url = "";
     
     if (type === "channel" || type === "bot") {
-        url = `https://t.me/${identifier.replace('@', '')}`;
+        // ✅ دعم الروابط المباشرة (يدعم روابط الإحالة ?start=)
+        if (identifier.includes('t.me') || identifier.includes('https://')) {
+            url = identifier;
+        } else {
+            url = `https://t.me/${identifier.replace('@', '')}`;
+        }
     } else if (type === "youtube") {
         url = identifier.startsWith("http") ? identifier : `https://youtube.com/@${identifier.replace('@', '')}`;
     } else if (type === "tiktok") {
